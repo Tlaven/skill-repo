@@ -330,6 +330,20 @@ def main():
     if args.command in ('replace-text', 'insert-paragraph') and not getattr(args, 'text', None):
         json_output({"error": "请提供 --text 或 --text-file"}, args.command); sys.exit(1)
 
+    # --data-file（解决 PowerShell 双引号被吞的问题）
+    DATA_COMMANDS = ('insert-table', 'replace-table', 'write-paragraphs')
+    data_file = getattr(args, 'data_file', None)
+    if data_file:
+        import json as _json
+        with open(data_file, 'r', encoding='utf-8-sig') as _f:
+            args.data = _f.read()
+        # 去除可能的 BOM
+        if args.data and args.data[0] == '\ufeff':
+            args.data = args.data[1:]
+    if args.command in DATA_COMMANDS:
+        if not getattr(args, 'data', None):
+            json_output({"error": "请提供 --data 或 --data-file"}, args.command); sys.exit(1)
+
     # --after-text
     if getattr(args, 'after_text', None) and args.command in ('insert-paragraph', 'insert-image', 'insert-table', 'insert-page-break'):
         from lib.core import ThesisDoc

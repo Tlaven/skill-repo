@@ -62,7 +62,8 @@ def register(subparsers):
     p = subparsers.add_parser('write-paragraphs', help='批量插入多段（从后往前，防索引漂移）')
     p.add_argument('file', help='输入 .docx 文件')
     p.add_argument('--after', type=int, required=True, help='在哪个段落之后插入')
-    p.add_argument('--data', required=True, help='JSON 数组: [{"text":"...","style":"body"}, ...]')
+    p.add_argument('--data', help='JSON 数组（与 --data-file 二选一）')
+    p.add_argument('--data-file', help='从文件读取段落数组 (JSON)')
     add_common_args(p)
 
     p = subparsers.add_parser('delete-paragraph', help='删除段落')
@@ -85,14 +86,16 @@ def register(subparsers):
     p = subparsers.add_parser('replace-table', help='替换表格内容')
     p.add_argument('file', help='输入 .docx 文件')
     p.add_argument('--index', type=int, required=True, help='表格索引')
-    p.add_argument('--data', required=True, help='JSON二维数组')
+    p.add_argument('--data', help='JSON二维数组（与 --data-file 二选一）')
+    p.add_argument('--data-file', help='从文件读取表格数据 (JSON)')
     add_common_args(p)
 
     p = subparsers.add_parser('insert-table', help='在段落后插入表格')
     p.add_argument('file', help='输入 .docx 文件')
     p.add_argument('--after', type=int, help='在哪个段落之后插入（索引）')
     p.add_argument('--after-text', help='在包含此文本的段落之后插入（优先于 --after）')
-    p.add_argument('--data', required=True, help='JSON二维数组')
+    p.add_argument('--data', help='JSON二维数组（与 --data-file 二选一）')
+    p.add_argument('--data-file', help='从文件读取表格数据 (JSON)')
     add_common_args(p)
 
     p = subparsers.add_parser('insert-image', help='在段落后插入图片')
