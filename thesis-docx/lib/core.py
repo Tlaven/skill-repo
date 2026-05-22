@@ -1,0 +1,330 @@
+"""ThesisDoc 核心类 — 文档加载、索引构建、保存"""
+import os
+import re
+from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from lib.utils import (
+    get_heading_level, get_run_font_info, get_paragraph_format,
+    emu_to_cm, is_heading
+)
+
+
+class ThesisDoc:
+    """论文文档的核心抽象，所有模块的入口"""
+
+    def __init__(self, filepath, create=False):
+        self.filepath = os.path.abspath(filepath)
+        if create:
+            self.doc = Document()
+        else:
+            if not os.path.exists(self.filepath):
+                raise FileNotFoundError(f"文件不存在: {self.filepath}")
+            self.doc = Document(self.filepath)
+        self._para_index = []
+        self._sections = []
+        self._images = []
+        self._tables = []
+        self._build_index()
+
+    def _build_index(self):
+        self._build_para_index()
+        self._build_sections_tree()
+        self._build_image_index()
+        self._build_table_index()
+
+    def _build_para_index(self):
+        current_chapter_path = ""
+        chapter_counters = {}
+        for i, para in enumerate(self.doc.paragraphs):
+            style_name = para.style.name if para.style else "Normal"
+            level = get_heading_level(style_name)
+            text = para.text or ""
+            fmt = get_paragraph_format(para)
+            if level is not None:
+                chapter_counters[level] = chapter_counters.get(level, 0) + 1
+                for lv in list(chapter_counters.keys()):
+                    if lv > level:
+                        del chapter_counters[lv]
+                parts = []
+                for lv in sorted(chapter_counters.keys()):
+                    if lv <= level:
+                        parts.append(str(chapter_counters[lv]))
+                current_chapter_path = ".".join(parts)
+            has_image, image_ids = self._check_para_images(para)
+            info = {
+                "index": i,
+                "text": text,
+                "style": style_name,
+                "level": level,
+                "alignment": fmt["alignment"],
+                "line_spacing": fmt["line_spacing"],
+                "first_line_indent": fmt["first_line_indent_cm"],
+                "runs": [get_run_font_info(r) for r in para.runs],
+                "has_image": has_image,
+                "image_ids": image_ids,
+                "chapter_path": current_chapter_path if level is None else current_chapter_path,
+                "char_count": len(text),
+            }
+            if level is not None:
+                info["chapter_path"] = current_chapter_path
+            self._para_index.append(info)
+
+    def _check_para_images(self, para):
+        image_ids = []
+        drawings = para._element.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing')
+        for drawing in drawings:
+            blip = drawing.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}blip')
+            if blip is not None:
+                embed = blip.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
+                if embed:
+                    image_ids.append(embed)
+        if not image_ids:
+            inline = para._element.findall('.//{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}inline')
+            for inl in inline:
+                blip = inl.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}blip')
+                if blip is not None:
+                    embed = blip.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
+                    if embed:
+                        image_ids.append(embed)
+        return len(image_ids) > 0, image_ids
+
+    def _build_sections_tree(self):
+        heading_paras = []
+        for info in self._para_index:
+            if info["level"] is not None:
+                heading_paras.append(info)
+        if not heading_paras:
+            return
+        total = len(self._para_index)
+
+        def build_node_single(idx, parent_path=""):
+            hp = heading_paras[idx]
+            level = hp["level"]
+            path = hp["chapter_path"]
+            para_start = hp["index"]
+            para_end = total - 1
+            for j in range(idx + 1, len(heading_paras)):
+                if heading_paras[j]["level"] <= level:
+                    para_end = heading_paras[j]["index"] - 1
+                    break
+            children = []
+            ci = idx + 1
+            while ci < len(heading_paras) and heading_paras[ci]["level"] > level:
+                if heading_paras[ci]["level"] == level + 1:
+                    child, ci = build_node_single(ci, path)
+                    children.append(child)
+                else:
+                    ci += 1
+            char_count = sum(
+                self._para_index[p]["char_count"]
+                for p in range(para_start, min(para_end + 1, total))
+            )
+            node = {
+                "level": level,
+                "title": hp["text"],
+                "para_index": para_start,
+                "children": children,
+                "para_range": [para_start, para_end],
+                "char_count": char_count,
+            }
+            return node, ci
+
+        self._sections = []
+        i = 0
+        while i < len(heading_paras):
+            hp = heading_paras[i]
+            if hp["level"] == 1:
+                node, i = build_node_single(i)
+                self._sections.append(node)
+            else:
+                i += 1
+
+    def _build_image_index(self):
+        image_rels = {}
+        for rel in self.doc.part.rels.values():
+            if "image" in rel.reltype:
+                image_rels[rel.rId] = rel
+        for info in self._para_index:
+            for r_id in info.get("image_ids", []):
+                if r_id in image_rels:
+                    rel = image_rels[r_id]
+                    img_info = {
+                        "para_index": info["index"],
+                        "r_id": r_id,
+                        "filename": rel.target_ref,
+                        "format": os.path.splitext(rel.target_ref)[1].lstrip("."),
+                    }
+                    try:
+                        blob = rel.target_part.blob
+                        img_info["size_bytes"] = len(blob)
+                    except Exception:
+                        img_info["size_bytes"] = None
+                    self._fill_image_dimensions(img_info, info["index"])
+                    self._fill_image_caption(img_info, info["index"])
+                    self._images.append(img_info)
+
+    def _fill_image_dimensions(self, img_info, para_index):
+        para = self.doc.paragraphs[para_index]
+        drawings = para._element.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing')
+        for drawing in drawings:
+            extent = drawing.find('.//{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}extent')
+            if extent is None:
+                continue
+            cx = extent.get('cx')
+            cy = extent.get('cy')
+            if cx and cy:
+                img_info["width_cm"] = emu_to_cm(int(cx))
+                img_info["height_cm"] = emu_to_cm(int(cy))
+                break
+        docPr = para._element.find('.//{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}docPr')
+        if docPr is not None:
+            img_info["name"] = docPr.get('name', '')
+            img_info["description"] = docPr.get('descr', '')
+
+    def _fill_image_caption(self, img_info, para_index):
+        caption_pattern = re.compile(r'^\s*(图|表|Figure|Table)\s*\d+[.\-]\d+')
+        search_range = 3
+        best_match = None
+        for offset in range(-search_range, search_range + 1):
+            idx = para_index + offset
+            if 0 <= idx < len(self._para_index):
+                p = self._para_index[idx]
+                text = p["text"].strip()
+                if not text:
+                    continue
+                if p["style"] == "Caption":
+                    img_info["nearby_caption"] = text
+                    img_info["caption_para_index"] = idx
+                    return
+                if caption_pattern.match(text) and len(text) <= 60:
+                    if best_match is None or len(text) < len(best_match[0]):
+                        best_match = (text, idx)
+        if best_match:
+            img_info["nearby_caption"] = best_match[0]
+            img_info["caption_para_index"] = best_match[1]
+        else:
+            img_info["nearby_caption"] = None
+            img_info["caption_para_index"] = None
+
+    def _build_table_index(self):
+        for idx, table in enumerate(self.doc.tables):
+            rows = []
+            for row in table.rows:
+                cells = [cell.text for cell in row.cells]
+                rows.append(cells)
+            header = rows[0] if rows else []
+            data = rows[1:] if len(rows) > 1 else []
+            tbl_element = table._element
+            para_index_approx = 0
+            body = self.doc.element.body
+            found = False
+            for child_idx, child in enumerate(body):
+                if child is tbl_element:
+                    para_count = 0
+                    for prev_child in body[:child_idx]:
+                        if prev_child.tag.endswith('}p'):
+                            para_count += 1
+                    para_index_approx = para_count
+                    found = True
+                    break
+            self._tables.append({
+                "index": idx,
+                "rows": len(table.rows),
+                "cols": len(table.columns),
+                "header": header,
+                "data": data,
+                "para_index_approx": para_index_approx,
+            })
+
+    @property
+    def paragraphs(self):
+        return self._para_index
+
+    @property
+    def sections_tree(self):
+        return self._sections
+
+    @property
+    def images(self):
+        return self._images
+
+    @property
+    def tables(self):
+        return self._tables
+
+    @property
+    def raw_paragraphs(self):
+        return self.doc.paragraphs
+
+    @property
+    def raw_tables(self):
+        return self.doc.tables
+
+    def find_section(self, title=None, level=None, index=None):
+        def _search(nodes, results):
+            for node in nodes:
+                match = True
+                if title and title not in node["title"]:
+                    match = False
+                if level is not None and node["level"] != level:
+                    match = False
+                if match:
+                    results.append(node)
+                _search(node["children"], results)
+        results = []
+        _search(self._sections, results)
+        if index is not None and 1 <= index <= len(results):
+            return results[index - 1]
+        if title:
+            return results[0] if results else None
+        return results
+
+    def get_section_paras(self, section_node):
+        start, end = section_node["para_range"]
+        return self._para_index[start:end + 1]
+
+    def get_para(self, index):
+        if 0 <= index < len(self._para_index):
+            return self._para_index[index]
+        return None
+
+    def find_paragraph_by_text(self, text, start=0):
+        for p in self._para_index[start:]:
+            if text in p["text"]:
+                return p["index"]
+        return None
+
+    def save(self, output_path=None):
+        path = output_path or self.filepath
+        self.doc.save(path)
+        return path
+
+    def save_zip(self, output_path=None):
+        import zipfile
+        import tempfile
+        import shutil
+        from lxml import etree
+        path = output_path or self.filepath
+        xml_bytes = etree.tostring(
+            self.doc.element,
+            xml_declaration=True,
+            encoding='UTF-8',
+            standalone=True,
+        )
+        output_dir = os.path.dirname(os.path.abspath(path))
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix='.docx', dir=output_dir)
+        os.close(tmp_fd)
+        try:
+            with zipfile.ZipFile(self.filepath, 'r') as zin:
+                with zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
+                    for item in zin.namelist():
+                        if item == 'word/document.xml':
+                            zout.writestr(item, xml_bytes)
+                        else:
+                            zout.writestr(item, zin.read(item))
+            os.replace(tmp_path, path)
+        except Exception:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            raise
+        return path
