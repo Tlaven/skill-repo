@@ -6,116 +6,48 @@ type: skill
 
 # 论文 DocX 工具
 
-`python cli.py <command> <file> [options]`。所有输出为 JSON。
+`python cli.py <command> <file> [options]`，所有输出 JSON。详见 [CLI.md](CLI.md)。
 
-详细参考：[CLI.md](CLI.md) | [lessons.md](lessons.md) | [api.py](api.py)
+## 陷阱（违反会丢数据）
 
-## 必须先知道的陷阱
+1. **段落索引会漂移** — `insert`/`delete` 后索引全变。用 `--by-text "子串"` 代替。
+2. **≥3 次 insert/delete 写脚本** — 不要多次调 CLI，在同一个 Python 进程内完成。
+3. **FORMULA_X_X 不会自动清理** — 插入公式后手动 `replace-inline --old "FORMULA_3_1" --new ""`。
 
-1. **段落索引会漂移** — `insert`/`delete` 后所有旧索引失效。解决办法：用 `--by-text "子串"` 或 `--after-text "子串"` 代替索引。
-2. **复杂修改写脚本** — 涉及 ≥3 次 `insert`/`delete` 时，用 Python 脚本在同一个进程内操作，不要多次调 CLI。
-3. **FORMULA_X_X 不会自动清理** — 插入公式后需手动 `replace-inline --old "FORMULA_3_1" --new ""`。
+## 思维模型
 
-## 给 Agent 的思维模型
+**用户需求 → 拆成以下某一种原语 → 用对应命令。不要写脚本。**
 
-**这个 CLI 不是论文写作百科全书，而是 docx 操作的抽象层。** 几乎所有用户需求都能拆解为以下 6 种原语的组合：
+| 原语 | 对应命令 |
+|------|---------|
+| 读内容 | `read-*` / `search` |
+| 改文字 | `replace-text` / `replace-inline` |
+| 增内容 | `insert-* --after-text` |
+| 改格式 | `set-*` / `format-inline` / `assign-styles` |
+| 检查 | `check-*` |
+| 删 | `delete-paragraph` / `delete-comments` |
 
-| 原语 | 对应命令 | 适用于 |
-|------|---------|--------|
-| 读内容 | `read-*` / `search` | 任何想了解文档内容的场景 |
-| 改文字 | `replace-text` / `replace-inline` | 增删改任何文本（包括公式旁边的说明文字） |
-| 增内容 | `insert-* --after-text` | 加段落/图/表/公式/分页符 |
-| 改格式 | `set-*` / `format-inline` / `assign-styles` | 调字体/样式/页边距/页眉页脚 |
-| 检查 | `check-*` | 格式/占位符/公式引用/图片引用/写作风格 |
-| 删 | `delete-paragraph` / `delete-comments` | 删段落/批注 |
-
-**判断准则**：你的需求能映射到某一种原语 → CLI 已经能处理，不用写脚本。只有当需要**组合 3 次以上 insert/delete** 或**遍历文档做条件筛选修改**时，才考虑写脚本。
-
-不需要理解 docx 的内部结构（段落索引、XML 命名空间、OMML 格式）。把用户需求拆成 6 种原语，然后找对应的命令即可。
-
-## 能力速查
-
-### 看（READ）
+## 命令速查
 
 | 我要做什么 | 命令 |
 |-----------|------|
-| 全文概况 | `read-full`（~3k tokens 地图） |
-| 展开某节全文+格式+图表 | `read-section --title "节名" --deep`（≤3000字自动限） |
-| 某段落在哪+附近元素 | `read-location --paragraph N` |
-| 某段完整格式（runs） | `read-paragraph --index N --deep` |
-| 表格全部数据+边框+字体 | `read-table --index N --deep` |
-| 所有公式位置+数学内容 | `read-formulas` |
-| 所有图片列表+标题 | `read-images` |
-| 样式定义 | `extract-rules` |
-| 页面设置/批注/统计 | `read-page-setup` / `read-comments` / `read-stats` |
-| 章节树 | `read-structure` |
+| 全文概况 | `read-full` |
+| 某节完整内容+格式+图表 | `read-section --title "节名" --deep` |
+| 段落在哪+附近元素 | `read-location --paragraph N` |
+| 表格+边框+字体 | `read-table --index N --deep` |
+| 公式位置+数学内容 | `read-formulas` |
 | 搜索关键词 | `search --query "关键词"` |
-
-### 改（WRITE + FORMAT）
-
-| 我要做什么 | 命令 |
-|-----------|------|
+| 样式定义 | `extract-rules` |
 | 替换整段 | `replace-text --by-text "旧段" --text "新段"` |
-| 改段内一个词（保留格式） | `replace-inline --by-text "锚定段" --old "旧词" --new "新词"` |
-| 改词+同时设格式 | `replace-inline --old X --new Y --bold --font 楷体` |
-| 只改格式不改文字 | `format-inline --target "子串" --bold --color FF0000` |
-| 插入一段 | `insert-paragraph --after-text "锚定" --text "内容" --style body` |
-| 批量插入多段 | `write-paragraphs --after N --data '[{...}]'` |
+| 段内改一个词 | `replace-inline --by-text "锚定段" --old "旧词" --new "新词"` |
+| 改词+设格式 | `replace-inline --old X --new Y --bold --font 楷体` |
+| 只改格式不改字 | `format-inline --target "子串" --bold` |
+| 插入一段/多段 | `insert-paragraph` / `write-paragraphs` |
 | 删除一段 | `delete-paragraph --by-text "要删的段"` |
 | 插入图片/表格/公式 | `insert-image/table/formula --after-text "锚定"` |
-| 替换图片 | `replace-image --caption "图3-1" --image "new.png"` |
-| 设置段落样式 | `set-format --by-text "标题" --style h1` |
+| 套模板格式 | `apply-template --template "模板.docx" "论文.docx"` |
 | 自动分配全部样式 | `assign-styles` |
-| 套用学校模板格式 | `apply-template --template "模板.docx" "论文.docx"` |
-| 修改页面/页眉/页脚 | `set-page-setup` / `set-header` / `set-footer` |
-| 参考文献管理 | `list-references` / `add-reference` / `renumber-references` |
-
-### 查（CHECK）
-
-| 我要做什么 | 命令 |
-|-----------|------|
 | 全面检查 | `check-all` |
-| 占位符残留 | `check-placeholders`（TODO/FORMULA_/IMAGE_/TABLE_） |
-| 公式引用检查 | `check-formula-references`（前后有无"如式"引用和"其中"解释） |
-| 图片引用检查 | `check-figure-references` |
-| 写作风格问题 | `check-style`（AI 痕迹检测） |
-| 对照模板检查格式 | `check-format --template "模板.docx"` |
-
-### 建（CREATE）
-
-| 我要做什么 | 命令 |
-|-----------|------|
-| 从零创建 | `create "论文.docx" --preset gb-academic` |
-| 从学校模板创建 | `create "论文.docx" --from-template "学校模板.docx"` |
-
-## 内容定位参数（代替索引）
-
-| 参数 | 适用命令 | 作用 |
-|------|---------|------|
-| `--by-text "子串"` | replace-text / replace-inline / delete-paragraph / set-format / format-inline | 找到含此文字的段落 |
-| `--after-text "子串"` | insert-paragraph / insert-image / insert-table / insert-page-break | 在此段落后插入 |
-| `--old / --new` | replace-inline | 段内查找替换 |
-| `--target "子串"` | format-inline | 定位要改格式的文字 |
-
-## 反模式（不要这样做）
-
-- ❌ 用了 `--paragraph N` 后又做 insert/delete → 索引漂移，优先用 `--by-text`
-- ❌ 自己写 python-docx 遍历读内容 → 用 `read-section --deep` 或 `read-paragraph --deep`
-- ❌ 多次 CLI 调用来做多步 insert → 写脚本
-- ❌ 用 `replace-text` 做全文关键词替换 → 用 `replace-batch`
-
-## 公式
-
-- 批量：`insert-formulas --json formulas.json`，连续公式用 `"position": "last"`
-- 验证：返回值 `saved_formula_count` 确认写入成功
-- 清理：插入后 `FORMULA_X_X` 不会自动消失，用 `replace-inline` 手动清除
-
-## Windows
-
-- 中文文件名 → `--find-file "子串"`
-- 不要用 `python -c "多行代码"` → 写成 `.py` 文件
-- subprocess 读输出 → `encoding='utf-8'`
-
-## 通用选项
-
-`--backup` / `--find-file` / `--output` / `--query-file`
+| 专项检查 | `check-placeholders` / `check-formula-references` / `check-style` |
+| 对照模板检查 | `check-format --template "模板.docx"` |
+| 新建论文 | `create "论文.docx" --preset gb-academic` 或 `--from-template` |
