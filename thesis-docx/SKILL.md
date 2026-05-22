@@ -16,6 +16,23 @@ type: skill
 2. **复杂修改写脚本** — 涉及 ≥3 次 `insert`/`delete` 时，用 Python 脚本在同一个进程内操作，不要多次调 CLI。
 3. **FORMULA_X_X 不会自动清理** — 插入公式后需手动 `replace-inline --old "FORMULA_3_1" --new ""`。
 
+## 给 Agent 的思维模型
+
+**这个 CLI 不是论文写作百科全书，而是 docx 操作的抽象层。** 几乎所有用户需求都能拆解为以下 6 种原语的组合：
+
+| 原语 | 对应命令 | 适用于 |
+|------|---------|--------|
+| 读内容 | `read-*` / `search` | 任何想了解文档内容的场景 |
+| 改文字 | `replace-text` / `replace-inline` | 增删改任何文本（包括公式旁边的说明文字） |
+| 增内容 | `insert-* --after-text` | 加段落/图/表/公式/分页符 |
+| 改格式 | `set-*` / `format-inline` / `assign-styles` | 调字体/样式/页边距/页眉页脚 |
+| 检查 | `check-*` | 格式/占位符/公式引用/图片引用/写作风格 |
+| 删 | `delete-paragraph` / `delete-comments` | 删段落/批注 |
+
+**判断准则**：你的需求能映射到某一种原语 → CLI 已经能处理，不用写脚本。只有当需要**组合 3 次以上 insert/delete** 或**遍历文档做条件筛选修改**时，才考虑写脚本。
+
+不需要理解 docx 的内部结构（段落索引、XML 命名空间、OMML 格式）。把用户需求拆成 6 种原语，然后找对应的命令即可。
+
 ## 能力速查
 
 ### 看（READ）
@@ -70,14 +87,6 @@ type: skill
 |-----------|------|
 | 从零创建 | `create "论文.docx" --preset gb-academic` |
 | 从学校模板创建 | `create "论文.docx" --from-template "学校模板.docx"` |
-
-## 我不确定用什么命令
-
-按这个顺序思考：
-
-1. **先读** — `read-full` 看全貌，`read-location` 定位，`read-section --deep` 看细节
-2. **后改** — 文字用 `replace-inline`，格式用 `format-inline`，段落用 `insert/delete --by-text`
-3. **再查** — `check-all` 兜底，具体问题用专项 check
 
 ## 内容定位参数（代替索引）
 
