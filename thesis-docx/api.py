@@ -66,6 +66,18 @@ class ThesisEditor:
         from lib.reader import read_comments
         return read_comments(self.doc)
 
+    def read_full(self, section=None, paragraphs=None):
+        from lib.reader import read_full
+        return read_full(self.doc, section=section, paragraphs=paragraphs)
+
+    def read_formulas(self):
+        from lib.reader import read_formulas
+        return read_formulas(self.doc)
+
+    def read_location(self, paragraph):
+        from lib.reader import read_location
+        return read_location(self.doc, paragraph=paragraph)
+
     # ========== 搜索 ==========
 
     def search(self, query, regex=False, chapter=None, section=None, context=0, limit=20):

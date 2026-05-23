@@ -97,6 +97,13 @@ def _fix_query_encoding(query):
         return query
 
 
+def _fix_all_string_args(args):
+    """对所有字符串参数应用编码修复（解决 PowerShell 中文乱码）。"""
+    for key, val in vars(args).items():
+        if isinstance(val, str):
+            vars(args)[key] = _fix_query_encoding(val)
+
+
 def run_command(args):
     """路由到 lib/ 对应函数执行命令。"""
     import lib.reader as lib_read
@@ -152,7 +159,8 @@ def run_command(args):
         'search-by-style': lambda: lib_search.search_by_style(doc, args.style),
         'search-format': lambda: lib_search.search_format(doc, target=getattr(args, 'target', 'all')),
         'replace-text': lambda: lib_edit.replace_text(doc, args.paragraph, args.text, output=_out, backup=_bak),
-        'replace-inline': lambda: lib_edit.replace_inline(doc, args.paragraph, args.old, args.new,
+        'replace-inline': lambda: lib_edit.replace_inline(doc, args.paragraph, args.old,
+            '' if getattr(args, 'delete', False) else args.new,
             output=_out, backup=_bak, bold=getattr(args, 'bold', None),
             font=getattr(args, 'font', None), font_east=getattr(args, 'font_east', None),
             size=getattr(args, 'size', None), color=getattr(args, 'color', None)),
@@ -307,6 +315,7 @@ def main():
     register_all(subparsers)
 
     args = parser.parse_args()
+    _fix_all_string_args(args)
     if not args.command:
         parser.print_help(); sys.exit(1)
 
@@ -358,7 +367,7 @@ def main():
             json_output({"error": "请提供 --after <索引> 或 --after-text <文本子串>"}, args.command); sys.exit(1)
 
     # --by-text（内容定位，替代 --paragraph）
-    BY_TEXT_COMMANDS = ('replace-text', 'replace-inline', 'delete-paragraph', 'set-format')
+    BY_TEXT_COMMANDS = ('replace-text', 'replace-inline', 'delete-paragraph', 'set-format', 'format-inline')
     if getattr(args, 'by_text', None) and args.command in BY_TEXT_COMMANDS:
         from lib.core import ThesisDoc as _TD
         _tmp = _TD(args.file)
@@ -369,9 +378,6 @@ def main():
     if args.command in BY_TEXT_COMMANDS:
         if not hasattr(args, 'paragraph') or args.paragraph is None:
             json_output({"error": "请提供 --paragraph <索引> 或 --by-text <文本子串>"}, args.command); sys.exit(1)
-
-    if getattr(args, 'query', None):
-        args.query = _fix_query_encoding(args.query)
 
     if getattr(args, 'command', None) == 'search' and not getattr(args, 'query', None):
         parser.parse_args(['search', '--help']); sys.exit(1)
