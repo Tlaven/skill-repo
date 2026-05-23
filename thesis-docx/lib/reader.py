@@ -667,9 +667,11 @@ def read_location(doc, paragraph):
     return result
 
 
-def read_formulas(doc):
-    """列出文档中所有公式（含章节位置和上下文）。"""
-    from lib.formula import list_formulas
+def read_formulas(doc, summary=False):
+    """列出文档中所有公式。
+    
+    summary=True 时输出精简格式（类型/位置/数学概要/所在章节）。
+    """
     import re
     from lxml import etree as _etree
     M_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
@@ -681,6 +683,7 @@ def read_formulas(doc):
         pi = p_info["index"]
         text = p_info["text"]
         ftype = None
+        ole_obj = False
 
         # 检测占位符
         if formula_placeholder.search(text):
@@ -691,9 +694,7 @@ def read_formulas(doc):
         ommal_content = ""
         if 'm:oMath' in xml_str or 'm:oMathPara' in xml_str:
             ftype = "OMML"
-            # 提取 OMML 数学内容
-            M_NS2 = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
-            ns2 = {'m': M_NS2}
+            ns2 = {'m': M_NS}
             math_parts = []
             for omath in elem.findall('.//m:oMath', ns2):
                 parts = []
@@ -703,8 +704,22 @@ def read_formulas(doc):
                         parts.append(t.text)
                 math_parts.append(''.join(parts))
             ommal_content = ''.join(math_parts)
+        # 检测 OLE 对象
+        if 'w:object' in xml_str or 'o:OLEObject' in xml_str:
+            ole_obj = True
+            if not ftype:
+                ftype = "OLE"
 
         if not ftype:
+            continue
+
+        if summary:
+            results.append({
+                "para_index": pi,
+                "type": ftype,
+                "text": ommal_content[:100] if ommal_content else (text[:80] if text else ""),
+                "chapter": p_info.get('chapter_path', ''),
+            })
             continue
 
         # 章节位置
@@ -737,7 +752,7 @@ def read_formulas(doc):
     seen = set()
     unique = []
     for r in results:
-        key = (r["para_index"], r["type"])
+        key = (r["para_index"], r["type"] if not summary else r["para_index"])
         if key not in seen:
             seen.add(key)
             unique.append(r)

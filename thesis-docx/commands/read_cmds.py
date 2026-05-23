@@ -54,8 +54,9 @@ def register(subparsers):
     p = subparsers.add_parser('read-stats', help='输出文档统计')
     p.add_argument('file', help='输入 .docx 文件')
 
-    p = subparsers.add_parser('read-formulas', help='列出所有公式（含章节位置和上下文段落）')
+    p = subparsers.add_parser('read-formulas', help='列出所有公式（含章节位置和上下文段落；--summary 精简输出）')
     p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--summary', action='store_true', help='精简模式：仅类型/位置/数学概要/所在章节')
 
     p = subparsers.add_parser('read-location', help='查询段落索引所在的章节路径及附近元素')
     p.add_argument('file', help='输入 .docx 文件')
@@ -73,5 +74,3 @@ def register(subparsers):
     p.add_argument('--section', help='展开指定章节的完整内容')
     p.add_argument('--range', nargs=2, type=int, metavar=('START', 'END'),
                    help='展开指定段落范围')
-    p.add_argument('--paragraphs', type=int, default=600,
-                   help='单段落最大输出字数（默认600），0=不截断')

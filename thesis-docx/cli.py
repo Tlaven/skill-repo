@@ -149,7 +149,7 @@ def run_command(args):
         'read-page-setup': lambda: lib_read.read_page_setup(doc, verify=_verify),
         'read-stats': lambda: lib_read.read_stats(doc),
         'read-comments': lambda: lib_read.read_comments(doc),
-        'read-formulas': lambda: lib_read.read_formulas(doc),
+        'read-formulas': lambda: lib_read.read_formulas(doc, summary=getattr(args, 'summary', False)),
         'read-location': lambda: lib_read.read_location(doc, getattr(args, 'paragraph', 0)),
         'read-table-context': lambda: lib_read.read_table_context(doc, getattr(args, 'index', 0)),
         'read-full': lambda: lib_read.read_full(doc,
@@ -200,6 +200,7 @@ def run_command(args):
         'insert-page-break': lambda: lib_layout.insert_page_break(doc, args.after, output=_out, backup=_bak),
         'set-header': lambda: lib_layout.set_header(doc, args.text, font=getattr(args, 'font', '宋体'), size=getattr(args, 'size', '9'), output=_out, backup=_bak),
         'set-footer': lambda: lib_layout.set_footer(doc, text=getattr(args, 'text', None), page_number=getattr(args, 'page_number', False), align=getattr(args, 'align', 'center'), font=getattr(args, 'font', '宋体'), size=getattr(args, 'size', '9'), output=_out, backup=_bak),
+        'renumber-captions': lambda: lib_layout.renumber_figures(doc, output=_out, backup=_bak),
         'renumber-figures': lambda: lib_layout.renumber_figures(doc, output=_out, backup=_bak),
         'apply-template': lambda: lib_fixer.apply_template(doc, args.template, output=_out, backup=_bak),
     }
@@ -316,8 +317,10 @@ def main():
         if not getattr(args, 'data', None):
             json_output({"error": "请提供 --data 或 --data-file"}, args.command); sys.exit(1)
 
+    AFTER_TEXT_COMMANDS = ('insert-paragraph', 'insert-image', 'insert-table', 'insert-page-break', 'write-paragraphs', 'insert-formula')
+
     # --after-text
-    if getattr(args, 'after_text', None) and args.command in ('insert-paragraph', 'insert-image', 'insert-table', 'insert-page-break'):
+    if getattr(args, 'after_text', None) and args.command in AFTER_TEXT_COMMANDS:
         from lib.core import ThesisDoc
         doc_for_lookup = ThesisDoc(args.file)
         idx = doc_for_lookup.find_paragraph_by_text(args.after_text)
@@ -325,7 +328,7 @@ def main():
             json_output({"error": f"未找到包含 \"{args.after_text}\" 的段落"}, args.command); sys.exit(1)
         args.after = idx
 
-    if args.command in ('insert-paragraph', 'insert-image', 'insert-table', 'insert-page-break'):
+    if args.command in AFTER_TEXT_COMMANDS:
         if not hasattr(args, 'after') or args.after is None:
             json_output({"error": "请提供 --after <索引> 或 --after-text <文本子串>"}, args.command); sys.exit(1)
 

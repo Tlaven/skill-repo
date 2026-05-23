@@ -319,21 +319,7 @@ def insert_formulas_batch(doc, formulas):
 
 
 def list_formulas(doc):
-    ns = {'m': M_NS}
-    formulas = []
-    for i, pinfo in enumerate(doc.paragraphs):
-        elem = doc.doc.paragraphs[i]._element
-        xml_str = etree.tostring(elem, encoding='unicode')
-        has_math = 'm:oMath' in xml_str or 'm:oMathPara' in xml_str
-        has_ole = 'w:object' in xml_str or 'o:OLEObject' in xml_str
-        if has_math or has_ole:
-            mt_elems = elem.findall('.//m:t', ns)
-            math_text = ''.join(mt.text for mt in mt_elems if mt.text)
-            formulas.append({
-                "para_index": i,
-                "type": "OMML" if has_math else "OLE",
-                "text": math_text[:100] if math_text else "",
-                "para_text": pinfo['text'][:80] if pinfo['text'] else "",
-                "chapter": pinfo.get('chapter_path', ''),
-            })
-    return {"status": "success", "total": len(formulas), "formulas": formulas}
+    """公式概要（精简模式）。委托给 reader.read_formulas(summary=True)。"""
+    from lib.reader import read_formulas
+    result = read_formulas(doc, summary=True)
+    return {"status": "success", "total": result["total"], "formulas": result["formulas"]}

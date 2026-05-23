@@ -4,18 +4,22 @@
 
 | 场景 | 命令 |
 |------|------|
-| 全文概况（字数/段落/图表/公式分布） | `read-full` |
+| 全文树状地图（章节结构+图表公式标注位置） | `read-full` |
 | 某节完整内容+格式+图表 | `read-section --title "节名" --deep` |
 | 某张表的内容+边框+字体 | `read-table --index N --deep` |
+| 表格摘要（标题+数据+所在章节） | `read-table-context --index N` |
 | 全部表概览（位置+形状+表头） | `read-tables` |
-| 公式位置+数学内容（OMML） | `read-formulas` |
+| 公式详细列表（位置/数学内容/上下文） | `read-formulas` |
+| 公式概要（类型/位置/数学概要/所在章节） | `read-formulas --summary` |
 | 图片列表 | `read-images` |
 | 段落定位（章节路径+附近元素） | `read-location --paragraph N` |
-| 搜索关键词 | `search --query "关键词"` |
+| 搜索关键词/正则 | `search --query "关键词"` / `search --query "模式" --regex` |
+| 从文件读取搜索内容 | `search --from-file query.txt` |
 | 搜索写作风格问题 | `search --writing-style` |
-| 样式定义 | `extract-rules` |
+| 按样式搜索段落 | `search-by-style --style "样式名"` |
+| 格式一致性检查（字号不一致） | `search-format --target all` |
+| 批注列表 | `read-comments` |
 | 页面设置 | `read-page-setup` |
-| 全文纯文字 | `extract-text` |
 
 ## 改
 
@@ -36,11 +40,11 @@
 | 场景 | 命令 |
 |------|------|
 | 插入一段 | `insert-paragraph --after-text "锚定" --text "新段"` |
-| 批量插入多段 | `write-paragraphs --after TEXT --data JSON` |
+| 批量插入多段 | `write-paragraphs --after TEXT --data JSON` / `write-paragraphs --after-text "锚定" --data-file data.json` |
 | 插入图片 | `insert-image --after-text "锚定" --image fig.png --caption "图3-1 标题"` |
 | 替换已有图片 | `replace-image --caption "图3-1 标题" --image new.png` |
 | 插入表格 | `insert-table --after-text "锚定" --data-file data.json` |
-| 插入公式 | `insert-formula --after N --latex "E=mc^2" --number "(3.1)"` |
+| 插入公式 | `insert-formula --after N --latex "E=mc^2" --number "(3.1)"` / `insert-formula --after-text "锚定" --latex "E=mc^2"` |
 
 ## 格式
 
@@ -54,7 +58,7 @@
 | 设页眉 | `set-header --text "XX大学毕业论文"` |
 | 设页码 | `set-footer --page-number` |
 | 套模板格式 | `apply-template --template "学校模板.docx" "论文.docx"` |
-| 图编号修正 | `renumber-figures` |
+| 图/表编号修正 | `renumber-captions` |
 
 ## 验证
 
@@ -77,7 +81,7 @@
 | 添加一条引用 | `add-reference --text "[1] 作者. 标题..."` |
 | 删除一条引用 | `remove-reference --number 3` |
 
-## 创建与导出
+## 创建、导出与提取
 
 | 场景 | 命令 |
 |------|------|
@@ -86,6 +90,8 @@
 | 导出 Markdown | `export-markdown "论文.docx" -o paper.md` |
 | 导出图片 | `export-images --output-dir ./images` |
 | 导出差异 | `export-diff "旧版.docx" "新版.docx" -o diff.json` |
+| 全文纯文字 | `extract-text "论文.docx" -o full.json` |
+| 样式定义（字体/字号/行距） | `extract-rules "论文.docx"` |
 
 ## 多步操作（≥3 次修改）
 

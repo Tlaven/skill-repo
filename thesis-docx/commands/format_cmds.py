@@ -23,12 +23,12 @@ def register(subparsers):
     # 页面布局
     p = subparsers.add_parser('set-page-setup', help='设置页面尺寸和页边距')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--width', help='页面宽度 (cm)')
-    p.add_argument('--height', help='页面高度 (cm)')
-    p.add_argument('--margin-top', help='上边距 (cm)')
-    p.add_argument('--margin-bottom', help='下边距 (cm)')
-    p.add_argument('--margin-left', help='左边距 (cm)')
-    p.add_argument('--margin-right', help='右边距 (cm)')
+    p.add_argument('--width', type=float, help='页面宽度 (cm)')
+    p.add_argument('--height', type=float, help='页面高度 (cm)')
+    p.add_argument('--margin-top', type=float, help='上边距 (cm)')
+    p.add_argument('--margin-bottom', type=float, help='下边距 (cm)')
+    p.add_argument('--margin-left', type=float, help='左边距 (cm)')
+    p.add_argument('--margin-right', type=float, help='右边距 (cm)')
     add_common_args(p)
 
     p = subparsers.add_parser('insert-page-break', help='在指定段落后插入分页符')
@@ -53,7 +53,11 @@ def register(subparsers):
     p.add_argument('--size', default='9', help='字号 (pt)')
     add_common_args(p)
 
-    p = subparsers.add_parser('renumber-figures', help='按章节顺序重编图表编号')
+    p = subparsers.add_parser('renumber-captions', help='按章节顺序重编图/表编号')
+    p.add_argument('file', help='输入 .docx 文件')
+    add_common_args(p)
+
+    p = subparsers.add_parser('renumber-figures', help='已弃用，请用 renumber-captions')
     p.add_argument('file', help='输入 .docx 文件')
     add_common_args(p)
 

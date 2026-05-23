@@ -28,17 +28,13 @@
 
 ## 测试
 
-```bash
-python -m pytest tests/
-```
-
-夹具在 `tests/conftest.py`：`create_test_doc()` 创建标准论文，`create_doc_with_headings()` 创建含多层标题的文档。
+目前无测试文件。运行测试前需先在 `thesis-docx/` 下创建 `tests/` 目录。
 
 ## 架构参考
 
 ```
 lib/          — 纯函数（reader, editor, checker, fixer, styles, formula, reference, layout, creator, exporter, extractor, searcher, rules, core, utils）
-commands/     — argparse 定义（read_cmds, edit_cmds, format_cmds, check_cmds, create_cmds, ref_cmds, export_cmds, extract_cmds）
+commands/     — argparse 定义（read_cmds, edit_cmds, format_cmds, create_cmds, ref_cmds, export_cmds, extract_cmds）
 scripts/      — 可复用独立脚本
 test-case/    — 测试用 .docx + 图片
 api.py        — ThesisEditor 编程接口

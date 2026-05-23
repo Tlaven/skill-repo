@@ -62,7 +62,8 @@ def register(subparsers):
 
     p = subparsers.add_parser('write-paragraphs', help='批量插入多段（从后往前，防索引漂移）')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--after', type=int, required=True, help='在哪个段落之后插入')
+    p.add_argument('--after', type=int, help='在哪个段落之后插入（与 --after-text 二选一）')
+    p.add_argument('--after-text', help='在包含此文本的段落之后插入（优先于 --after）')
     p.add_argument('--data', help='JSON 数组（与 --data-file 二选一）')
     p.add_argument('--data-file', help='从文件读取段落数组 (JSON)')
     add_common_args(p)
@@ -104,7 +105,7 @@ def register(subparsers):
     p.add_argument('--after', type=int, help='在哪个段落之后插入（索引）')
     p.add_argument('--after-text', help='在包含此文本的段落之后插入（优先于 --after）')
     p.add_argument('--image', required=True, help='图片文件路径')
-    p.add_argument('--width', help='图片宽度 (cm)')
+    p.add_argument('--width', type=float, help='图片宽度 (cm)')
     p.add_argument('--caption', help='图片标题')
     add_common_args(p)
 

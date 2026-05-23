@@ -47,7 +47,7 @@ type: skill
 
 ## 多步操作脚本模板
 
-`ThesisEditor`（`api.py`）是 CLI 的编程等价物——封装了所有 lib/ 函数，提供与 CLI 命令一一对应的 Python 方法（`replace_inline`、`set_page_setup`、`delete_paragraph` 等，完整列表见 `api.py`）。它与 CLI 共用同一套底层逻辑，区别只是不经过 argparse 解析参数。
+`ThesisEditor`（`api.py`）是 CLI 的编程等价物——提供与 CLI 命令基本对应的 Python 方法（`replace_inline`、`set_page_setup`、`delete_paragraph`、`replace_text`、`format_inline`、`insert_formula` 等，完整列表见 `api.py`）。它与 CLI 共用同一套底层逻辑，区别只是不经过 argparse 解析参数。
 
 ≥3 次修改或跨操作类型时用 `ThesisEditor` 写单进程脚本，避免多次 CLI 调用的打开/保存开销和索引漂移：
 
@@ -57,7 +57,7 @@ with ThesisEditor("论文.docx") as editor:
     editor.set_page_setup(width=21, height=29.7, margin_top=2.5)
     editor.replace_inline(by_text="图6-1", old="图6-1", new="图3-1")
     editor.replace_inline(by_text="式(4.1)", old="式(4.1)", new="式(2.1)")
-    editor.delete_paragraph(42)
+    editor.delete_paragraph(by_text="要删除的段落")
     editor.save()
 ```
 
@@ -69,6 +69,7 @@ with ThesisEditor("论文.docx") as editor:
 | 确认命令参数 | 完整参考 + 示例 | CLI.md |
 | 避坑 | 索引漂移 / 公式 / 批注 | lessons.md |
 | 学术论文规范检查 | checklist 逐项排查 | checklist.md |
+| 复杂脚本复用 | 批量修复/缩写检查 | scripts/ 目录 |
 
 
 对于无法用 CLI 自动化验证的项，用 `read-table-context` / `read-section --deep` 获取上下文后自行判断。

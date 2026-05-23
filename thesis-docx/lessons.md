@@ -50,23 +50,21 @@ type: reference
 ## 3. 批注操作
 
 - `read-comments` 的 `selected_text` 可能为 `null`（光标位置批注），用 `paragraph_index` 定位
-- `delete-comments` 需清理 4 个 XML 文件：`comments.xml` / `commentsExtended.xml` / `commentsIds.xml` / `commentsExtensible.xml`
+- `delete-comments` 已自动清理 4 个 XML 文件（`comments.xml` / `commentsExtended.xml` / `commentsIds.xml` / `commentsExtensible.xml`），**不要手工操作**
 - 中英文样式名（"标题 1" / "Heading 1"）均已支持
 
-## 4. Windows 注意事项
+## 4. 公式 FORMULA_X_X 占位符不会自动清理
+
+`insert-formula` 插入公式后，原段落中的 `FORMULA_X_X` 文本不会被自动清除。
+
+**解法：** 插入公式后手动 `replace-inline --old "FORMULA_3_1" --delete`（PowerShell 下推荐用 `--delete` 替代 `--new ""`）。
+
+## 5. Windows 注意事项
 
 - 不要用 `python -c "多行代码"`（`|| goto :error` 破坏缩进），写成 `.py` 文件执行
 - 临时脚本用 `sys.stdout.reconfigure(encoding='utf-8')` 防乱码
 
-## 5. 公式占位符残留（待修）
-
-`FORMULA_X_X` 占位符在 `insert-formula` 后不会被自动清除。
-
-**根因：** `insert-formula` 在段落之后插入公式段落，但不清除原段落中的 `FORMULA_X_X` 文本。
-
-**待修：** `cmd_insert_formula` 和 `cmd_insert_formulas` 中应加入占位符清理逻辑。
-
-## 6. 公式编号右对齐
+## 5. 公式编号右对齐
 
 公式居中 + 编号右对齐：用 `w:tabs` 设置右对齐制表位，编号放在 `m:oMathPara` 外部的 `w:r` 中，前面加 `w:tab`。
 
@@ -82,7 +80,7 @@ type: reference
 
 ## 9. assign-styles 误识别（已修）
 
-`table_caption` 和 `figure_caption` 匹配增加 ≥60 字跳过，防止 `"表4-1展示了..."` 正文段落被误判为标题。测试见 `tests/test_styles.py`。
+`table_caption` 和 `figure_caption` 匹配增加 ≥60 字跳过，防止 `"表4-1展示了..."` 正文段落被误判为标题。
 
 ## 10. 三层架构（已实现）
 
