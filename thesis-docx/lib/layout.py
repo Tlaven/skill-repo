@@ -98,10 +98,30 @@ def set_footer(doc, text=None, page_number=False, align='center', font='宋体',
     return {"page_number": page_number, "footer_text": text, "align": align, "output": output_path}
 
 
+def _build_chapter_map(doc):
+    """构建 段落索引 → 实际章号 的映射（从标题文字"第X章"解析，而非内部索引位置）"""
+    chapter_map = {}
+    current_chapter = 0
+    ch_pattern = re.compile(r'第(\d+)章')
+    for p in doc.paragraphs:
+        if p.get("level") == 1:
+            text = p.get("text", "")
+            m = ch_pattern.search(text)
+            if m:
+                current_chapter = int(m.group(1))
+            else:
+                m2 = re.match(r'(\d+)[.、．\s]', text)
+                if m2:
+                    current_chapter = int(m2.group(1))
+        chapter_map[p["index"]] = current_chapter
+    return chapter_map
+
+
 def renumber_figures(doc, output=None, backup=False):
     output_path = get_output_path(doc, output=output, backup=backup)
     fig_pattern = re.compile(r'(图\s*)(\d+)([-.]\s*)(\d+)')
     tbl_pattern = re.compile(r'(表\s*)(\d+)([-.]\s*)(\d+)')
+    chapter_map = _build_chapter_map(doc)
     chapter_fig_counters = {}
     chapter_tbl_counters = {}
     changes = []
@@ -116,8 +136,7 @@ def renumber_figures(doc, output=None, backup=False):
             for match in pattern.finditer(text):
                 old_chapter = int(match.group(2))
                 old_num = int(match.group(4))
-                chapter_path = p_info.get("chapter_path", "")
-                current_chapter = int(chapter_path.split('.')[0]) if chapter_path and chapter_path.split('.')[0].isdigit() else old_chapter
+                current_chapter = chapter_map.get(para_idx, old_chapter)
                 counters.setdefault(current_chapter, 0)
                 counters[current_chapter] += 1
                 new_num = counters[current_chapter]

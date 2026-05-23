@@ -12,6 +12,7 @@ type: skill
 |------|------|
 | 单步操作（1-2 次修改） | `python cli.py <command> <file> [options]` |
 | 多步复杂操作（≥3 次，跨类型） | `from api import ThesisEditor` → 单进程脚本 |
+| DocX工具无法满足要求 | 在 thesis-docx/scripts/ 下写python脚本解决，并保留 |
 
 所有输出 JSON。
 
@@ -20,12 +21,10 @@ type: skill
 | 原语 | 对应命令 |
 |------|---------|
 | 读内容 | `read-*` / `search` |
-| 改文字 | `replace-text` / `replace-inline` / `replace-batch` |
-| 改表格 | `replace-table` |
-| 增内容 | `insert-* --after-text` |
-| 改格式 | `set-format` / `format-inline` / `assign-styles` / `set-page-setup` |
-| 检查 | `--verify`（附加到 read-*/list-*） |
-| 删 | `delete-paragraph --by-text` / `delete-comments` |
+| 替换内容 | `replace-*` |
+| 增加内容 | `insert-*` |
+| 删 | `delete-*` |
+| 检查 | 读 checklist.md |
 
 ## 黄金流程
 
@@ -37,18 +36,20 @@ type: skill
 
 | 操作类型 | 操作命令 | 验证命令 |
 |---------|---------|---------|
-| 改文字 | replace-text / replace-inline | read-paragraphs / search |
+| 改文字 | replace-text / replace-inline | search |
 | 改表格 | replace-table | read-table --index N --deep |
 | 插图片 | insert-image | read-images / read-section --deep |
-| 插表格 | insert-table | read-tables / list-references |
+| 插表格 | insert-table | read-table --index N --deep |
 | 插公式 | insert-formula | read-formulas |
-| 删段落 | delete-paragraph | read-full / read-section |
+| 删段落 | delete-paragraph | search / read-section |
 | 改页设置 | set-page-setup | read-page-setup --verify |
-| 改整体格式 | assign-styles / fix-format | read-structure --verify |
+| 改样式 | assign-styles / fix-format | read-structure --verify |
 
 ## 多步操作脚本模板
 
-≥3 次修改或跨操作类型，用 API 写单进程脚本：
+`ThesisEditor`（`api.py`）是 CLI 的编程等价物——封装了所有 lib/ 函数，提供与 CLI 命令一一对应的 Python 方法（`replace_inline`、`set_page_setup`、`delete_paragraph` 等，完整列表见 `api.py`）。它与 CLI 共用同一套底层逻辑，区别只是不经过 argparse 解析参数。
+
+≥3 次修改或跨操作类型时用 `ThesisEditor` 写单进程脚本，避免多次 CLI 调用的打开/保存开销和索引漂移：
 
 ```python
 from api import ThesisEditor
@@ -60,23 +61,6 @@ with ThesisEditor("论文.docx") as editor:
     editor.save()
 ```
 
-API 方法列表见 `api.py`。优势：单进程打开/保存一次，无索引漂移风险。
-
-## 陷阱
-
-1. **段落索引漂移** → 始终用 `--by-text` / `--after-text` 或 API 脚本。展开: lessons.md §1
-2. **≥3 次修改写 API 脚本** → 单进程避免多次打开/保存。展开: lessons.md §1
-3. **FORMULA_X_X 残留** → 插公式后手动 `replace-inline --old "FORMULA_3_1" --delete`。展开: lessons.md §5
-
-## 验证（–verify）
-
-| 验证点 | 对应命令 |
-|--------|---------|
-| 页宽/高/边距是否符合标准 | `read-page-setup --verify` |
-| 正文样式异常（字号/行距/缩进） | `read-section --verify` |
-| 标题样式未分配 | `read-structure --verify` |
-| 引用编号对应（未引用/未定义/顺序） | `list-references --verify` |
-
 ## 文档地图
 
 | 你要做什么 | 先看 | 在哪 |
@@ -84,14 +68,7 @@ API 方法列表见 `api.py`。优势：单进程打开/保存一次，无索引
 | 找命令 | "我要做 X → 用 Y" | QUICK.md |
 | 确认命令参数 | 完整参考 + 示例 | CLI.md |
 | 避坑 | 索引漂移 / 公式 / 批注 | lessons.md |
-| 全面质量检查 | 按 checklist 逐项排查表格/图片/公式/样式等 | checklist.md |
+| 学术论文规范检查 | checklist 逐项排查 | checklist.md |
 
-## 检查模式
-
-当用户要求"检查论文"或"找问题"时，按 checklist.md 逐类筛查。流程：
-
-1. **先扫自动化项**（速查命令集中跑一遍），快速命中残留内容、缺标题、引用异常
-2. **再走人工判断项**（主题相关、图/表位置、代码缩进等需要看上下文）
-3. **按优先级汇报结果**：🔴 必检问题优先说，🟡 应检次之，🟢 选检最后
 
 对于无法用 CLI 自动化验证的项，用 `read-table-context` / `read-section --deep` 获取上下文后自行判断。

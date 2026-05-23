@@ -61,6 +61,7 @@ python cli.py extract-rules "论文.docx"                  # 样式定义（字�
 python cli.py read-structure --verify "论文.docx"        # 章节树+标题样式异常标注
 python cli.py read-section --title "节名" --verify "论文.docx"  # 正文格式检查
 python cli.py list-references --verify "论文.docx"       # 引用一致性检查
+python cli.py search-format --target all "论文.docx"      # 格式一致性检查（同段内字号不一致）
 ```
 
 ## 搜索
