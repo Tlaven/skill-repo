@@ -8,9 +8,7 @@ def register(subparsers):
 
     p = subparsers.add_parser('list-references', help='列出参考文献')
     p.add_argument('file', help='输入 .docx 文件')
-
-    p = subparsers.add_parser('check-references', help='检查引用一致性')
-    p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--verify', action='store_true', help='附加引用一致性检查（未引用/未定义/出现顺序异常）')
 
     p = subparsers.add_parser('renumber-references', help='重编引用号')
     p.add_argument('file', help='输入 .docx 文件')

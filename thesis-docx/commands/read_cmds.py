@@ -5,6 +5,7 @@ def register(subparsers):
     p = subparsers.add_parser('read-structure', help='输出章节树')
     p.add_argument('file', help='输入 .docx 文件')
     p.add_argument('--format', choices=['tree', 'flat'], default='tree', help='输出格式')
+    p.add_argument('--verify', action='store_true', help='附加样式异常标注（文本像标题但未设样式）')
 
     p = subparsers.add_parser('read-paragraph', help='输出指定段落')
     p.add_argument('file', help='输入 .docx 文件')
@@ -25,6 +26,8 @@ def register(subparsers):
     p.add_argument('--index', type=int, help='第N个匹配项 (1-based)')
     p.add_argument('--deep', action='store_true',
                    help='深度模式：展开完整格式/表格/图片/公式（限≤3000字/≤40段）')
+    p.add_argument('--verify', action='store_true',
+                   help='附加正文格式检查（字号/行距/首行缩进异常）')
 
     p = subparsers.add_parser('read-image', help='输出图片信息')
     p.add_argument('file', help='输入 .docx 文件')
@@ -46,6 +49,7 @@ def register(subparsers):
 
     p = subparsers.add_parser('read-page-setup', help='输出页面设置')
     p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--verify', action='store_true', help='附加标准值核对（页宽/高/边距 vs A4 2.5cm）')
 
     p = subparsers.add_parser('read-stats', help='输出文档统计')
     p.add_argument('file', help='输入 .docx 文件')

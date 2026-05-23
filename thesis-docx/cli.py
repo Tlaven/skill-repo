@@ -108,7 +108,6 @@ def run_command(args):
     """路由到 lib/ 对应函数执行命令。"""
     import lib.reader as lib_read
     import lib.editor as lib_edit
-    import lib.checker as lib_check
     import lib.fixer as lib_fixer
     import lib.reference as lib_ref
     import lib.formula as lib_formula
@@ -136,17 +135,18 @@ def run_command(args):
 
     _out = getattr(args, 'output', None)
     _bak = getattr(args, 'backup', False)
+    _verify = getattr(args, 'verify', False)
 
     cmd_map = {
-        'read-structure': lambda: lib_read.read_structure(doc, format=getattr(args, 'format', 'tree')),
+        'read-structure': lambda: lib_read.read_structure(doc, format=getattr(args, 'format', 'tree'), verify=_verify),
         'read-paragraph': lambda: lib_read.read_paragraph(doc, args.index, with_format=getattr(args, 'with_format', False), deep=getattr(args, 'deep', False)),
         'read-paragraphs': lambda: lib_read.read_paragraphs(doc, args.start, args.end, with_format=getattr(args, 'with_format', False)),
-        'read-section': lambda: lib_read.read_section(doc, title=getattr(args, 'title', None), level=getattr(args, 'level', None), index=getattr(args, 'index', None), deep=getattr(args, 'deep', False)),
+        'read-section': lambda: lib_read.read_section(doc, title=getattr(args, 'title', None), level=getattr(args, 'level', None), index=getattr(args, 'index', None), deep=getattr(args, 'deep', False), verify=_verify),
         'read-image': lambda: lib_read.read_image(doc, args.id, extract=getattr(args, 'extract', False), output_dir=getattr(args, 'output_dir', None), deep=getattr(args, 'deep', False)),
         'read-images': lambda: lib_read.read_images(doc),
         'read-table': lambda: lib_read.read_table(doc, args.index, deep=getattr(args, 'deep', False)),
         'read-tables': lambda: lib_read.read_tables(doc),
-        'read-page-setup': lambda: lib_read.read_page_setup(doc),
+        'read-page-setup': lambda: lib_read.read_page_setup(doc, verify=_verify),
         'read-stats': lambda: lib_read.read_stats(doc),
         'read-comments': lambda: lib_read.read_comments(doc),
         'read-formulas': lambda: lib_read.read_formulas(doc),
@@ -155,7 +155,7 @@ def run_command(args):
         'read-full': lambda: lib_read.read_full(doc,
             section=getattr(args, 'section', None),
             paragraphs=getattr(args, 'range', None)),
-        'search': lambda: lib_search.search(doc, query=getattr(args, 'query', None), query_file=getattr(args, 'query_file', None), regex=getattr(args, 'regex', False), chapter=getattr(args, 'chapter', None), section=getattr(args, 'section', None), context=getattr(args, 'context', 0), limit=getattr(args, 'limit', 20)),
+        'search': lambda: lib_search.search(doc, query=getattr(args, 'query', None), query_file=getattr(args, 'query_file', None), regex=getattr(args, 'regex', False), writing_style=getattr(args, 'writing_style', False), chapter=getattr(args, 'chapter', None), section=getattr(args, 'section', None), context=getattr(args, 'context', 0), limit=getattr(args, 'limit', 20)),
         'search-by-style': lambda: lib_search.search_by_style(doc, args.style),
         'search-format': lambda: lib_search.search_format(doc, target=getattr(args, 'target', 'all')),
         'replace-text': lambda: lib_edit.replace_text(doc, args.paragraph, args.text, output=_out, backup=_bak),
@@ -180,22 +180,10 @@ def run_command(args):
         'replace-image': lambda: lib_edit.replace_image(doc, args.image, caption=getattr(args, 'caption', None), paragraph=getattr(args, 'paragraph', None), media=getattr(args, 'media', None), output=_out, backup=_bak),
         'delete-comments': lambda: lib_edit.delete_comments(doc, output=_out, backup=_bak),
         'list-citations': lambda: lib_ref.list_citations(doc),
-        'list-references': lambda: lib_ref.list_references(doc),
-        'check-references': lambda: lib_check.check_references(doc),
+        'list-references': lambda: lib_ref.list_references(doc, verify=_verify),
         'renumber-references': lambda: lib_ref.renumber_references(doc, args.output),
         'add-reference': lambda: lib_ref.add_reference(doc, args.text, position=getattr(args, 'position', None), output=_out, backup=_bak),
         'remove-reference': lambda: lib_ref.remove_reference(doc, args.number, output=_out, backup=_bak),
-        'check-format': lambda: _check_format_with_template(doc, args, lib_check),
-        'check-headings': lambda: lib_check.check_headings(doc, getattr(args, 'rules', None)),
-        'check-body': lambda: lib_check.check_body(doc, getattr(args, 'rules', None)),
-        'check-captions': lambda: lib_check.check_captions(doc, getattr(args, 'rules', None)),
-        'check-page-setup': lambda: lib_check.check_page_setup(doc, getattr(args, 'rules', None)),
-        'check-style': lambda: lib_check.check_style(doc),
-        'check-paragraphs': lambda: lib_check.check_paragraphs(doc, threshold=getattr(args, 'threshold', 200), start=getattr(args, 'start', None), end=getattr(args, 'end', None)),
-        'check-placeholders': lambda: lib_check.check_placeholders(doc),
-        'check-figure-references': lambda: lib_check.check_figure_references(doc),
-        'check-formula-references': lambda: lib_check.check_formula_references(doc),
-        'check-all': lambda: lib_check.check_all(doc, rules=getattr(args, 'rules', None), threshold=getattr(args, 'threshold', 200)),
         'export-markdown': lambda: lib_export.export_markdown(doc, output=getattr(args, 'output', None)),
         'export-section': lambda: lib_export.export_section(doc, args.title, output=getattr(args, 'output', None)),
         'export-images': lambda: lib_export.export_images(doc, args.output_dir),
@@ -264,36 +252,11 @@ def _cmd_insert_formulas(doc, args):
     return result
 
 
-def _check_format_with_template(doc, args, lib_check):
-    """处理 check-format --template：提取模板规则后检查。"""
-    tmpl_path = getattr(args, 'template', None)
-    if tmpl_path:
-        from lib.core import ThesisDoc as _TD
-        from lib.extractor import extract_rules as _extract
-        tmpl_doc = _TD(tmpl_path)
-        tmpl_rules = _extract(tmpl_doc)
-        # 转换为 check 用的 rules 格式
-        rules = {
-            "page": tmpl_rules.get("page", {}),
-            "headings": {},
-            "body": {},
-            "caption": {},
-            "reference": {},
-        }
-        for sname, sinfo in tmpl_rules.get("styles", {}).items():
-            sname_lower = sname.lower()
-            if "heading 1" in sname_lower:
-                rules["headings"]["h1"] = sinfo
-            elif "heading 2" in sname_lower:
-                rules["headings"]["h2"] = sinfo
-            elif "heading 3" in sname_lower:
-                rules["headings"]["h3"] = sinfo
-            elif "body text" in sname_lower or "normal" in sname_lower:
-                rules["body"] = sinfo
-            elif "caption" in sname_lower:
-                rules["caption"] = sinfo
-        return lib_check.check_format(doc, rules)
-    return lib_check.check_format(doc, getattr(args, 'rules', None))
+# check-* 命令已移除。验证功能见对应命令的 --verify 参数：
+#   read-structure --verify  → 样式异常标注
+#   read-section --verify   → 正文格式检查
+#   read-page-setup --verify → 页面设置验证
+#   list-references --verify → 引用一致性验证
 
 
 def main():
@@ -379,7 +342,7 @@ def main():
         if not hasattr(args, 'paragraph') or args.paragraph is None:
             json_output({"error": "请提供 --paragraph <索引> 或 --by-text <文本子串>"}, args.command); sys.exit(1)
 
-    if getattr(args, 'command', None) == 'search' and not getattr(args, 'query', None):
+    if getattr(args, 'command', None) == 'search' and not getattr(args, 'query', None) and not getattr(args, 'writing_style', False):
         parser.parse_args(['search', '--help']); sys.exit(1)
 
     try:

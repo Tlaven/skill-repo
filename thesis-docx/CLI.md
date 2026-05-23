@@ -2,6 +2,8 @@
 
 入口：`python cli.py <command> <file> [options]`。所有输出为 JSON。
 
+> 先看 QUICK.md 按场景找命令，再到本文件确认详细参数。
+
 ---
 
 ## 了解文档结构 (READ)
@@ -49,19 +51,16 @@ python cli.py read-images "论文.docx"
 python cli.py read-formulas "论文.docx"
 ```
 
-## 统计与检查
+## 统计与验证
 
 ```bash
 python cli.py read-stats "论文.docx"                    # 字数/段落/图表/引用统计
-python cli.py read-page-setup "论文.docx"                # 页面尺寸+边距
+python cli.py read-page-setup --verify "论文.docx"      # 页面尺寸+边距+标准值核对
 python cli.py read-comments "论文.docx"                  # 批注列表
 python cli.py extract-rules "论文.docx"                  # 样式定义（字体/字号/行距）
-python cli.py check-all "论文.docx"                      # 全面检查
-python cli.py check-placeholders "论文.docx"             # 占位符检查
-python cli.py check-style "论文.docx"                    # 写作风格
-python cli.py check-paragraphs --threshold 200 "论文.docx" # 长段落
-python cli.py check-figure-references "论文.docx"         # 图片引用检查
-python cli.py check-formula-references "论文.docx"        # 公式引用检查
+python cli.py read-structure --verify "论文.docx"        # 章节树+标题样式异常标注
+python cli.py read-section --title "节名" --verify "论文.docx"  # 正文格式检查
+python cli.py list-references --verify "论文.docx"       # 引用一致性检查
 ```
 
 ## 搜索
@@ -164,7 +163,7 @@ python cli.py renumber-figures "论文.docx"
 ```bash
 python cli.py list-citations "论文.docx"                 # 正文引用标记
 python cli.py list-references "论文.docx"                 # 参考文献列表
-python cli.py check-references "论文.docx"
+python cli.py list-references --verify "论文.docx"       # 引用一致性验证（未引用/未定义/顺序异常）
 python cli.py renumber-references "论文.docx" -o out.docx
 python cli.py add-reference --text "[1] 作者. 标题..." "论文.docx"
 python cli.py remove-reference --number 3 "论文.docx"

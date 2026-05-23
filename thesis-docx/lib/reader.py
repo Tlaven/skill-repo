@@ -8,8 +8,8 @@ from lib.utils import emu_to_cm
 W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
 
-def read_structure(doc, format='tree'):
-    """输出章节树。format: 'tree' 或 'flat'"""
+def read_structure(doc, format='tree', verify=False):
+    """输出章节树。format: 'tree' 或 'flat'。verify=True 时附加样式异常标注。"""
     sections = doc.sections_tree
     if format == 'flat':
         flat = []
@@ -23,8 +23,24 @@ def read_structure(doc, format='tree'):
                 })
                 flatten(node["children"])
         flatten(sections)
-        return {"sections": flat}
-    return {"sections": _clean_sections(sections)}
+        result = {"sections": flat}
+    else:
+        result = {"sections": _clean_sections(sections)}
+
+    if verify:
+        from lib.checker import _check_heading_rules
+        from lib.styles import get_default_rules
+        rules = get_default_rules()
+        issues, _ = _check_heading_rules(doc, rules)
+        # Add section path to each issue
+        for issue in issues:
+            idx = issue.get("para_index")
+            if idx is not None:
+                p = doc.get_para(idx)
+                if p:
+                    issue["section"] = p.get("chapter_path", "")
+        result["verify"] = issues if issues else []
+    return result
 
 
 def _clean_sections(nodes):
@@ -101,7 +117,7 @@ def read_paragraphs(doc, start, end, with_format=False):
     return {"range": [start, end], "count": len(items), "paragraphs": items}
 
 
-def read_section(doc, title=None, level=None, index=None, deep=False):
+def read_section(doc, title=None, level=None, index=None, deep=False, verify=False):
     """读取章节内容。deep=True 时展开完整格式、表格、图片、公式信息。
 
     安全限制（防上下文爆炸）：
@@ -109,12 +125,16 @@ def read_section(doc, title=None, level=None, index=None, deep=False):
     - 段落数 > 40 时同样拒绝
     """
     if deep:
-        return _read_section_deep(doc, title=title, level=level, index=index)
+        result = _read_section_deep(doc, title=title, level=level, index=index)
+        if "error" in result or verify:
+            return result
+        result["verify"] = _verify_section_body(doc, result.get("section", {}))
+        return result
     section = doc.find_section(title=title, level=level, index=index)
     if section is None:
         return {"error": "未找到匹配的章节"}
     paras = doc.get_section_paras(section)
-    return {
+    result = {
         "section": {
             "level": section["level"], "title": section["title"],
             "para_index": section["para_index"], "para_range": section["para_range"],
@@ -125,6 +145,23 @@ def read_section(doc, title=None, level=None, index=None, deep=False):
             "style": p["style"], "level": p["level"], "char_count": p["char_count"],
         } for p in paras],
     }
+    if verify:
+        result["verify"] = _verify_section_body(doc, section)
+    return result
+
+
+def _verify_section_body(doc, section):
+    if not section:
+        return []
+    from lib.checker import _check_body_rules
+    from lib.styles import get_default_rules
+    rules = get_default_rules()
+    issues, _ = _check_body_rules(doc, rules)
+    if not issues:
+        return []
+    # Filter to issues within this section's range
+    start, end = section.get("para_range", (0, len(doc.paragraphs)))
+    return [i for i in issues if start <= i.get("para_index", -1) <= end]
 
 
 def _read_section_deep(doc, title=None, level=None, index=None):
@@ -405,7 +442,7 @@ def read_tables(doc):
     }
 
 
-def read_page_setup(doc):
+def read_page_setup(doc, verify=False):
     result = []
     for i, section in enumerate(doc.doc.sections):
         result.append({
@@ -420,7 +457,14 @@ def read_page_setup(doc):
             "footer_distance_cm": emu_to_cm(section.footer_distance),
             "orientation": str(section.orientation) if section.orientation else "portrait",
         })
-    return {"sections": result}
+    out = {"sections": result}
+    if verify:
+        from lib.checker import _check_page_setup_rules
+        from lib.styles import get_default_rules
+        rules = get_default_rules()
+        issues, _ = _check_page_setup_rules(doc, rules)
+        out["verify"] = issues if issues else []
+    return out
 
 
 def read_stats(doc):

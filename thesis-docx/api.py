@@ -137,28 +137,6 @@ class ThesisEditor:
         return replace_image(self.doc, image=image, caption=caption,
                             paragraph=paragraph, media=media)
 
-    # ========== 检查 ==========
-
-    def check_format(self, rules=None):
-        from lib.checker import check_format
-        return check_format(self.doc, rules=rules)
-
-    def check_style(self):
-        from lib.checker import check_style
-        return check_style(self.doc)
-
-    def check_all(self, rules=None, threshold=200):
-        from lib.checker import check_all
-        return check_all(self.doc, rules=rules, threshold=threshold)
-
-    def check_references(self):
-        from lib.checker import check_references
-        return check_references(self.doc)
-
-    def check_placeholders(self):
-        from lib.checker import check_placeholders
-        return check_placeholders(self.doc)
-
     # ========== 引用 ==========
 
     def list_references(self):

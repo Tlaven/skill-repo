@@ -121,11 +121,12 @@ def register(subparsers):
     add_common_args(p)
 
     # 搜索（属于读类但放在编辑组方便）
-    p = subparsers.add_parser('search', help='关键词/正则搜索')
+    p = subparsers.add_parser('search', help='关键词/正则/写作风格搜索')
     p.add_argument('file', help='输入 .docx 文件')
     p.add_argument('--query', default=None, help='搜索关键词或正则')
     p.add_argument('--from-file', dest='query_file', help='从文件读取搜索内容')
     p.add_argument('--regex', action='store_true', help='使用正则')
+    p.add_argument('--writing-style', action='store_true', help='搜索常见写作风格问题（套路化开头/连接词堆砌/机械列举/预告句/冗余总结/摘要过长）')
     p.add_argument('--chapter', type=int, help='限定第N章')
     p.add_argument('--section', help='限定章节（标题名模糊匹配）')
     p.add_argument('--context', type=int, default=0, help='上下文段落数')

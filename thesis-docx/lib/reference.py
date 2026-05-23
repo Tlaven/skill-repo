@@ -31,7 +31,7 @@ def list_citations(doc):
     return {"citations": citations, "first_appearance_order": order}
 
 
-def list_references(doc):
+def list_references(doc, verify=False):
     refs = _find_reference_section(doc)
     if not refs:
         return {"error": "未找到参考文献部分"}
@@ -54,7 +54,43 @@ def list_references(doc):
                 "para_index": p["index"],
                 "note": "缺少编号前缀 [N]，已自动编号",
             })
-    return {"total": len(ref_list), "references": ref_list}
+    result = {"total": len(ref_list), "references": ref_list}
+    if verify:
+        result["verify"] = _verify_references(doc, ref_list)
+    return result
+
+
+def _verify_references(doc, ref_list):
+    citations_result = list_citations(doc)
+    all_cited_nums = set()
+    for c in citations_result["citations"]:
+        all_cited_nums.add(c["ref_num"])
+    ref_nums = set(r["number"] for r in ref_list)
+    unreferenced = sorted(ref_nums - all_cited_nums)
+    undefined = sorted(all_cited_nums - ref_nums)
+    issues = []
+    if not all_cited_nums and ref_nums:
+        issues.append({
+            "type": "no_citations",
+            "detail": f"正文无任何引用标记，但参考文献列表有 {len(ref_nums)} 条记录",
+        })
+    order = citations_result["first_appearance_order"]
+    prev = 0
+    for num in order:
+        if num < prev:
+            for c in citations_result["citations"]:
+                if c["ref_num"] == num:
+                    issues.append({
+                        "type": "not_in_order",
+                        "detail": f"正文第{c['para_index']}段: [{num}]出现在[{prev}]之前",
+                    })
+                    break
+        prev = num
+    for num in unreferenced:
+        issues.append({"type": "missing_in_text", "detail": f"参考文献[{num}]在正文中未被引用"})
+    for num in undefined:
+        issues.append({"type": "missing_in_list", "detail": f"正文引用了[{num}]，但参考文献列表中不存在"})
+    return issues
 
 
 def check_references(doc):

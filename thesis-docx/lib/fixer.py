@@ -182,9 +182,8 @@ def fix_format(doc, rules=None, preset=None, output=None, backup=False):
     page_fixed = _fix_page_setup(doc, page_issues, _rules)
     if page_fixed:
         fixed.extend(page_fixed)
-    from lib.reference import list_citations, list_references, _renumber_para_citations, _reorder_references
-    from lib.checker import check_references as _check_refs
-    ref_result = _check_refs(doc)
+    from lib.reference import list_citations, list_references, _renumber_para_citations, _reorder_references, check_references
+    ref_result = check_references(doc)
     ref_issues = ref_result.get("issues", [])
     not_in_order = [i for i in ref_issues if i.get("type") == "not_in_order"]
     if not_in_order:

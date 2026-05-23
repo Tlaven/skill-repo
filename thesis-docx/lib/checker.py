@@ -1,62 +1,14 @@
-"""检查模块 — 纯库函数，无 argparse 依赖"""
-import os
+"""检查辅助函数（内部使用，无 argparse 依赖）
+ 
+保留模块作为内部工具库，供 fixer 等模块引用。
+公共 check-* 命令已移除：改为对应 read-*/list-* 的 --verify。
+"""
 import re
 from lib.utils import emu_to_cm, get_heading_level, find_toc_range
-from lib.styles import get_default_rules, load_rules_with_defaults, classify_paragraph, CLASSIFY_PATTERNS
+from lib.styles import get_default_rules, load_rules_with_defaults, classify_paragraph
 from lib.rules import load_rules
 
 DEFAULT_RULES = get_default_rules()
-
-
-def check_format(doc, rules=None):
-    """综合格式检查"""
-    _rules = load_rules(rules) if rules else DEFAULT_RULES
-    issues = []
-    total_checked = 0
-
-    page_issues, page_count = _check_page_setup_rules(doc, _rules)
-    issues.extend(page_issues); total_checked += page_count
-
-    heading_issues, heading_count = _check_heading_rules(doc, _rules)
-    issues.extend(heading_issues); total_checked += heading_count
-
-    body_issues, body_count = _check_body_rules(doc, _rules)
-    issues.extend(body_issues); total_checked += body_count
-
-    caption_issues, caption_count = _check_caption_rules(doc, _rules)
-    issues.extend(caption_issues); total_checked += caption_count
-
-    errors = sum(1 for i in issues if i["severity"] == "error")
-    warnings = sum(1 for i in issues if i["severity"] == "warning")
-
-    return {
-        "total_issues": len(issues), "issues": issues[:50],
-        "summary": {"errors": errors, "warnings": warnings, "passed": max(0, total_checked - len(issues))},
-    }
-
-
-def check_headings(doc, rules=None):
-    _rules = load_rules(rules) if rules else DEFAULT_RULES
-    issues, count = _check_heading_rules(doc, _rules)
-    return {"total_issues": len(issues), "issues": issues, "checked": count}
-
-
-def check_body(doc, rules=None):
-    _rules = load_rules(rules) if rules else DEFAULT_RULES
-    issues, count = _check_body_rules(doc, _rules)
-    return {"total_issues": len(issues), "issues": issues, "checked": count}
-
-
-def check_captions(doc, rules=None):
-    _rules = load_rules(rules) if rules else DEFAULT_RULES
-    issues, count = _check_caption_rules(doc, _rules)
-    return {"total_issues": len(issues), "issues": issues, "checked": count}
-
-
-def check_page_setup(doc, rules=None):
-    _rules = load_rules(rules) if rules else DEFAULT_RULES
-    issues, count = _check_page_setup_rules(doc, _rules)
-    return {"total_issues": len(issues), "issues": issues, "checked": count}
 
 
 def _check_page_setup_rules(doc, rules):
@@ -167,6 +119,19 @@ def _is_non_body_role(text):
     return role is not None
 
 
+def _find_abstract_paragraphs(doc):
+    in_abstract = False
+    abstract_paras = []
+    for p in doc.paragraphs:
+        text = p.get("text", "").strip()
+        if text == "摘   要" or text == "摘要":
+            in_abstract = True; continue
+        if in_abstract:
+            if text.startswith("关键词") or text == "ABSTRACT": break
+            if text: abstract_paras.append(p)
+    return abstract_paras
+
+
 def _check_body_rules(doc, rules):
     issues = []
     count = 0
@@ -204,123 +169,31 @@ def _check_body_rules(doc, rules):
     return issues, count
 
 
-def _check_caption_rules(doc, rules):
-    import re
-    issues = []
-    count = 0
-    caption_rules = rules.get("caption", {})
-    pattern = caption_rules.get("pattern", r"^图\s*\d+-\d+|^表\s*\d+-\d+")
-    skip = _compute_skip_indices(doc)
+def _compute_skip_indices(doc):
+    skip = set()
+    body_start = 0
     for p in doc.paragraphs:
-        text = p["text"].strip()
+        text = p.get("text", "").strip()
         if not text: continue
-        idx = p["index"]
-        if idx in skip: continue
-        is_caption_style = p["style"] == "Caption"
-        is_caption_content = bool(re.match(pattern, text))
-        if not is_caption_style and not is_caption_content: continue
-        count += 1
-        text_preview = (text[:50] + "...") if len(text) > 50 else text
-        if is_caption_content and not is_caption_style:
-            issues.append({"type": "caption_missing_style", "severity": "warning", "para_index": idx,
-                           "text": text_preview, "expected": "Caption", "actual": p["style"],
-                           "fix": f"将样式从 {p['style']} 改为 Caption"})
-        if not re.match(pattern, text):
-            issues.append({"type": "caption_format", "severity": "warning", "para_index": idx,
-                           "text": text_preview, "fix": f"图表标题编号格式应符合 {pattern}"})
-        if caption_rules.get("size_pt"):
-            for run_info in p["runs"]:
-                actual_size = run_info.get("font_size")
-                if actual_size and abs(actual_size - caption_rules["size_pt"]) > 0.5:
-                    issues.append({"type": "caption_size", "severity": "warning", "para_index": idx,
-                                   "text": text_preview, "expected": caption_rules["size_pt"],
-                                   "actual": actual_size, "fix": f"将字号从 {actual_size}pt 改为 {caption_rules['size_pt']}pt"}); break
-        if caption_rules.get("alignment"):
-            actual_align = p.get("alignment")
-            if actual_align and actual_align != caption_rules["alignment"]:
-                issues.append({"type": "caption_alignment", "severity": "warning", "para_index": idx,
-                               "text": text_preview, "expected": caption_rules["alignment"],
-                               "actual": actual_align, "fix": f"将对齐从 {actual_align} 改为 {caption_rules['alignment']}"})
-    return issues, count
-
-
-def check_style(doc):
-    STYLE_RULES = [
-        {"id": "connector_pile", "name": "连接词堆砌", "desc": "段落中同时出现多个列举式连接词",
-         "severity": "warning",
-         "patterns": [r"首先[，,].+其次[，,]", r"首先[，,].+然后[，,]", r"一方面[，,].+另一方面[，,]"]},
-        {"id": "mechanical_listing", "name": "机械列举", "desc": "使用第X/第Y/第Z结构",
-         "severity": "warning",
-         "patterns": [r"第一[，,].+第二[，,].+第三[，,]", r"（一）.+（二）.+（三）"]},
-        {"id": "preview_sentence", "name": "列举预告句", "desc": "先预告再说的冗余句式",
-         "severity": "warning",
-         "patterns": [r"主要(包括|完成|涵盖|分为|涉及)(了|以下|以下)?(几个|如下|下列|以下)",
-                      r"从(以下|以下)几个方面", r"主要包括(如下|以下|几点|几个方面)"]},
-        {"id": "cliche_opener", "name": "套路化开头", "desc": "空泛的万能开头",
-         "severity": "warning",
-         "patterns": [r"随着[^。？]*的(快速|不断|迅猛|蓬勃|飞速)发展",
-                      r"在[^.]*领域(展现出|具有|发挥着)(巨大|重要|广泛|深远)(的)?(潜力|作用|价值|意义|前景)"]},
-        {"id": "filler_conclusion", "name": "冗余总结", "desc": "万能总结句",
-         "severity": "info",
-         "patterns": [r"因此[，,]?(该|本|此|上述)[^。]*(具有|有)(重要|较大|一定)(的)?(理论意义|应用价值|参考价值|现实意义)",
-                      r"(综上|总之|总而言之|由此可见)[，,]?[^。]*(具有|有)(重要|较大)(的)?(意义|价值|作用)"]},
-    ]
-    issues = []
-    checked = 0
+        role = classify_paragraph(text)
+        if role in ("abstract_zh_title", "toc_title", "chapter_title"):
+            body_start = p["index"]; break
+        if p.get("level") == 1 and text:
+            body_start = p["index"]; break
+    for p in doc.paragraphs:
+        if p["index"] < body_start: skip.add(p["index"])
+    decl_start = None; decl_end = None
     for p in doc.paragraphs:
         text = p.get("text", "").strip()
-        if not text or len(text) < 10: continue
-        style = p.get("style", "")
-        if style in ("toc 1", "toc 2", "toc 3", "Heading 1", "Heading 2", "Heading 3"): continue
-        checked += 1
-        text_preview = (text[:60] + "...") if len(text) > 60 else text
-        for rule in STYLE_RULES:
-            for pattern in rule.get("patterns", []):
-                match = re.search(pattern, text, re.DOTALL)
-                if match:
-                    issues.append({
-                        "rule_id": rule["id"], "rule_name": rule["name"], "desc": rule["desc"],
-                        "severity": rule["severity"], "para_index": p["index"],
-                        "matched": match.group()[:80], "text_preview": text_preview,
-                        "fix": _style_fix_hint(rule["id"]),
-                    })
-                    break
-    abstract_paras = _find_abstract_paragraphs(doc)
-    if abstract_paras:
-        abstract_text = "".join(p.get("text", "") for p in abstract_paras)
-        char_count = len(abstract_text)
-        if char_count > 400:
-            issues.append({
-                "rule_id": "abstract_length", "rule_name": "摘要过长",
-                "desc": f"摘要当前{char_count}字，建议控制在100-200字",
-                "severity": "warning", "para_index": abstract_paras[0]["index"],
-                "matched": f"{char_count}字", "fix": "精简摘要",
-            })
-    return {"total_issues": len(issues), "issues": issues, "checked": checked}
-
-
-def _find_abstract_paragraphs(doc):
-    in_abstract = False
-    abstract_paras = []
-    for p in doc.paragraphs:
-        text = p.get("text", "").strip()
-        if text == "摘   要" or text == "摘要":
-            in_abstract = True; continue
-        if in_abstract:
-            if text.startswith("关键词") or text == "ABSTRACT": break
-            if text: abstract_paras.append(p)
-    return abstract_paras
-
-
-def _style_fix_hint(rule_id):
-    hints = {
-        "connector_pile": "将列举式连接词替换为内容逻辑自然过渡",
-        "mechanical_listing": "去掉'第一、第二'结构，改为内容本身组织段落",
-        "preview_sentence": "删除预告句，直接写具体内容",
-        "cliche_opener": "去掉空泛开头，直接切入具体问题",
-        "filler_conclusion": "删除万能总结句，或替换为具体结论",
-        "abstract_length": "精简摘要，删除重复信息和预告句",
-    }
+        if "声明" in text and (p.get("level") is not None or "声明" in text[:4]):
+            decl_start = p["index"]; continue
+        if decl_start is not None and decl_end is None:
+            if p.get("level") is not None or classify_paragraph(text) is not None:
+                decl_end = p["index"]; break
+    if decl_start is not None:
+        end = decl_end if decl_end is not None else len(doc.paragraphs)
+        for idx in range(decl_start, end): skip.add(idx)
+    return skip
     return hints.get(rule_id, "优化写作风格")
 
 
