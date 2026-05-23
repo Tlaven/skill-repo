@@ -252,6 +252,7 @@ def delete_paragraph(doc, paragraph, output=None, backup=False):
     deleted_text = para.text or ""
     para._element.getparent().remove(para._element)
     doc.save_zip(output_path)
+    doc._build_index()
     return {"deleted_paragraph": paragraph, "deleted_text": deleted_text, "output": output_path}
 
 

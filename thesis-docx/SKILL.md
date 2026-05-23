@@ -6,11 +6,16 @@ type: skill
 
 # 论文 DocX 工具
 
-`python cli.py <command> <file> [options]`，所有输出 JSON。
+有两种操作方式，根据复杂度选择：
+
+| 场景 | 方式 |
+|------|------|
+| 单步操作（1-2 次修改） | `python cli.py <command> <file> [options]` |
+| 多步复杂操作（≥3 次，跨类型） | `from api import ThesisEditor` → 单进程脚本 |
+
+所有输出 JSON。
 
 ## 思维模型
-
-**用户需求 → 拆成原语 → 选命令 → 执行 → 验证**
 
 | 原语 | 对应命令 |
 |------|---------|
@@ -19,12 +24,10 @@ type: skill
 | 改表格 | `replace-table` |
 | 增内容 | `insert-* --after-text` |
 | 改格式 | `set-format` / `format-inline` / `assign-styles` / `set-page-setup` |
-| 检查 | `check-*` |
+| 检查 | `--verify`（附加到 read-*/list-*） |
 | 删 | `delete-paragraph --by-text` / `delete-comments` |
 
 ## 黄金流程
-
-每步操作后立即验证，形成闭环：
 
 ```
 诊断 → 操作 → 验证 → 下一操作
@@ -43,15 +46,29 @@ type: skill
 | 改页设置 | set-page-setup | read-page-setup --verify |
 | 改整体格式 | assign-styles / fix-format | read-structure --verify |
 
+## 多步操作脚本模板
+
+≥3 次修改或跨操作类型，用 API 写单进程脚本：
+
+```python
+from api import ThesisEditor
+with ThesisEditor("论文.docx") as editor:
+    editor.set_page_setup(width=21, height=29.7, margin_top=2.5)
+    editor.replace_inline(by_text="图6-1", old="图6-1", new="图3-1")
+    editor.replace_inline(by_text="式(4.1)", old="式(4.1)", new="式(2.1)")
+    editor.delete_paragraph(42)
+    editor.save()
+```
+
+API 方法列表见 `api.py`。优势：单进程打开/保存一次，无索引漂移风险。
+
 ## 陷阱
 
-1. **段落索引漂移** → 始终用 `--by-text` / `--after-text`。展开: lessons.md §1
-2. **≥3 次 insert/delete 写单脚本** → 多步操作同进程。展开: lessons.md §1
+1. **段落索引漂移** → 始终用 `--by-text` / `--after-text` 或 API 脚本。展开: lessons.md §1
+2. **≥3 次修改写 API 脚本** → 单进程避免多次打开/保存。展开: lessons.md §1
 3. **FORMULA_X_X 残留** → 插公式后手动 `replace-inline --old "FORMULA_3_1" --delete`。展开: lessons.md §5
 
 ## 验证（–verify）
-
-原 check-* 命令已移除，验证功能附加到 read-*/list-* 的 `--verify` 参数上：
 
 | 验证点 | 对应命令 |
 |--------|---------|
@@ -61,8 +78,6 @@ type: skill
 | 引用编号对应（未引用/未定义/顺序） | `list-references --verify` |
 
 ## 文档地图
-
-动手前先读对应文档，选好命令再执行：
 
 | 你要做什么 | 先看 | 在哪 |
 |-----------|------|------|

@@ -89,14 +89,20 @@
 
 ## 多步操作（≥3 次修改）
 
-不要多次调 CLI。用 api.py 或直接写 Python 脚本，在同一个进程中完成所有操作。脚本保存在 `thesis-docx/scripts/` 下，后续可提炼为正式命令。
+跨操作类型或≥3 次修改，用 `ThesisEditor` API 写单进程脚本，避免多次打开/保存和索引漂移。
 
 ```python
 from api import ThesisEditor
 with ThesisEditor("论文.docx") as editor:
-    editor.replace_paragraph(43, "新内容")
-    editor.insert_paragraph("新段", after=43)
+    # 页面设置
+    editor.set_page_setup(width=21, height=29.7, margin_top=2.5)
+    # 段内替换（by_text 内容定位，防索引漂移）
+    editor.replace_inline(by_text="图6-1", old="图6-1", new="图3-1")
+    # 公式替换
+    editor.replace_inline(by_text="式(4.1)", old="式(4.1)", new="式(2.1)")
+    # 删除段落
+    editor.delete_paragraph(42)
     editor.save()
 ```
 
-关键原则：**内容定位**（文本子串匹配段落）代替**硬索引**，防索引漂移。
+API 方法见 `api.py`。关键原则：**内容定位**代替**硬索引**。

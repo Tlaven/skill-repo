@@ -119,6 +119,28 @@ class ThesisEditor:
         from lib.fixer import assign_styles
         return assign_styles(self.doc, rules=rules, preset=preset)
 
+    def replace_inline(self, paragraph=None, by_text=None, old=None, new=None,
+                       bold=None, font=None, font_east=None, size=None, color=None):
+        from lib.editor import replace_inline
+        if by_text is not None:
+            for i, p in enumerate(self.doc.raw_paragraphs):
+                if by_text in (p.text or ""):
+                    paragraph = i
+                    break
+            if paragraph is None:
+                return {"error": f"未找到包含 '{by_text}' 的段落"}
+        return replace_inline(self.doc, paragraph=paragraph, old=old, new=new,
+                              bold=bold, font=font, font_east=font_east,
+                              size=size, color=color)
+
+    def set_page_setup(self, width=None, height=None,
+                       margin_top=None, margin_bottom=None,
+                       margin_left=None, margin_right=None):
+        from lib.layout import set_page_setup
+        return set_page_setup(self.doc, width=width, height=height,
+                             margin_top=margin_top, margin_bottom=margin_bottom,
+                             margin_left=margin_left, margin_right=margin_right)
+
     def set_format(self, style, paragraph=None, start=None, end=None, target=None, rules=None):
         from lib.editor import set_format
         return set_format(self.doc, style=style, paragraph=paragraph, start=start,

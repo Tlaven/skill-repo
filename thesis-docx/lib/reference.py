@@ -195,6 +195,8 @@ def _reorder_references(doc, old_to_new, ref_list):
     if not ref_paras:
         return
     sorted_refs = sorted(ref_list, key=lambda r: old_to_new.get(r["number"], 999))
+
+    # 1. Update labels
     for ref in sorted_refs:
         para = doc.raw_paragraphs[ref["para_index"]]
         for run in para.runs:
@@ -203,6 +205,24 @@ def _reorder_references(doc, old_to_new, ref_list):
                 new_label = f"[{old_to_new.get(ref['number'], ref['number'])}]"
                 if run.text.startswith(old_label):
                     run.text = run.text.replace(old_label, new_label, 1)
+
+    # 2. Physically reorder paragraphs
+    entries = []
+    for ref in sorted_refs:
+        entries.append({
+            "elem": doc.raw_paragraphs[ref["para_index"]]._element,
+        })
+    if not entries:
+        return
+    heading_elem = entries[0]["elem"].getprevious()
+    parent = entries[0]["elem"].getparent()
+    for e in entries:
+        parent.remove(e["elem"])
+    anchor = heading_elem
+    for e in entries:
+        anchor.addnext(e["elem"])
+        anchor = e["elem"]
+    doc._build_index()
 
 
 def add_reference(doc, text, position=None, output=None, backup=False):

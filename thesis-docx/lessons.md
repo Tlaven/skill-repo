@@ -70,27 +70,20 @@ type: reference
 
 公式居中 + 编号右对齐：用 `w:tabs` 设置右对齐制表位，编号放在 `m:oMathPara` 外部的 `w:r` 中，前面加 `w:tab`。
 
-## 7. 公式引用检查（已实现）
-
-`check-formula-references` 命令检测：
-- 公式前是否有 `如式(X.Y)所示` 引用
-- 公式后是否有 `其中，` 变量解释
-已集成到 `check-all`。
-
-## 8. 字号预设
+## 7. 字号预设
 
 `--preset gb-academic` 切换到 GB/T 7713.2-2022 标准字号（正文 10.5pt）。
 可用命令：`create` / `assign-styles` / `fix-format`。
 
-## 9. 图片尺寸约束
+## 8. 图片尺寸约束
 
 `insert-image` 自动约束图片不超出页面：宽度 ≤ 文字区域，高度 ≤ 页面可用高度。
 未指定 `--width` 时默认 80%。
 
-## 10. assign-styles 误识别（已修）
+## 9. assign-styles 误识别（已修）
 
 `table_caption` 和 `figure_caption` 匹配增加 ≥60 字跳过，防止 `"表4-1展示了..."` 正文段落被误判为标题。测试见 `tests/test_styles.py`。
 
-## 11. 三层架构（已实现）
+## 10. 三层架构（已实现）
 
 `lib/`（纯函数） + `commands/`（argparse） + `scripts/`（可复用脚本）。
