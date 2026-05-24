@@ -6,7 +6,7 @@ type: reference
 
 # 操作经验手册
 
-## 1. 段落索引漂移
+## 段落索引漂移
 
 每次 `insert-paragraph` / `delete-paragraph` 都会增删段落，**后续所有索引立即偏移**。
 
@@ -41,34 +41,19 @@ type: reference
  {"latex": "...", "number": "(2.3)", "position": "last"}]
 ```
 
-## 2. 手动插入段落后的样式修复
+## 手动插入段落后的样式修复
 
 通过 XML 直接插入的段落，样式可能不被 Word 正确识别。
 
 **解法：** 保存后运行 `assign-styles`，自动按文本模式分配 Heading 级别。
 
-## 3. 批注操作
+## 批注操作
 
 - `read-comments` 的 `selected_text` 可能为 `null`（光标位置批注），用 `paragraph_index` 定位
 - `delete-comments` 已自动清理 4 个 XML 文件（`comments.xml` / `commentsExtended.xml` / `commentsIds.xml` / `commentsExtensible.xml`），**不要手工操作**
 - 中英文样式名（"标题 1" / "Heading 1"）均已支持
 
-## 4. 公式 FORMULA_X_X 占位符不会自动清理
-
-`insert-formula` 插入公式后，原段落中的 `FORMULA_X_X` 文本不会被自动清除。
-
-**解法：** 插入公式后手动 `replace-inline --old "FORMULA_3_1" --delete`（PowerShell 下推荐用 `--delete` 替代 `--new ""`）。
-
-## 5. 公式编号右对齐
-
-公式居中 + 编号右对齐：用 `w:tabs` 设置右对齐制表位，编号放在 `m:oMathPara` 外部的 `w:r` 中，前面加 `w:tab`。
-
-## 6. 字号预设
-
-`--preset gb-academic` 切换到 GB/T 7713.2-2022 标准字号（正文 10.5pt）。
-可用命令：`create` / `assign-styles` / `fix-format`。
-
-## 7. 图片尺寸约束
+##  图片尺寸约束
 
 `insert-image` 自动约束图片不超出页面：宽度 ≤ 文字区域，高度 ≤ 页面可用高度。
 未指定 `--width` 时默认 80%。
