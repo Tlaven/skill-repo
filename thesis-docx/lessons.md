@@ -1,6 +1,6 @@
 ---
 name: thesis-docx-lessons
-description: Accumulated operational lessons for thesis-docx editing. Index-shifting traps, content-based matching, comment cleanup, formula pitfalls.
+description: Accumulated operational lessons for thesis-docx docx editing. Index-shifting traps, content-based matching, comment cleanup, formula pitfalls.
 type: reference
 ---
 
