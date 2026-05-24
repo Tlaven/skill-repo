@@ -1,3 +1,9 @@
+---
+name: thesis-docx-cli
+description: "Complete CLI command reference for thesis-docx. Use when you need to look up specific command syntax, arguments, or options."
+type: reference
+---
+
 # 论文 DocX CLI 命令参考
 
 入口：`python cli.py <command> <file> [options]`。所有输出为 JSON。
@@ -86,6 +92,8 @@ python cli.py list-references --verify "论文.docx"       # 引用一致性检�
 python cli.py search-format --target all "论文.docx"         # 格式一致性检查
 python cli.py search-format --target headings "论文.docx"    # 仅检查标题
 python cli.py search-format --target body "论文.docx"        # 仅检查正文
+
+python cli.py detect-revisions "论文.docx"               # 检测修订/彩色文字/高亮
 ```
 
 ## 修改文字 (WRITE)
@@ -126,14 +134,13 @@ python cli.py replace-batch-by-index --pairs-file pairs.json "论文.docx"
 
 ```bash
 # 插入一段（支持 --text-file 从文件读入，--rules 自定义样式）
-python cli.py insert-paragraph --after-text "锚定文字" --text "新段" --style body "论文.docx"
 python cli.py insert-paragraph --after 43 --text "新段" "论文.docx"
-python cli.py insert-paragraph --after-text "锚定" --text-file new_para.txt "论文.docx"
-python cli.py insert-paragraph --after-text "锚定" --text "新段" --rules my_rules.yaml "论文.docx"
+python cli.py insert-paragraph --after 43 --text-file new_para.txt "论文.docx"
+python cli.py insert-paragraph --after 43 --text "新段" --rules my_rules.yaml "论文.docx"
 
-# 批量插入多段（从后往前，防索引漂移；支持 --after-text）
+# 批量插入多段（从后往前，防索引漂移）
 python cli.py write-paragraphs --after 43 --data '[{"text":"第一段","style":"body"},{"text":"第二段","style":"body"}]' "论文.docx"
-python cli.py write-paragraphs --after-text "锚定文字" --data-file data.json "论文.docx"
+python cli.py write-paragraphs --after 43 --data-file data.json "论文.docx"
 
 # 删除段落
 python cli.py delete-paragraph --paragraph 43 "论文.docx"
@@ -144,8 +151,7 @@ python cli.py delete-paragraph --by-text "要删除的段落文字" "论文.docx
 
 ```bash
 # 图片（--width 单位 cm，默认 80% 页面宽度）
-python cli.py insert-image --after-text "锚定" --image "fig.png" --width 12 --caption "图3-1 标题" "论文.docx"
-python cli.py insert-image --after 45 --image "fig.png" "论文.docx"
+python cli.py insert-image --after 45 --image "fig.png" --width 12 --caption "图3-1 标题" "论文.docx"
 
 # 替换已有图片（三种定位方式：--caption / --paragraph / --media）
 python cli.py replace-image --caption "图3-1 标题" --image "new.png" "论文.docx"
@@ -153,15 +159,14 @@ python cli.py replace-image --paragraph 45 --image "new.png" "论文.docx"
 python cli.py replace-image --media "image2.png" --image "new.png" "论文.docx"
 
 # 表格（--data 直接传 JSON，--data-file 从文件读取）
-python cli.py insert-table --after-text "锚定" --data '[["列1","列2"],["值1","值2"]]' "论文.docx"
-python cli.py insert-table --after-text "锚定" --data-file data.json "论文.docx"
+python cli.py insert-table --after 45 --data '[["列1","列2"],["值1","值2"]]' "论文.docx"
+python cli.py insert-table --after 45 --data-file data.json "论文.docx"
 python cli.py replace-table --index 2 --data '[["列1","列2"],["值1","值2"]]' "论文.docx"
 python cli.py replace-table --index 2 --data-file data.json "论文.docx"
 
-# 公式（全部 save_zip，可随时插入；支持 --after-text）
+# 公式（全部 save_zip，可随时插入）
 python cli.py insert-formulas --json formulas.json "论文.docx"
 python cli.py insert-formula --after 50 --latex "E=mc^2" --number "(3.1)" "论文.docx"
-python cli.py insert-formula --after-text "锚定文字" --latex "E=mc^2" --number "(3.1)" "论文.docx"
 
 # 删除批注
 python cli.py delete-comments "论文.docx"
@@ -192,7 +197,6 @@ python cli.py set-page-setup --width 21 --height 29.7 --margin-top 2.5 --margin-
 python cli.py set-header --text "XX大学毕业论文" --font "宋体" --size 9 "论文.docx"
 python cli.py set-footer --page-number "论文.docx"
 python cli.py set-footer --text "第 " --page-number --align center --font "宋体" --size 9 "论文.docx"
-python cli.py insert-page-break --after-text "章末" "论文.docx"
 python cli.py insert-page-break --after 42 "论文.docx"
 python cli.py renumber-captions "论文.docx"         # 图/表编号修正（推荐）
 python cli.py renumber-figures "论文.docx"          # 已弃用，请用 renumber-captions
@@ -241,7 +245,6 @@ python cli.py extract-rules "论文.docx" -o rules.yaml                    # 输
 | 参数 | 适用命令 | 说明 |
 |------|---------|------|
 | `--by-text "子串"` | replace-text / replace-inline / delete-paragraph / set-format / format-inline | 按段落实质内容查找 |
-| `--after-text "子串"` | insert-paragraph / insert-image / insert-table / insert-page-break / write-paragraphs / insert-formula | 在匹配段落后插入 |
 | `--after N` | insert-paragraph / insert-image / insert-table / insert-page-break / write-paragraphs / insert-formula | 索引定位（insert-formulas 的位置在 JSON 中指定） |
 | `--old / --new` | replace-inline | 段内查找替换 |
 | `--target` | format-inline | 定位要改格式的子串 |
@@ -263,6 +266,7 @@ python cli.py extract-rules "论文.docx" -o rules.yaml                    # 输
 |------|------|
 | `batch_fix.py` / `batch_fix2.py` | 多步批量修复（页面设置/编号/占位符/段落删除） |
 | `check_abbrev.py` | 扫描英文简称首次出现是否符合全称规范 |
+| `detect_colors_revisions.py` | 已迁移为 CLI 命令 `detect-revisions`，见上方 |
 
 ## 架构参考
 

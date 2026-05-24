@@ -191,7 +191,7 @@ class ThesisDoc:
                 text = p["text"].strip()
                 if not text:
                     continue
-                if p["style"] == "Caption":
+                if p["style"].lower() == "caption":
                     img_info["nearby_caption"] = text
                     img_info["caption_para_index"] = idx
                     return
@@ -298,6 +298,18 @@ class ThesisDoc:
         self.doc.save(path)
         return path
 
+    def _build_rels_xml(self):
+        """从内存中的 rels 构建 word/_rels/document.xml.rels XML。"""
+        from lxml import etree
+        NS = 'http://schemas.openxmlformats.org/package/2006/relationships'
+        root = etree.Element(f'{{{NS}}}Relationships')
+        for rId, rel in self.doc.part.rels.items():
+            child = etree.SubElement(root, f'{{{NS}}}Relationship')
+            child.set('Id', rId)
+            child.set('Type', rel.reltype)
+            child.set('Target', rel.target_ref)
+        return etree.tostring(root, xml_declaration=True, encoding='UTF-8', standalone=True)
+
     def save_zip(self, output_path=None):
         import zipfile
         import tempfile
@@ -309,16 +321,23 @@ class ThesisDoc:
             encoding='UTF-8',
             standalone=True,
         )
+        rels_xml = self._build_rels_xml()
         output_dir = os.path.dirname(os.path.abspath(path))
         tmp_fd, tmp_path = tempfile.mkstemp(suffix='.docx', dir=output_dir)
         os.close(tmp_fd)
         try:
             with zipfile.ZipFile(self.filepath, 'r') as zin:
-                existing = set(zin.namelist())
                 with zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
-                    for item in zin.namelist():
-                        if item == 'word/document.xml':
+                    # 去重写入 zip 中的已有文件
+                    written = set()
+                    for item in zin.infolist():
+                        if item.filename in written:
+                            continue
+                        written.add(item.filename)
+                        if item.filename == 'word/document.xml':
                             zout.writestr(item, xml_bytes)
+                        elif item.filename == 'word/_rels/document.xml.rels':
+                            zout.writestr(item, rels_xml)
                         else:
                             zout.writestr(item, zin.read(item))
                     # 写入新 blob（insert_image / replace_image 添加的内存中图片）
@@ -329,25 +348,25 @@ class ThesisDoc:
                         target_ref = rel.target_ref
                         if target_ref.startswith('/'):
                             target_ref = target_ref[1:]
-                        elif '/' not in target_ref:
-                            tag = rel.reltype.rstrip('/').split('/')[-1] if '/' in rel.reltype else ''
-                            if tag in ('header', 'footer'):
-                                target_ref = f'word/{target_ref}'
-                            else:
-                                target_ref = f'word/media/{target_ref}'
-                        if target_ref not in existing:
-                            try:
+                        elif target_ref.startswith('../'):
+                            target_ref = target_ref[3:]
+                        # 统一补上 word/ 前缀（zip 内文件的实际路径）
+                        if not target_ref.startswith('word/'):
+                            target_ref = f'word/{target_ref}'
+                        if target_ref in written:
+                            continue
+                        written.add(target_ref)
+                        try:
+                            if hasattr(rel.target_part, 'blob'):
                                 zout.writestr(target_ref, rel.target_part.blob)
-                            except Exception:
-                                pass
-                        elif hasattr(rel.target_part, '_element'):
-                            try:
+                            elif hasattr(rel.target_part, '_element'):
                                 part_xml = etree.tostring(
                                     rel.target_part._element,
                                     xml_declaration=True, encoding='UTF-8', standalone=True)
                                 zout.writestr(target_ref, part_xml)
-                            except Exception:
-                                pass
+                        except Exception as e:
+                            import warnings
+                            warnings.warn(f'save_zip: 无法写入 {target_ref}: {e}')
             os.replace(tmp_path, path)
         except Exception:
             if os.path.exists(tmp_path):

@@ -156,14 +156,8 @@ class ThesisEditor:
         finally:
             os.unlink(tmp_path)
 
-    def insert_paragraph(self, after=None, after_text=None, text=None, style='body'):
+    def insert_paragraph(self, after, text=None, style='body'):
         from lib.editor import insert_paragraph
-        if after is None and after_text is not None:
-            after = self._resolve_by_text(after_text)
-            if after is None:
-                return {"error": f"未找到包含 '{after_text}' 的段落"}
-        if after is None:
-            return {"error": "请提供 after 或 after_text"}
         result = insert_paragraph(self.doc, after=after, text=text, style=style)
         self.doc._build_index()
         return result
@@ -195,27 +189,16 @@ class ThesisEditor:
         from lib.editor import replace_table
         return replace_table(self.doc, index=index, data=data)
 
-    def insert_table(self, after=None, after_text=None, data=None):
+    def insert_table(self, after, data=None):
         from lib.editor import insert_table
-        if after is None and after_text is not None:
-            after = self._resolve_by_text(after_text)
-            if after is None:
-                return {"error": f"未找到包含 '{after_text}' 的段落"}
-        if after is None:
-            return {"error": "请提供 after 或 after_text"}
         result = insert_table(self.doc, after=after, data=data)
         self.doc._build_index()
         return result
 
-    def insert_image(self, after=None, after_text=None, image=None, width=None, caption=None):
+    def insert_image(self, after, image=None, width=None, caption=None):
         from lib.editor import insert_image
-        if after is None and after_text is not None:
-            after = self._resolve_by_text(after_text)
-            if after is None:
-                return {"error": f"未找到包含 '{after_text}' 的段落"}
-        if after is None:
-            return {"error": "请提供 after 或 after_text"}
-        result = insert_image(self.doc, after=after, image=image, width=width, caption=caption)
+        result = insert_image(self.doc, after=after, image=image, width=width,
+                              caption=caption)
         self.doc._build_index()
         return result
 
@@ -256,14 +239,8 @@ class ThesisEditor:
                              margin_top=margin_top, margin_bottom=margin_bottom,
                              margin_left=margin_left, margin_right=margin_right)
 
-    def insert_page_break(self, after=None, after_text=None):
+    def insert_page_break(self, after):
         from lib.layout import insert_page_break
-        if after is None and after_text is not None:
-            after = self._resolve_by_text(after_text)
-            if after is None:
-                return {"error": f"未找到包含 '{after_text}' 的段落"}
-        if after is None:
-            return {"error": "请提供 after 或 after_text"}
         result = insert_page_break(self.doc, after=after)
         self.doc._build_index()
         return result
@@ -305,14 +282,8 @@ class ThesisEditor:
 
     # ==================== 公式 ====================
 
-    def insert_formula(self, after=None, after_text=None, latex=None, number=None):
+    def insert_formula(self, after, latex=None, number=None):
         from lib.formula import insert_formula
-        if after is None and after_text is not None:
-            after = self._resolve_by_text(after_text)
-            if after is None:
-                return {"error": f"未找到包含 '{after_text}' 的段落"}
-        if after is None:
-            return {"error": "请提供 after 或 after_text"}
         result = insert_formula(self.doc, after_index=after, latex_str=latex, eq_number=number)
         self.doc._build_index()
         return result

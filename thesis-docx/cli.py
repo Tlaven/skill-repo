@@ -158,6 +158,7 @@ def run_command(args):
         'search': lambda: lib_search.search(doc, query=getattr(args, 'query', None), query_file=getattr(args, 'query_file', None), regex=getattr(args, 'regex', False), writing_style=getattr(args, 'writing_style', False), chapter=getattr(args, 'chapter', None), section=getattr(args, 'section', None), context=getattr(args, 'context', 0), limit=getattr(args, 'limit', 20)),
         'search-by-style': lambda: lib_search.search_by_style(doc, args.style),
         'search-format': lambda: lib_search.search_format(doc, target=getattr(args, 'target', 'all')),
+        'detect-revisions': lambda: _detect_revisions(doc),
         'replace-text': lambda: lib_edit.replace_text(doc, args.paragraph, args.text, output=_out, backup=_bak),
         'replace-inline': lambda: lib_edit.replace_inline(doc, args.paragraph, args.old,
             '' if getattr(args, 'delete', False) else args.new,
@@ -260,6 +261,11 @@ def _cmd_insert_formulas(doc, args):
 #   list-references --verify → 引用一致性验证
 
 
+def _detect_revisions(doc):
+    from lib.detector import detect_revisions
+    return detect_revisions(doc)
+
+
 def main():
     import io
     if sys.platform == 'win32' and hasattr(sys.stdout, 'buffer'):
@@ -318,19 +324,9 @@ def main():
             json_output({"error": "请提供 --data 或 --data-file"}, args.command); sys.exit(1)
 
     AFTER_TEXT_COMMANDS = ('insert-paragraph', 'insert-image', 'insert-table', 'insert-page-break', 'write-paragraphs', 'insert-formula')
-
-    # --after-text
-    if getattr(args, 'after_text', None) and args.command in AFTER_TEXT_COMMANDS:
-        from lib.core import ThesisDoc
-        doc_for_lookup = ThesisDoc(args.file)
-        idx = doc_for_lookup.find_paragraph_by_text(args.after_text)
-        if idx is None:
-            json_output({"error": f"未找到包含 \"{args.after_text}\" 的段落"}, args.command); sys.exit(1)
-        args.after = idx
-
     if args.command in AFTER_TEXT_COMMANDS:
         if not hasattr(args, 'after') or args.after is None:
-            json_output({"error": "请提供 --after <索引> 或 --after-text <文本子串>"}, args.command); sys.exit(1)
+            json_output({"error": "请提供 --after <索引>"}, args.command); sys.exit(1)
 
     # --by-text（内容定位，替代 --paragraph）
     BY_TEXT_COMMANDS = ('replace-text', 'replace-inline', 'delete-paragraph', 'set-format', 'format-inline')

@@ -33,8 +33,7 @@ def register(subparsers):
 
     p = subparsers.add_parser('insert-page-break', help='在指定段落后插入分页符')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--after', type=int, help='在哪个段落之后插入（索引）')
-    p.add_argument('--after-text', help='在包含此文本的段落之后插入')
+    p.add_argument('--after', type=int, required=True, help='在哪个段落之后插入（索引）')
     add_common_args(p)
 
     p = subparsers.add_parser('set-header', help='设置页眉')

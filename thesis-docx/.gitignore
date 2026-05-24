@@ -1,5 +1,3 @@
-__pycache__/
-*.pyc
-*.pyo
-*.docx
-.DS_Store
+scripts/debug_*.py
+scripts/inject_test_revisions.py
+scripts/extract_comments*.py

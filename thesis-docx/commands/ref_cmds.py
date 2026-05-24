@@ -28,8 +28,7 @@ def register(subparsers):
     # 公式
     p = subparsers.add_parser('insert-formula', help='插入 LaTeX 公式')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--after', type=int, help='在该段落索引之后插入（与 --after-text 二选一）')
-    p.add_argument('--after-text', help='在包含此文本的段落之后插入（优先于 --after）')
+    p.add_argument('--after', type=int, required=True, help='在该段落索引之后插入')
     p.add_argument('--latex', required=True, help='LaTeX 公式字符串')
     p.add_argument('--number', help='公式编号，如 (4.1)')
     add_common_args(p)

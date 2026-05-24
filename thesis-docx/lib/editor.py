@@ -364,6 +364,55 @@ def insert_table(doc, after, data, output=None, backup=False):
             "data_preview": [row[:3] for row in data[:3]], "output": output_path}
 
 
+def _get_caption_style_id(doc):
+    """从 styles.xml 查找实际定义的 caption/题注 样式 styleId。"""
+    from lxml import etree as _etree
+    W = NSMAP['w']
+    try:
+        import zipfile
+        with zipfile.ZipFile(doc.filepath, 'r') as z:
+            if 'word/styles.xml' not in z.namelist():
+                return None
+            styles_xml = _etree.fromstring(z.read('word/styles.xml'))
+            for style in styles_xml.iter(f'{{{W}}}style'):
+                sid = style.get(f'{{{W}}}styleId')
+                name_el = style.find(f'{{{W}}}name')
+                nval = name_el.get(f'{{{W}}}val') if name_el is not None else ''
+                if nval in ('Caption', 'caption', '题注'):
+                    return sid
+    except Exception:
+        pass
+    return None
+
+
+def _detect_caption_style(doc):
+    """检测文档中图题/表题实际使用的样式 styleId。先查 styles.xml 定义，再扫正文段落。"""
+    # 优先：从 styles.xml 获取真实的 caption 样式 ID
+    defined_id = _get_caption_style_id(doc)
+    # 如果定义了且不是 Normal，直接返回
+    if defined_id and defined_id not in ('Normal', ''):
+        return defined_id
+    # 备选：扫已有段落，匹配实际使用的样式
+    from lxml import etree as _etree
+    W = NSMAP['w']
+    body = doc.doc.element.find(f'{{{W}}}body')
+    if body is not None:
+        for p in body.iter(f'{{{W}}}p'):
+            texts = p.findall(f'.//{{{W}}}t')
+            full = ''.join(t.text or '' for t in texts)
+            stripped = full.strip()
+            if not (stripped.startswith('图') or stripped.startswith('表')):
+                continue
+            pPr = p.find(f'{{{W}}}pPr')
+            if pPr is not None:
+                pStyle = pPr.find(f'{{{W}}}pStyle')
+                if pStyle is not None:
+                    sid = pStyle.get(f'{{{W}}}val')
+                    if sid and sid not in ('Normal', ''):
+                        return sid
+    return 'Caption'
+
+
 def insert_image(doc, after, image, width=None, caption=None, output=None, backup=False):
     """在指定段落后插入图片。使用 save_zip 保存以保留已有 OMML 公式。"""
     output_path = get_output_path(doc, output=output, backup=backup)
@@ -403,7 +452,8 @@ def insert_image(doc, after, image, width=None, caption=None, output=None, backu
     target_para = doc.raw_paragraphs[after]
     target_para._element.addnext(p._element)
     if caption:
-        cap_p = _create_clean_paragraph(caption, "Caption")
+        cap_style = _detect_caption_style(doc)
+        cap_p = _create_clean_paragraph(caption, cap_style)
         p._element.addnext(cap_p)
     doc.save_zip(output_path)
     doc._build_index()
