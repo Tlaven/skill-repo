@@ -159,6 +159,8 @@ def run_command(args):
         'search-by-style': lambda: lib_search.search_by_style(doc, args.style),
         'search-format': lambda: lib_search.search_format(doc, target=getattr(args, 'target', 'all')),
         'detect-revisions': lambda: _detect_revisions(doc),
+        'accept-revisions': lambda: _accept_revisions(doc, args),
+        'reject-revisions': lambda: _reject_revisions(doc, args),
         'replace-text': lambda: lib_edit.replace_text(doc, args.paragraph, args.text, output=_out, backup=_bak),
         'replace-inline': lambda: lib_edit.replace_inline(doc, args.paragraph, args.old,
             '' if getattr(args, 'delete', False) else args.new,
@@ -264,6 +266,34 @@ def _cmd_insert_formulas(doc, args):
 def _detect_revisions(doc):
     from lib.detector import detect_revisions
     return detect_revisions(doc)
+
+
+def _accept_revisions(doc, args):
+    from lib.utils import get_output_path
+    output_path = get_output_path(doc, output=args.output, backup=args.backup)
+    doc.accept_all_revisions()
+    doc.save_zip(output_path)
+    from lib.detector import detect_revisions
+    after = detect_revisions(doc)
+    return {
+        "action": "accepted",
+        "output": output_path,
+        "revisions_remaining": after["summary"]["total_revisions"],
+    }
+
+
+def _reject_revisions(doc, args):
+    from lib.utils import get_output_path
+    output_path = get_output_path(doc, output=args.output, backup=args.backup)
+    doc.reject_all_revisions()
+    doc.save_zip(output_path)
+    from lib.detector import detect_revisions
+    after = detect_revisions(doc)
+    return {
+        "action": "rejected",
+        "output": output_path,
+        "revisions_remaining": after["summary"]["total_revisions"],
+    }
 
 
 def main():

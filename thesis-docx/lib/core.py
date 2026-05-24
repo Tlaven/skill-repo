@@ -255,6 +255,18 @@ class ThesisDoc:
     def raw_paragraphs(self):
         return self.doc.paragraphs
 
+    def accept_all_revisions(self):
+        """接受全部修订标记（插入保留、删除移除）。"""
+        from lib.reviser import accept_all_revisions as _accept
+        _accept(self)
+        self._build_index()
+
+    def reject_all_revisions(self):
+        """拒绝全部修订标记（插入移除、删除恢复）。"""
+        from lib.reviser import reject_all_revisions as _reject
+        _reject(self)
+        self._build_index()
+
     @property
     def raw_tables(self):
         return self.doc.tables

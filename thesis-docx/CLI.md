@@ -94,6 +94,10 @@ python cli.py search-format --target headings "论文.docx"    # 仅检查标题
 python cli.py search-format --target body "论文.docx"        # 仅检查正文
 
 python cli.py detect-revisions "论文.docx"               # 检测修订/彩色文字/高亮
+python cli.py accept-revisions "论文.docx"                # 接受全部修订（插入保留、删除移除）
+python cli.py accept-revisions "论文.docx" -o 新论文.docx  # 接受后另存
+python cli.py accept-revisions "论文.docx" --backup       # 接受前自动备份
+python cli.py reject-revisions "论文.docx"                # 拒绝全部修订（插入移除、删除恢复）
 ```
 
 ## 修改文字 (WRITE)
@@ -267,6 +271,7 @@ python cli.py extract-rules "论文.docx" -o rules.yaml                    # 输
 | `batch_fix.py` / `batch_fix2.py` | 多步批量修复（页面设置/编号/占位符/段落删除） |
 | `check_abbrev.py` | 扫描英文简称首次出现是否符合全称规范 |
 | `detect_colors_revisions.py` | 已迁移为 CLI 命令 `detect-revisions`，见上方 |
+| `lib/reviser.py` | accept/reject-revisions 的底层实现（accept_all_revisions / reject_all_revisions） |
 
 ## 架构参考
 

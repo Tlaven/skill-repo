@@ -140,3 +140,11 @@ def register(subparsers):
     p = subparsers.add_parser('detect-revisions', help='检测修订、彩色文字、高亮等异常标记')
     p.add_argument('file', help='输入 .docx 文件')
     add_common_args(p)
+
+    p = subparsers.add_parser('accept-revisions', help='接受全部修订（插入保留、删除移除）')
+    p.add_argument('file', help='输入 .docx 文件')
+    add_common_args(p)
+
+    p = subparsers.add_parser('reject-revisions', help='拒绝全部修订（插入移除、删除恢复）')
+    p.add_argument('file', help='输入 .docx 文件')
+    add_common_args(p)
