@@ -194,6 +194,7 @@ def _compute_skip_indices(doc):
     if decl_start is not None:
         end = decl_end if decl_end is not None else len(doc.paragraphs)
         for idx in range(decl_start, end): skip.add(idx)
+    return skip
 
 
 def check_caption_numbering(doc):

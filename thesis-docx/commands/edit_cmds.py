@@ -18,8 +18,8 @@ def register(subparsers):
     p.add_argument('--old', required=True, help='被替换的子串')
     p.add_argument('--new', default='', help='替换后的新子串（传空串=删除，如 --new ""）')
     p.add_argument('--delete', action='store_true', help='删除 --old 子串（PowerShell 友好，替代 --new ""）')
-p.add_argument('--bold', type=lambda s: s.lower() in ('true','1','yes'), nargs='?',
-               const=True, help='加粗')
+    p.add_argument('--bold', type=lambda s: s.lower() in ('true','1','yes'), nargs='?',
+                   const=True, help='加粗')
     p.add_argument('--font', help='西文字体名')
     p.add_argument('--font-east', dest='font_east', help='东亚字体名')
     p.add_argument('--size', type=float, help='字号 (pt)')

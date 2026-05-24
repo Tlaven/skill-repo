@@ -322,18 +322,32 @@ class ThesisDoc:
                         else:
                             zout.writestr(item, zin.read(item))
                     # 写入新 blob（insert_image / replace_image 添加的内存中图片）
+                    # 以及内存中修改过的 header/footer 等 XML part
                     for rel in self.doc.part.rels.values():
-                        if "image" in rel.reltype and hasattr(rel, 'target_part'):
-                            target_ref = rel.target_ref
-                            if target_ref.startswith('/'):
-                                target_ref = target_ref[1:]
-                            elif '/' not in target_ref:
+                        if not hasattr(rel, 'target_part'):
+                            continue
+                        target_ref = rel.target_ref
+                        if target_ref.startswith('/'):
+                            target_ref = target_ref[1:]
+                        elif '/' not in target_ref:
+                            tag = rel.reltype.rstrip('/').split('/')[-1] if '/' in rel.reltype else ''
+                            if tag in ('header', 'footer'):
+                                target_ref = f'word/{target_ref}'
+                            else:
                                 target_ref = f'word/media/{target_ref}'
-                            if target_ref not in existing:
-                                try:
-                                    zout.writestr(target_ref, rel.target_part.blob)
-                                except Exception:
-                                    pass
+                        if target_ref not in existing:
+                            try:
+                                zout.writestr(target_ref, rel.target_part.blob)
+                            except Exception:
+                                pass
+                        elif hasattr(rel.target_part, '_element'):
+                            try:
+                                part_xml = etree.tostring(
+                                    rel.target_part._element,
+                                    xml_declaration=True, encoding='UTF-8', standalone=True)
+                                zout.writestr(target_ref, part_xml)
+                            except Exception:
+                                pass
             os.replace(tmp_path, path)
         except Exception:
             if os.path.exists(tmp_path):

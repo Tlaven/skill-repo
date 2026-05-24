@@ -13,6 +13,7 @@ def create_thesis(doc, output=None, preset=None):
     _setup_page(doc)
     _setup_styles(doc, preset)
     _insert_skeleton(doc)
+    doc.save(output_path)
     doc.save_zip(output_path)
     return {"output": output_path, "message": "空白论文模板已创建"}
 

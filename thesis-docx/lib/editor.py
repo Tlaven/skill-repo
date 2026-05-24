@@ -235,17 +235,19 @@ def write_paragraphs(doc, after, data, output=None, backup=False):
 
 
 def _create_clean_paragraph(text, word_style_name):
+    from docx.oxml import parse_xml
     W = NSMAP["w"]
     xml_space = '{http://www.w3.org/XML/1998/namespace}space'
-    p = etree.Element(f'{{{W}}}p')
-    pPr = etree.SubElement(p, f'{{{W}}}pPr')
+    p_raw = etree.Element(f'{{{W}}}p')
+    pPr = etree.SubElement(p_raw, f'{{{W}}}pPr')
     pStyle = etree.SubElement(pPr, f'{{{W}}}pStyle')
     pStyle.set(f'{{{W}}}val', word_style_name)
-    r = etree.SubElement(p, f'{{{W}}}r')
+    r = etree.SubElement(p_raw, f'{{{W}}}r')
     t = etree.SubElement(r, f'{{{W}}}t')
     t.set(xml_space, 'preserve')
     t.text = text
-    return p
+    p_xml = etree.tostring(p_raw, encoding='unicode')
+    return parse_xml(p_xml)
 
 
 def delete_paragraph(doc, paragraph, output=None, backup=False):

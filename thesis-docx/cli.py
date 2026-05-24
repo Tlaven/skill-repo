@@ -342,7 +342,9 @@ def main():
             json_output({"error": f"未找到包含 \"{args.by_text}\" 的段落"}, args.command); sys.exit(1)
         args.paragraph = idx
     if args.command in BY_TEXT_COMMANDS:
-        if not hasattr(args, 'paragraph') or args.paragraph is None:
+        if args.command == 'set-format' and getattr(args, 'target', None):
+            pass
+        elif not hasattr(args, 'paragraph') or args.paragraph is None:
             json_output({"error": "请提供 --paragraph <索引> 或 --by-text <文本子串>"}, args.command); sys.exit(1)
 
     if getattr(args, 'command', None) == 'search' and not getattr(args, 'query', None) and not getattr(args, 'writing_style', False):
