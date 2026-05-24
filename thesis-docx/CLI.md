@@ -2,7 +2,7 @@
 
 入口：`python cli.py <command> <file> [options]`。所有输出为 JSON。
 
-> 先看 QUICK.md 按场景找命令，再到本文件确认详细参数。
+
 
 ---
 

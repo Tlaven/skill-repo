@@ -50,7 +50,7 @@ type: skill
 | 引用检查 | `list-references --verify "论文.docx"` |
 | 批量多步操作 | `ThesisEditor` Python API（见下方） |
 
-不确定用哪个命令 → 看 QUICK.md；确认参数 → 看 CLI.md。
+不确定用哪个命令 → 看 CLI.md 按类别找。
 
 ## 操作方式
 
@@ -114,8 +114,7 @@ with ThesisEditor("论文.docx") as editor:
 
 | 你要做什么 | 先看 | 在哪 |
 |-----------|------|------|
-| 按场景找命令 | 场景速查 | QUICK.md |
-| 确认命令详细参数 | 完整参考 | CLI.md |
+| 查命令参考 | 完整参考 | CLI.md |
 | 避坑 | 索引漂移 / 公式 / 批注 | lessons.md |
 | 学术论文规范检查 | checklist 逐项排查 | checklist.md |
 | 复杂脚本复用 | 批量修复/缩写检查 | scripts/ 目录 |
