@@ -11,15 +11,15 @@ def register(subparsers):
     p.add_argument('--text-file', help='从文件读取替换文本')
     add_common_args(p)
 
-    p = subparsers.add_parser('replace-inline', help='段内子串替换（保留格式；--deep 可指定新格式）')
+    p = subparsers.add_parser('replace-inline', help='段内子串替换（保留原有格式，可指定新格式参数）')
     p.add_argument('file', help='输入 .docx 文件')
     p.add_argument('--paragraph', type=int, help='段落索引')
     p.add_argument('--by-text', help='包含此文本的段落（内容定位，优先于 --paragraph）')
     p.add_argument('--old', required=True, help='被替换的子串')
     p.add_argument('--new', default='', help='替换后的新子串（传空串=删除，如 --new ""）')
     p.add_argument('--delete', action='store_true', help='删除 --old 子串（PowerShell 友好，替代 --new ""）')
-    p.add_argument('--bold', type=lambda s: s.lower() in ('true','1','yes'), nargs='?',
-                   const=True, help='加粗（--deep 格式控制）')
+p.add_argument('--bold', type=lambda s: s.lower() in ('true','1','yes'), nargs='?',
+               const=True, help='加粗')
     p.add_argument('--font', help='西文字体名')
     p.add_argument('--font-east', dest='font_east', help='东亚字体名')
     p.add_argument('--size', type=float, help='字号 (pt)')

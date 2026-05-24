@@ -290,7 +290,7 @@ def main():
         with open(args.query_file, 'r', encoding='utf-8') as f:
             args.query = f.read().strip()
         if not args.query:
-            json_output({"error": "--query-file 文件内容为空"}, args.command); sys.exit(1)
+            json_output({"error": "--from-file 文件内容为空"}, args.command); sys.exit(1)
 
     # --text-file
     text_file = getattr(args, 'text_file', None)

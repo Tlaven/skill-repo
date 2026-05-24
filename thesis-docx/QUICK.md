@@ -40,7 +40,7 @@
 | 场景 | 命令 |
 |------|------|
 | 插入一段 | `insert-paragraph --after-text "锚定" --text "新段"` |
-| 批量插入多段 | `write-paragraphs --after TEXT --data JSON` / `write-paragraphs --after-text "锚定" --data-file data.json` |
+| 批量插入多段 | `write-paragraphs --after N --data JSON` / `write-paragraphs --after-text "锚定" --data-file data.json` |
 | 插入图片 | `insert-image --after-text "锚定" --image fig.png --caption "图3-1 标题"` |
 | 替换已有图片 | `replace-image --caption "图3-1 标题" --image new.png` |
 | 插入表格 | `insert-table --after-text "锚定" --data-file data.json` |

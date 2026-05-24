@@ -34,7 +34,7 @@ def search(doc, query=None, query_file=None, regex=False, writing_style=False,
         with open(query_file, 'r', encoding='utf-8') as f:
             query = f.read().strip()
     if not query:
-        return {"error": "请提供 --query 或 --query-file"}
+        return {"error": "请提供 --query 或 --from-file"}
 
     results = []
     if section:

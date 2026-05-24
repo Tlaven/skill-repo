@@ -15,7 +15,7 @@ type: reference
 | 场景 | 安全 | 原因 |
 |------|------|------|
 | 单次 replace-text / replace-inline | Yes | 不增删段落 |
-| 单次 insert-paragraph（用 `--by-text`） | Yes | 内容定位，不用索引 |
+| 单次 insert-paragraph（用 `--after-text`） | Yes | 内容定位，不用索引 |
 | 多次 insert-paragraph（多个 CLI 调用） | **No** | 每次调用间索引漂移 |
 | insert-formulas 多个绝对 after | **No** | 内部不调整索引 |
 | 任意多次 insert/delete 组合 | **No** | 跨调用索引失效 |
@@ -59,29 +59,16 @@ type: reference
 
 **解法：** 插入公式后手动 `replace-inline --old "FORMULA_3_1" --delete`（PowerShell 下推荐用 `--delete` 替代 `--new ""`）。
 
-## 5. Windows 注意事项
-
-- 不要用 `python -c "多行代码"`（`|| goto :error` 破坏缩进），写成 `.py` 文件执行
-- 临时脚本用 `sys.stdout.reconfigure(encoding='utf-8')` 防乱码
-
 ## 5. 公式编号右对齐
 
 公式居中 + 编号右对齐：用 `w:tabs` 设置右对齐制表位，编号放在 `m:oMathPara` 外部的 `w:r` 中，前面加 `w:tab`。
 
-## 7. 字号预设
+## 6. 字号预设
 
 `--preset gb-academic` 切换到 GB/T 7713.2-2022 标准字号（正文 10.5pt）。
 可用命令：`create` / `assign-styles` / `fix-format`。
 
-## 8. 图片尺寸约束
+## 7. 图片尺寸约束
 
 `insert-image` 自动约束图片不超出页面：宽度 ≤ 文字区域，高度 ≤ 页面可用高度。
 未指定 `--width` 时默认 80%。
-
-## 9. assign-styles 误识别（已修）
-
-`table_caption` 和 `figure_caption` 匹配增加 ≥60 字跳过，防止 `"表4-1展示了..."` 正文段落被误判为标题。
-
-## 10. 三层架构（已实现）
-
-`lib/`（纯函数） + `commands/`（argparse） + `scripts/`（可复用脚本）。

@@ -101,7 +101,7 @@ python cli.py replace-text --by-text "旧段落" --text-file new_content.txt "�
 python cli.py replace-inline --paragraph 43 --old "旧词" --new "新词" "论文.docx"
 python cli.py replace-inline --by-text "包含旧词的段落" --old "旧词" --new "新词" "论文.docx"
 
-# 替换+设格式（--deep 格式控制）
+# 替换+设格式
 python cli.py replace-inline --paragraph 43 --old "旧词" --new "新词" \
     --bold true --font-east "楷体" --size 14 --color FF0000 "论文.docx"
 
