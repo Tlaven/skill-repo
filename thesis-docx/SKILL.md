@@ -65,7 +65,7 @@ with ThesisEditor("论文.docx") as editor:
 
 | 你要做什么 | 先看 | 在哪 |
 |-----------|------|------|
-| 确认命令参数 | 完整参考 + 示例 | CLI.md |
+| 不清楚用什么命令 / 参数怎么用 | 查 CLI.md | CLI.md |
 | 避坑 | 索引漂移 / 公式 / 批注 | lessons.md |
 | 学术论文规范检查 | checklist 逐项排查 | checklist.md |
 | 复杂脚本复用 | 批量修复/缩写检查 | scripts/ 目录 |
