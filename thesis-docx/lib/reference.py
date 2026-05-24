@@ -167,13 +167,13 @@ def renumber_references(doc, output):
         if not p_info["text"]:
             continue
         para = doc.raw_paragraphs[p_info["index"]]
-        _renumber_para_citations(para, old_to_new)
-    _reorder_references(doc, old_to_new, refs_result["references"])
-    doc.save(output)
+        renumber_para_citations(para, old_to_new)
+    reorder_references(doc, old_to_new, refs_result["references"])
+    doc.save_zip(output)
     return {"mapping": old_to_new, "output": output}
 
 
-def _renumber_para_citations(para, old_to_new):
+def renumber_para_citations(para, old_to_new):
     for run in para.runs:
         if not run.text:
             continue
@@ -190,7 +190,7 @@ def _replace_citation_nums(match, old_to_new):
     return f"[{','.join(new_nums)}]"
 
 
-def _reorder_references(doc, old_to_new, ref_list):
+def reorder_references(doc, old_to_new, ref_list):
     ref_paras = _find_reference_section(doc)
     if not ref_paras:
         return
@@ -246,7 +246,7 @@ def add_reference(doc, text, position=None, output=None, backup=False):
         ref_para._element.addnext(new_para)
     else:
         return {"error": "无法确定插入位置"}
-    doc.save(output_path)
+    doc.save_zip(output_path)
     return {"number": position, "text": ref_text, "output": output_path}
 
 
@@ -264,7 +264,7 @@ def remove_reference(doc, number, output=None, backup=False):
         return {"error": f"未找到参考文献 [{number}]"}
     para = doc.raw_paragraphs[target["para_index"]]
     para._element.getparent().remove(para._element)
-    doc.save(output_path)
+    doc.save_zip(output_path)
     return {"removed": target, "output": output_path}
 
 

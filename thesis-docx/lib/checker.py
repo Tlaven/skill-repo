@@ -3,28 +3,25 @@
 公共 check-* 命令已移除：改为对应 read-*/list-* 的 --verify。
 
 被其他模块引用的内部函数：
-  _check_page_setup_rules  — fixer.py / reader.py 引用
-  _check_heading_rules     — reader.py (--verify) 引用
-  _check_body_rules        — reader.py (--verify) 引用
+  check_page_setup_rules  — fixer.py / reader.py 引用
+  check_heading_rules     — reader.py (--verify) 引用
+  check_body_rules        — reader.py (--verify) 引用
 
 曾存在但已删除的（需 Agent 结合 search/上下文判断，不宜程序硬检查）：
   check_paragraphs   check_placeholders  check_all
   check_references   check_figure_references  check_formula_references
 """
 import re
-from lib.utils import emu_to_cm, get_heading_level, find_toc_range
-from lib.styles import get_default_rules, load_rules_with_defaults, classify_paragraph
-from lib.rules import load_rules
+from lib.utils import emu_to_cm, find_toc_range
+from lib.styles import get_default_rules, classify_paragraph
 
 DEFAULT_RULES = get_default_rules()
 
 
-def _check_page_setup_rules(doc, rules):
+def check_page_setup_rules(doc, rules):
     issues = []
-    count = 0
     page_rules = rules.get("page", {})
     for section in doc.doc.sections:
-        count += 1
         width = emu_to_cm(section.page_width)
         height = emu_to_cm(section.page_height)
         if page_rules.get("width_cm") and abs(width - page_rules["width_cm"]) > 0.1:
@@ -46,7 +43,7 @@ def _check_page_setup_rules(doc, rules):
                     issues.append({"type": f"page_{margin_name}", "severity": "warning",
                                    "expected": expected, "actual": actual,
                                    "fix": f"将 {margin_name} 从 {actual}cm 改为 {expected}cm"})
-    return issues, count
+    return issues
 
 
 def _detect_heading_level(text):
@@ -62,9 +59,8 @@ def _detect_heading_level(text):
     return None
 
 
-def _check_heading_rules(doc, rules):
+def check_heading_rules(doc, rules):
     issues = []
-    count = 0
     heading_rules = rules.get("headings", {})
     skip = _compute_skip_indices(doc)
     toc_start, toc_end = find_toc_range(doc)
@@ -85,7 +81,6 @@ def _check_heading_rules(doc, rules):
                            "para_index": idx, "text": (text[:30] + "...") if len(text) > 30 else text,
                            "expected": f"Heading {level}", "actual": p["style"],
                            "fix": f"将样式从 {p['style']} 改为 Heading {level}"})
-        count += 1
         rule_key = f"h{level}"
         rule = heading_rules.get(rule_key)
         if not rule: continue
@@ -119,7 +114,7 @@ def _check_heading_rules(doc, rules):
                 issues.append({"type": "heading_alignment", "severity": "warning", "para_index": idx,
                                "text": text_preview, "expected": rule["alignment"],
                                "actual": actual_align, "fix": f"将对齐从 {actual_align} 改为 {rule['alignment']}"})
-    return issues, count
+    return issues
 
 
 def _is_non_body_role(text):
@@ -127,7 +122,7 @@ def _is_non_body_role(text):
     return role is not None
 
 
-def _find_abstract_paragraphs(doc):
+def find_abstract_paragraphs(doc):
     in_abstract = False
     abstract_paras = []
     for p in doc.paragraphs:
@@ -140,9 +135,8 @@ def _find_abstract_paragraphs(doc):
     return abstract_paras
 
 
-def _check_body_rules(doc, rules):
+def check_body_rules(doc, rules):
     issues = []
-    count = 0
     body_rules = rules.get("body", {})
     skip = _compute_skip_indices(doc)
     for p in doc.paragraphs:
@@ -151,7 +145,6 @@ def _check_body_rules(doc, rules):
         if p["index"] in skip: continue
         if p["style"] not in ("Normal", "Body Text"): continue
         if _is_non_body_role(text): continue
-        count += 1
         text_preview = (text[:50] + "...") if len(text) > 50 else text
         if body_rules.get("size_pt"):
             for run_info in p["runs"]:
@@ -174,7 +167,7 @@ def _check_body_rules(doc, rules):
                     issues.append({"type": "body_first_line_indent", "severity": "warning", "para_index": p["index"],
                                    "text": text_preview, "expected": body_rules["first_line_indent_cm"],
                                    "actual": actual_indent, "fix": f"将首行缩进从 {actual_indent}cm 改为 {body_rules['first_line_indent_cm']}cm"})
-    return issues, count
+    return issues
 
 
 def _compute_skip_indices(doc):
@@ -203,5 +196,59 @@ def _compute_skip_indices(doc):
         for idx in range(decl_start, end): skip.add(idx)
 
 
+def check_caption_numbering(doc):
+    """检查图表编号在章节内是否连续（不跳号）。"""
+    issues = []
+    fig_pattern = re.compile(r'^(图\s*)(\d+)([-.]\s*)(\d+)')
+    tbl_pattern = re.compile(r'^(表\s*)(\d+)([-.]\s*)(\d+)')
+    from lib.layout import build_chapter_map
+    chapter_map = build_chapter_map(doc)
+    for pattern, label in [(fig_pattern, '图'), (tbl_pattern, '表')]:
+        counters = {}
+        for p in doc.paragraphs:
+            text = p["text"].strip()
+            m = pattern.match(text)
+            if not m:
+                continue
+            old_chapter = int(m.group(2))
+            old_num = int(m.group(4))
+            current_chapter = chapter_map.get(p["index"], old_chapter)
+            expected = counters.get(current_chapter, 0) + 1
+            if old_num != expected:
+                issues.append({
+                    "type": "caption_number_gap",
+                    "severity": "warning",
+                    "para_index": p["index"],
+                    "text": text[:60],
+                    "expected": f"{label}{current_chapter}-{expected}",
+                    "actual": text[:60],
+                    "fix": f"可能跳号：期望 {label}{current_chapter}-{expected}，实际 {text[:60]}",
+                })
+            counters[current_chapter] = max(counters.get(current_chapter, 0), old_num)
+    return issues
 
 
+def check_chapter_sequence(doc):
+    """检查章序号是否连续（不跳号如 1→3）。"""
+    issues = []
+    ch_pattern = re.compile(r'第(\d+)章')
+    expected = 1
+    for p in doc.paragraphs:
+        if p.get("level") != 1:
+            continue
+        text = p["text"].strip()
+        m = ch_pattern.search(text)
+        if m:
+            num = int(m.group(1))
+            if num != expected:
+                issues.append({
+                    "type": "chapter_sequence_gap",
+                    "severity": "error",
+                    "para_index": p["index"],
+                    "text": text[:60],
+                    "expected": f"第{expected}章",
+                    "actual": text[:60],
+                    "fix": f"章序号不连续：期望 第{expected}章，实际 {text[:60]}",
+                })
+            expected = num + 1
+    return issues

@@ -2,7 +2,7 @@
 from docx.shared import Pt, Cm
 from lxml import etree
 from lib.utils import NSMAP, get_output_path, str_to_alignment, find_toc_range
-from lib.styles import classify_paragraph, ROLE_TO_WORD_STYLE, resolve_style
+from lib.styles import classify_paragraph, ROLE_TO_WORD_STYLE, resolve_style, SKIP_FIRST_N_PARAS
 from lib.rules import load_rules
 
 
@@ -32,7 +32,7 @@ def assign_styles(doc, rules=None, preset=None, output=None, backup=False):
     assignments = _assign_styles_impl(doc, rules, preset)
     if not assignments:
         return {"total_assigned": 0, "assignments": [], "output": None}
-    doc.save(output_path)
+    doc.save_zip(output_path)
     return {"total_assigned": len(assignments), "assignments": assignments[:50], "output": output_path}
 
 
@@ -46,7 +46,7 @@ def _assign_styles_impl(doc, rules_path=None, preset=None, preserve_style_defs=F
         style = p["style"]
         if not text:
             continue
-        if idx < 13:
+        if idx < SKIP_FIRST_N_PARAS:
             continue
         if toc_start is not None and toc_end is not None:
             if toc_start <= idx < toc_end:
@@ -177,12 +177,12 @@ def fix_format(doc, rules=None, preset=None, output=None, backup=False):
     if assignments:
         fixed.append({"type": "styles_assigned", "count": len(assignments)})
     _rules = load_rules(rules)
-    from lib.checker import _check_page_setup_rules
-    page_issues, _ = _check_page_setup_rules(doc, _rules)
+    from lib.checker import check_page_setup_rules
+    page_issues = check_page_setup_rules(doc, _rules)
     page_fixed = _fix_page_setup(doc, page_issues, _rules)
     if page_fixed:
         fixed.extend(page_fixed)
-    from lib.reference import list_citations, list_references, _renumber_para_citations, _reorder_references, check_references
+    from lib.reference import list_citations, list_references, renumber_para_citations, reorder_references, check_references
     ref_result = check_references(doc)
     ref_issues = ref_result.get("issues", [])
     not_in_order = [i for i in ref_issues if i.get("type") == "not_in_order"]
@@ -202,23 +202,23 @@ def fix_format(doc, rules=None, preset=None, output=None, backup=False):
         for p_info in doc.paragraphs:
             if not p_info["text"]: continue
             para = doc.raw_paragraphs[p_info["index"]]
-            _renumber_para_citations(para, old_to_new)
+            renumber_para_citations(para, old_to_new)
         if "references" in refs_result:
-            _reorder_references(doc, old_to_new, refs_result["references"])
+            reorder_references(doc, old_to_new, refs_result["references"])
         fixed.append({"type": "references_renumbered", "count": len(not_in_order), "mapping": old_to_new})
     if fixed:
-        doc.save(output_path)
+        doc.save_zip(output_path)
     return {"total_fixed": len(fixed), "fixes": fixed[:100], "output": output_path if fixed else None}
 
 
 def fix_page_setup(doc, rules=None, output=None, backup=False):
-    from lib.checker import _check_page_setup_rules
+    from lib.checker import check_page_setup_rules
     _rules = load_rules(rules)
     output_path = get_output_path(doc, output=output, backup=backup)
-    issues, _ = _check_page_setup_rules(doc, _rules)
+    issues = check_page_setup_rules(doc, _rules)
     fixed = _fix_page_setup(doc, issues, _rules)
     if fixed:
-        doc.save(output_path)
+        doc.save_zip(output_path)
     return {"total_fixed": len(fixed), "fixes": fixed, "output": output_path if fixed else None}
 
 
@@ -311,3 +311,43 @@ def apply_template(doc, template_path, output=None, backup=False):
         "total_assigned": total_assigned,
         "message": f"已应用模板样式，重新分配了 {total_assigned} 个段落的样式",
     }
+
+
+def delete_comments(doc, output=None, backup=False):
+    """删除文档中的所有批注。使用 zipfile 直写保存，保留 OMML。"""
+    from lxml import etree as _etree
+    import zipfile, tempfile, os
+    output_path = get_output_path(doc, output=output, backup=backup)
+    W = NSMAP["w"]
+    comment_tags = {'commentRangeStart', 'commentRangeEnd', 'commentReference',
+                    'commentRangeExtendAfter', 'commentRangeExtendBefore'}
+    body = doc.doc.element.body
+    removed = 0
+    for elem in list(body.iter()):
+        tag = elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
+        if tag in comment_tags:
+            parent = elem.getparent()
+            if parent is not None:
+                parent.remove(elem); removed += 1
+    xml_bytes = _etree.tostring(doc.doc.element, xml_declaration=True, encoding='UTF-8', standalone=True)
+    output_dir = os.path.dirname(os.path.abspath(output_path))
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix='.docx', dir=output_dir)
+    os.close(tmp_fd)
+    comment_files = {'word/comments.xml', 'word/commentsExtended.xml',
+                     'word/commentsIds.xml', 'word/commentsExtensible.xml'}
+    removed_files = []
+    try:
+        with zipfile.ZipFile(doc.filepath, 'r') as zin:
+            with zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
+                for item in zin.namelist():
+                    if item == 'word/document.xml':
+                        zout.writestr(item, xml_bytes)
+                    elif item in comment_files:
+                        removed_files.append(item); continue
+                    else:
+                        zout.writestr(item, zin.read(item))
+        os.replace(tmp_path, output_path)
+    except Exception:
+        if os.path.exists(tmp_path): os.unlink(tmp_path)
+        raise
+    return {"removed_elements": removed, "removed_files": removed_files, "output": output_path}

@@ -1,5 +1,4 @@
 """公式模块 — LaTeX/OMML 公式插入，无 argparse 依赖"""
-import json
 from lxml import etree
 from latex2mathml.converter import convert as latex_to_mathml
 
@@ -306,7 +305,6 @@ def insert_formulas_batch(doc, formulas):
             "number": number, "latex": latex[:60] + ('...' if len(latex) > 60 else ''),
         })
         if desc:
-            from lib.editor import insert_paragraph_text
             desc_p = etree.SubElement(new_p.getparent(), f'{{{W_NS}}}p')
             desc_text = etree.SubElement(desc_p, f'{{{W_NS}}}r')
             desc_t = etree.SubElement(desc_text, f'{{{W_NS}}}t')

@@ -203,7 +203,9 @@ class ThesisEditor:
                 return {"error": f"未找到包含 '{after_text}' 的段落"}
         if after is None:
             return {"error": "请提供 after 或 after_text"}
-        return insert_table(self.doc, after=after, data=data)
+        result = insert_table(self.doc, after=after, data=data)
+        self.doc._build_index()
+        return result
 
     def insert_image(self, after=None, after_text=None, image=None, width=None, caption=None):
         from lib.editor import insert_image
@@ -213,7 +215,9 @@ class ThesisEditor:
                 return {"error": f"未找到包含 '{after_text}' 的段落"}
         if after is None:
             return {"error": "请提供 after 或 after_text"}
-        return insert_image(self.doc, after=after, image=image, width=width, caption=caption)
+        result = insert_image(self.doc, after=after, image=image, width=width, caption=caption)
+        self.doc._build_index()
+        return result
 
     def replace_image(self, image, caption=None, paragraph=None, media=None):
         from lib.editor import replace_image
@@ -221,7 +225,7 @@ class ThesisEditor:
                             paragraph=paragraph, media=media)
 
     def delete_comments(self):
-        from lib.editor import delete_comments
+        from lib.fixer import delete_comments
         return delete_comments(self.doc)
 
     # ==================== 格式修复 ====================
@@ -260,7 +264,9 @@ class ThesisEditor:
                 return {"error": f"未找到包含 '{after_text}' 的段落"}
         if after is None:
             return {"error": "请提供 after 或 after_text"}
-        return insert_page_break(self.doc, after=after)
+        result = insert_page_break(self.doc, after=after)
+        self.doc._build_index()
+        return result
 
     def set_header(self, text, font='宋体', size='9'):
         from lib.layout import set_header
@@ -299,13 +305,23 @@ class ThesisEditor:
 
     # ==================== 公式 ====================
 
-    def insert_formula(self, after, latex, number=None):
+    def insert_formula(self, after=None, after_text=None, latex=None, number=None):
         from lib.formula import insert_formula
-        return insert_formula(self.doc, after_index=after, latex_str=latex, eq_number=number)
+        if after is None and after_text is not None:
+            after = self._resolve_by_text(after_text)
+            if after is None:
+                return {"error": f"未找到包含 '{after_text}' 的段落"}
+        if after is None:
+            return {"error": "请提供 after 或 after_text"}
+        result = insert_formula(self.doc, after_index=after, latex_str=latex, eq_number=number)
+        self.doc._build_index()
+        return result
 
     def insert_formulas(self, formulas):
         from lib.formula import insert_formulas_batch
-        return insert_formulas_batch(self.doc, formulas=formulas)
+        result = insert_formulas_batch(self.doc, formulas=formulas)
+        self.doc._build_index()
+        return result
 
     def list_formulas(self):
         """已弃用，请用 read_formulas(summary=True)。"""

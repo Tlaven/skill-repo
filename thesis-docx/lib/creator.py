@@ -1,7 +1,7 @@
 """创建空白论文模板 — 纯库函数"""
 import os
 import shutil
-from docx.shared import Pt, Cm
+from docx.shared import Cm
 from lxml import etree
 from lib.styles import PAGE_RULES, ROLE_TO_WORD_STYLE, resolve_style
 from lib.utils import NSMAP
@@ -13,7 +13,7 @@ def create_thesis(doc, output=None, preset=None):
     _setup_page(doc)
     _setup_styles(doc, preset)
     _insert_skeleton(doc)
-    doc.save(output_path)
+    doc.save_zip(output_path)
     return {"output": output_path, "message": "空白论文模板已创建"}
 
 

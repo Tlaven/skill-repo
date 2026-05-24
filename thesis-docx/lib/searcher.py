@@ -126,8 +126,8 @@ def _search_writing_style(doc, chapter=None, section=None, limit=20):
                     break
 
     # Abstract length check
-    from lib.checker import _find_abstract_paragraphs
-    abstract_paras = _find_abstract_paragraphs(doc)
+    from lib.checker import find_abstract_paragraphs
+    abstract_paras = find_abstract_paragraphs(doc)
     if abstract_paras and len(results) < limit:
         abstract_text = "".join(p.get("text", "") for p in abstract_paras)
         char_count = len(abstract_text)

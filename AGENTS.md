@@ -1,53 +1,69 @@
 # thesis-docx — AGENTS.md
 
-## 项目性质
+## 入口
 
-单项目仓库，仅含 `thesis-docx/`。中文论文 .docx 编辑工具集，同时是 OpenCode skill（定义见 `~/.claude/skills/thesis-docx/SKILL.md`）。
+- **CLI**: `python cli.py <command> <file> [options]`，所有输出 JSON
+- **Python API**: `from api import ThesisEditor`（支持 context manager）
+- **脚本**: `scripts/` — 独立可复用，以 `sys.path.insert(0, '..')` 引入 `api.py`
 
-## 入口与架构
+## 分层
 
-- **CLI 入口**：`python cli.py <command> <file> [options]`，所有输出 JSON
-- **Python API**：`from api import ThesisEditor`，支持 context manager
-- **分层**：`lib/`（纯函数，无 argparse）→ `commands/`（argparse 粘合）→ `cli.py`（路由）
-- **依赖**：`pip install -r requirements.txt`（python-docx, latex2mathml）
-- **Python**：本地 3.12.4，兼容 3.9+
+`lib/`（纯函数，无 argparse）→ `commands/`（argparse 注册）→ `cli.py`（路由）
 
-## 关键陷阱（违反会丢数据）
+## 依赖
 
-1. **段落索引漂移** — `insert`/`delete` 后索引全变。始终用 `--by-text "子串"` / `--after-text "子串"` 代替 `--paragraph N`
-2. **≥3 次 insert/delete 写脚本** — 不要多次调 CLI，在同一个 Python 进程内完成（或用 `api.py`）
-3. **FORMULA_X_X 不会自动清理** — 插入公式后手动 `replace-inline --old "FORMULA_3_1" --delete`（PowerShell 下推荐用 `--delete` 替代 `--new ""`）
-4. **批注删除清 4 个 XML** — `delete-comments` 已封装；手动需清理 `comments.xml` / `commentsExtended.xml` / `commentsIds.xml` / `commentsExtensible.xml`
+```
+pip install -r requirements.txt  # python-docx, latex2mathml
+```
 
-## 通用选项
+## 核心类
 
-- `--backup` 修改前创建带时间戳备份
-- `--by-text "子串"` 替代 `--paragraph N`（内容定位，防索引漂移）
-- `--after-text "子串"` 替代 `--after N`（同上）
-- `--data-file` 在 PowerShell 下替代 `--data '[...]'`（绕开双引号被吞问题）
+`lib/core.py` → `ThesisDoc`：加载 .docx、构建索引（段落/章节树/图片/表格）、保存。 `save_zip()` 用 lxml 序列化 `document.xml` 回写 zip（不是 `doc.save`）。
+
+## lib/ 结构
+
+```
+reader.py         — 结构/段落/章节/统计/页面设置（374行）
+reader_loc.py     — read_location（62行）
+reader_table.py   — 表格读取 + 边框/字体检测（172行）
+reader_media.py   — 图片/公式/批注读取（192行）
+reader_full.py    — 全文地图 read-full（236行）
+                   ↑ 全部通过 reader.py re-export
+editor.py         — 插入/替换/删除段落/表格/图片/文字
+fixer.py          — 样式分配/格式修复/模板应用/批注删除
+formula.py        — LaTeX→OMML 公式插入
+layout.py         — 页面设置/页眉页脚/分页符/图表重编号
+reference.py      — 引用收集/重编号/一致性验证
+searcher.py       — 文本搜索/写作风格检测
+checker.py        — 内部检查函数（被 reader --verify 和 fixer 调用）
+styles.py         — 样式定义/段落分类/字号预设/规则加载
+rules.py          — 薄封装（打破 checker↔fixer 循环依赖）
+utils.py          — 共享工具函数
+creator.py        — 创建空白/模板论文
+exporter.py       — 导出 markdown/section/images/diff
+extractor.py      — 提取文本/样式/页面设置到 JSON/YAML
+```
+
+## 关键陷阱
+
+1. **段落索引漂移** — `insert-paragraph` / `delete-paragraph` / `insert-table` / `insert-formula` / `insert-image` / `insert-page-break` / `write-paragraphs` 后索引全变。总是用 `--by-text "子串"` / `--after-text "子串"` 代替 `--paragraph N` / `--after N`。API 版用 `by_text=` / `after_text=`（内部调用 `_resolve_by_text`）
+2. **≥3 次 insert/delete 写脚本** — 在同一个 Python 进程内通过 `ThesisEditor` API 完成，不要多次调 CLI
+3. **FORMULA_X_X 不会自动清理** — 插入公式后手动 `replace-inline --old "FORMULA_3_1" --delete`
+4. **结构修改后重建索引** — API 在所有 `insert_*` / `delete_paragraph` / `write_paragraphs` 之后自动调 `doc._build_index()`。CLI 不会自动重建——它每次重新打开文件
+5. **PowerShell 中文乱码** — CLI 的 `_fix_all_string_args` 自动修复 `latin-1→utf-8` 被吞的中文。 `--data-file` 绕过双引号被吞问题
+
+## 样式系统
+
+`lib/styles.py`：STYLE_DEFS 定义 h1-h3 / body / caption / reference / header / footer。段落角色由 `classify_paragraph()` 通过正则匹配（如 `^第[1-9]章`、`^摘\s*要$`）。 `--preset gb-academic` 切换到 GB/T 7713.2-2022 字号（正文 10.5pt）。
+
+## 规则系统
+
+`lib/rules.py` 是薄封装（避免 checker↔fixer 循环依赖）。规则可来自 YAML 文件，`load_rules_with_defaults()` 做 deep merge。
 
 ## 测试
 
-目前无测试文件。运行测试前需先在 `thesis-docx/` 下创建 `tests/` 目录。
+无测试文件。 `.pytest_cache/` 存在但无 `tests/` 目录，无 pytest 配置文件。
 
-## 架构参考
+## scripts/ 参考
 
-```
-lib/          — 纯函数（reader, editor, checker, fixer, styles, formula, reference, layout, creator, exporter, extractor, searcher, rules, core, utils）
-commands/     — argparse 定义（read_cmds, edit_cmds, format_cmds, create_cmds, ref_cmds, export_cmds, extract_cmds）
-scripts/      — 可复用独立脚本
-test-case/    — 测试用 .docx + 图片
-api.py        — ThesisEditor 编程接口
-cli.py        — 命令行入口（路由 + 参数预处理）
-```
-
-## 预设
-
-- `--preset gb-academic` 切换到 GB/T 7713.2-2022 标准字号（正文 10.5pt）
-- 可用于 `create` / `assign-styles` / `fix-format`
-
-## 文档
-
-- `CLI.md` — 完整命令参考
-- `lessons.md` — 操作经验手册（索引漂移、公式、格式等实战教训）
-- `SKILL.md` — OpenCode skill 定义（思维模型 + 陷阱 + 命令速查）
+`batch_fix.py` 展示推荐模式：`ThesisEditor` → 多次 API 调用 → `_build_index()` → `save()`

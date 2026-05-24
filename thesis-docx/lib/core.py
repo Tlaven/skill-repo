@@ -2,10 +2,9 @@
 import os
 import re
 from docx import Document
-from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from lib.utils import (
     get_heading_level, get_run_font_info, get_paragraph_format,
-    emu_to_cm, is_heading
+    emu_to_cm,
 )
 
 
@@ -302,7 +301,6 @@ class ThesisDoc:
     def save_zip(self, output_path=None):
         import zipfile
         import tempfile
-        import shutil
         from lxml import etree
         path = output_path or self.filepath
         xml_bytes = etree.tostring(
@@ -316,12 +314,26 @@ class ThesisDoc:
         os.close(tmp_fd)
         try:
             with zipfile.ZipFile(self.filepath, 'r') as zin:
+                existing = set(zin.namelist())
                 with zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
                     for item in zin.namelist():
                         if item == 'word/document.xml':
                             zout.writestr(item, xml_bytes)
                         else:
                             zout.writestr(item, zin.read(item))
+                    # 写入新 blob（insert_image / replace_image 添加的内存中图片）
+                    for rel in self.doc.part.rels.values():
+                        if "image" in rel.reltype and hasattr(rel, 'target_part'):
+                            target_ref = rel.target_ref
+                            if target_ref.startswith('/'):
+                                target_ref = target_ref[1:]
+                            elif '/' not in target_ref:
+                                target_ref = f'word/media/{target_ref}'
+                            if target_ref not in existing:
+                                try:
+                                    zout.writestr(target_ref, rel.target_part.blob)
+                                except Exception:
+                                    pass
             os.replace(tmp_path, path)
         except Exception:
             if os.path.exists(tmp_path):

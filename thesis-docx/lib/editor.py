@@ -4,7 +4,7 @@ import os
 import zipfile
 import tempfile
 from lxml import etree
-from docx.shared import Cm, Inches
+from docx.shared import Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from lib.utils import NSMAP, get_output_path
 from lib.styles import STYLE_NAME_TO_WORD
@@ -204,6 +204,7 @@ def insert_paragraph(doc, after, text, style='body', rules=None, output=None, ba
     new_para = _create_clean_paragraph(text, word_style)
     ref_para._element.addnext(new_para)
     doc.save_zip(output_path)
+    doc._build_index()
     return {"after_paragraph": after, "text": text, "style": word_style, "output": output_path}
 
 
@@ -229,6 +230,7 @@ def write_paragraphs(doc, after, data, output=None, backup=False):
         ref_para._element.addnext(new_para)
         inserted.insert(0, {"text": text[:50], "style": word_style})
     doc.save_zip(output_path)
+    doc._build_index()
     return {"after_paragraph": after, "total_inserted": len(data), "inserted": inserted, "output": output_path}
 
 
@@ -355,6 +357,7 @@ def insert_table(doc, after, data, output=None, backup=False):
     tbl_element.getparent().remove(tbl_element)
     ref_para._element.addnext(tbl_element)
     doc.save_zip(output_path)
+    doc._build_index()
     return {"after_paragraph": after, "rows": num_rows, "cols": num_cols,
             "data_preview": [row[:3] for row in data[:3]], "output": output_path}
 
@@ -400,8 +403,8 @@ def insert_image(doc, after, image, width=None, caption=None, output=None, backu
     if caption:
         cap_p = _create_clean_paragraph(caption, "Caption")
         p._element.addnext(cap_p)
-    # 使用 save_zip 保留 OMML 公式
-    _save_zip_replace(doc, output_path)
+    doc.save_zip(output_path)
+    doc._build_index()
     result = {
         "after_paragraph": after, "image": os.path.basename(image),
         "output": output_path, "width_cm": f"{actual_width_cm:.1f}",
@@ -410,27 +413,6 @@ def insert_image(doc, after, image, width=None, caption=None, output=None, backu
     if caption:
         result["caption"] = caption
     return result
-
-
-def _save_zip_replace(doc, output_path):
-    """zipfile 直写保存，保留 OMML 公式。"""
-    from lxml import etree as _etree
-    xml_bytes = _etree.tostring(doc.doc.element, xml_declaration=True, encoding='UTF-8', standalone=True)
-    output_dir = os.path.dirname(os.path.abspath(output_path))
-    tmp_fd, tmp_path = tempfile.mkstemp(suffix='.docx', dir=output_dir)
-    os.close(tmp_fd)
-    try:
-        with zipfile.ZipFile(doc.filepath, 'r') as zin:
-            with zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
-                for item in zin.namelist():
-                    if item == 'word/document.xml':
-                        zout.writestr(item, xml_bytes)
-                    else:
-                        zout.writestr(item, zin.read(item))
-        os.replace(tmp_path, output_path)
-    except Exception:
-        if os.path.exists(tmp_path): os.unlink(tmp_path)
-        raise
 
 
 def replace_image(doc, image, caption=None, paragraph=None, media=None, output=None, backup=False):
@@ -523,40 +505,4 @@ def _get_image_size(doc, rid):
         return None
 
 
-def delete_comments(doc, output=None, backup=False):
-    """删除文档中的所有批注。使用 zipfile 直写保存，保留 OMML。"""
-    output_path = get_output_path(doc, output=output, backup=backup)
-    W = NSMAP["w"]
-    comment_tags = {'commentRangeStart', 'commentRangeEnd', 'commentReference',
-                    'commentRangeExtendAfter', 'commentRangeExtendBefore'}
-    body = doc.doc.element.body
-    removed = 0
-    for elem in list(body.iter()):
-        tag = elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
-        if tag in comment_tags:
-            parent = elem.getparent()
-            if parent is not None:
-                parent.remove(elem); removed += 1
-    from lxml import etree as _etree
-    xml_bytes = _etree.tostring(doc.doc.element, xml_declaration=True, encoding='UTF-8', standalone=True)
-    output_dir = os.path.dirname(os.path.abspath(output_path))
-    tmp_fd, tmp_path = tempfile.mkstemp(suffix='.docx', dir=output_dir)
-    os.close(tmp_fd)
-    comment_files = {'word/comments.xml', 'word/commentsExtended.xml',
-                     'word/commentsIds.xml', 'word/commentsExtensible.xml'}
-    removed_files = []
-    try:
-        with zipfile.ZipFile(doc.filepath, 'r') as zin:
-            with zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
-                for item in zin.namelist():
-                    if item == 'word/document.xml':
-                        zout.writestr(item, xml_bytes)
-                    elif item in comment_files:
-                        removed_files.append(item); continue
-                    else:
-                        zout.writestr(item, zin.read(item))
-        os.replace(tmp_path, output_path)
-    except Exception:
-        if os.path.exists(tmp_path): os.unlink(tmp_path)
-        raise
-    return {"removed_elements": removed, "removed_files": removed_files, "output": output_path}
+

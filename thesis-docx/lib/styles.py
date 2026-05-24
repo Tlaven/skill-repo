@@ -12,6 +12,13 @@ PAGE_RULES = {
     "margin_right_cm": 2.5,
 }
 
+# deep 模式安全限制
+MAX_DEEP_CHARS = 3000
+MAX_DEEP_PARAS = 40
+
+# assign-styles 跳过前 N 段（封面/声明区域）
+SKIP_FIRST_N_PARAS = 13
+
 _BASE = {
     "font": "Times New Roman",
     "font_east": "宋体",

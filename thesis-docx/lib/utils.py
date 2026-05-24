@@ -1,5 +1,4 @@
 """共享工具函数"""
-from docx.shared import Pt, Cm, Emu
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 

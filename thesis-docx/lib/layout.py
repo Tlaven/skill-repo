@@ -17,7 +17,7 @@ def set_page_setup(doc, width=None, height=None, margin_top=None, margin_bottom=
         if margin_bottom: section.bottom_margin = Cm(float(margin_bottom)); changes["margin_bottom_cm"] = float(margin_bottom)
         if margin_left: section.left_margin = Cm(float(margin_left)); changes["margin_left_cm"] = float(margin_left)
         if margin_right: section.right_margin = Cm(float(margin_right)); changes["margin_right_cm"] = float(margin_right)
-    doc.save(output_path)
+    doc.save_zip(output_path)
     return {"changes": changes, "sections_modified": len(doc.doc.sections), "output": output_path}
 
 
@@ -29,7 +29,8 @@ def insert_page_break(doc, after, output=None, backup=False):
     br = etree.SubElement(new_p.find(f'{{{NSMAP["w"]}}}r'), f'{{{NSMAP["w"]}}}br')
     br.set(f'{{{NSMAP["w"]}}}type', 'page')
     ref_para._element.addnext(new_p)
-    doc.save(output_path)
+    doc.save_zip(output_path)
+    doc._build_index()
     return {"after_paragraph": after, "output": output_path,
             "note": "段落索引已偏移，后续操作前请先 read-structure 获取新索引"}
 
@@ -57,7 +58,7 @@ def set_header(doc, text, font='宋体', size='9', output=None, backup=False):
             rFonts = rPr.find(f'{{{NSMAP["w"]}}}rFonts')
             if rFonts is not None:
                 rFonts.set(f'{{{NSMAP["w"]}}}eastAsia', font_name)
-    doc.save(output_path)
+    doc.save_zip(output_path)
     return {"header_text": text, "font": font_name, "size_pt": font_size,
             "sections_modified": len(doc.doc.sections), "output": output_path}
 
@@ -94,11 +95,11 @@ def set_footer(doc, text=None, page_number=False, align='center', font='宋体',
         elif text:
             run = para.add_run(text)
             run.font.name = font_name; run.font.size = Pt(font_size)
-    doc.save(output_path)
+    doc.save_zip(output_path)
     return {"page_number": page_number, "footer_text": text, "align": align, "output": output_path}
 
 
-def _build_chapter_map(doc):
+def build_chapter_map(doc):
     """构建 段落索引 → 实际章号 的映射（从标题文字"第X章"解析，而非内部索引位置）"""
     chapter_map = {}
     current_chapter = 0
@@ -121,7 +122,7 @@ def renumber_figures(doc, output=None, backup=False):
     output_path = get_output_path(doc, output=output, backup=backup)
     fig_pattern = re.compile(r'(图\s*)(\d+)([-.]\s*)(\d+)')
     tbl_pattern = re.compile(r'(表\s*)(\d+)([-.]\s*)(\d+)')
-    chapter_map = _build_chapter_map(doc)
+    chapter_map = build_chapter_map(doc)
     chapter_fig_counters = {}
     chapter_tbl_counters = {}
     changes = []
@@ -146,7 +147,7 @@ def renumber_figures(doc, output=None, backup=False):
                     _replace_in_runs(para, old_label, new_label)
                     changes.append({"para_index": para_idx, "old": old_label, "new": new_label})
     if changes:
-        doc.save(output_path)
+        doc.save_zip(output_path)
     return {
         "total_renumbered": len(changes), "changes": changes[:50],
         "figure_counters": chapter_fig_counters, "table_counters": chapter_tbl_counters,

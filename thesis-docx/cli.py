@@ -178,7 +178,7 @@ def run_command(args):
         'insert-table': lambda: lib_edit.insert_table(doc, args.after, json.loads(args.data), output=_out, backup=_bak),
         'insert-image': lambda: lib_edit.insert_image(doc, args.after, args.image, width=getattr(args, 'width', None), caption=getattr(args, 'caption', None), output=_out, backup=_bak),
         'replace-image': lambda: lib_edit.replace_image(doc, args.image, caption=getattr(args, 'caption', None), paragraph=getattr(args, 'paragraph', None), media=getattr(args, 'media', None), output=_out, backup=_bak),
-        'delete-comments': lambda: lib_edit.delete_comments(doc, output=_out, backup=_bak),
+        'delete-comments': lambda: lib_fixer.delete_comments(doc, output=_out, backup=_bak),
         'list-citations': lambda: lib_ref.list_citations(doc),
         'list-references': lambda: lib_ref.list_references(doc, verify=_verify),
         'renumber-references': lambda: lib_ref.renumber_references(doc, args.output),
