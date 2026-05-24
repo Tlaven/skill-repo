@@ -35,6 +35,7 @@ python cli.py read-paragraph --index N --with-format "论文.docx"
 # 读某一章段落列表
 python cli.py read-section --title "章名" "论文.docx"
 python cli.py read-paragraphs --start N --end M "论文.docx"
+python cli.py read-paragraphs --start N --end M --with-format "论文.docx"
 
 # 表格完整上下文
 python cli.py read-table --index N --deep "论文.docx"
@@ -97,17 +98,20 @@ python cli.py replace-text --paragraph 43 --text "新内容" "论文.docx"
 python cli.py replace-text --by-text "旧段落内容" --text "新内容" "论文.docx"
 python cli.py replace-text --by-text "旧段落" --text-file new_content.txt "论文.docx"
 
-# 段内子串替换（保留原有格式）
+# 段内子串替换（保留原有格式；--new "" 或 --delete 均可删除子串）
 python cli.py replace-inline --paragraph 43 --old "旧词" --new "新词" "论文.docx"
 python cli.py replace-inline --by-text "包含旧词的段落" --old "旧词" --new "新词" "论文.docx"
+python cli.py replace-inline --by-text "锚定段" --old "占位符_XX" --delete "论文.docx"
 
 # 替换+设格式
 python cli.py replace-inline --paragraph 43 --old "旧词" --new "新词" \
-    --bold true --font-east "楷体" --size 14 --color FF0000 "论文.docx"
+    --bold true --font "Times New Roman" --font-east "楷体" --size 14 --color FF0000 "论文.docx"
 
-# 不改文字，只改格式
+# 不改文字，只改格式（支持 --by-text 内容定位）
 python cli.py format-inline --paragraph 43 --target "目标子串" \
-    --bold --font-east "黑体" --color 000000 "论文.docx"
+    --bold --font "Times New Roman" --font-east "黑体" --size 12 --color 000000 "论文.docx"
+python cli.py format-inline --by-text "包含目标子串的整段文字" --target "目标子串" \
+    --bold --color FF0000 "论文.docx"
 
 # 全文关键词替换（--chapter N 限定章节）
 python cli.py replace-batch --pairs '[{"old":"旧","new":"新"}]' "论文.docx"
@@ -121,10 +125,11 @@ python cli.py replace-batch-by-index --pairs-file pairs.json "论文.docx"
 ## 段落操作
 
 ```bash
-# 插入一段（支持 --text-file 从文件读入）
+# 插入一段（支持 --text-file 从文件读入，--rules 自定义样式）
 python cli.py insert-paragraph --after-text "锚定文字" --text "新段" --style body "论文.docx"
 python cli.py insert-paragraph --after 43 --text "新段" "论文.docx"
 python cli.py insert-paragraph --after-text "锚定" --text-file new_para.txt "论文.docx"
+python cli.py insert-paragraph --after-text "锚定" --text "新段" --rules my_rules.yaml "论文.docx"
 
 # 批量插入多段（从后往前，防索引漂移；支持 --after-text）
 python cli.py write-paragraphs --after 43 --data '[{"text":"第一段","style":"body"},{"text":"第二段","style":"body"}]' "论文.docx"
@@ -138,15 +143,20 @@ python cli.py delete-paragraph --by-text "要删除的段落文字" "论文.docx
 ## 插入元素
 
 ```bash
-# 图片
+# 图片（--width 单位 cm，默认 80% 页面宽度）
 python cli.py insert-image --after-text "锚定" --image "fig.png" --width 12 --caption "图3-1 标题" "论文.docx"
+python cli.py insert-image --after 45 --image "fig.png" "论文.docx"
 
-# 替换已有图片
+# 替换已有图片（三种定位方式：--caption / --paragraph / --media）
 python cli.py replace-image --caption "图3-1 标题" --image "new.png" "论文.docx"
+python cli.py replace-image --paragraph 45 --image "new.png" "论文.docx"
+python cli.py replace-image --media "image2.png" --image "new.png" "论文.docx"
 
-# 表格
+# 表格（--data 直接传 JSON，--data-file 从文件读取）
 python cli.py insert-table --after-text "锚定" --data '[["列1","列2"],["值1","值2"]]' "论文.docx"
+python cli.py insert-table --after-text "锚定" --data-file data.json "论文.docx"
 python cli.py replace-table --index 2 --data '[["列1","列2"],["值1","值2"]]' "论文.docx"
+python cli.py replace-table --index 2 --data-file data.json "论文.docx"
 
 # 公式（全部 save_zip，可随时插入；支持 --after-text）
 python cli.py insert-formulas --json formulas.json "论文.docx"
@@ -161,11 +171,17 @@ python cli.py delete-comments "论文.docx"
 
 ```bash
 python cli.py assign-styles "论文.docx"                  # 样式识别+分配
+python cli.py assign-styles --preset gb-academic "论文.docx"   # GB/T 7713.2 字号
+python cli.py assign-styles --rules custom.yaml "论文.docx"    # 自定义规则
 python cli.py fix-format "论文.docx"                    # 综合修复（样式+页面+引用）
+python cli.py fix-format --preset gb-academic --rules custom.yaml "论文.docx"
 python cli.py fix-page-setup "论文.docx"                # 仅修复页面设置
-python cli.py set-format --by-text "标题" --style h1 "论文.docx"        # 手动设样式（单段）
+python cli.py fix-page-setup --rules custom.yaml "论文.docx"
+python cli.py set-format --by-text "标题" --style h1 "论文.docx"        # 内容定位（单段）
+python cli.py set-format --paragraph 15 --style h1 "论文.docx"         # 索引定位（单段）
 python cli.py set-format --start 10 --end 20 --style h1 "论文.docx"     # 范围模式（多段）
 python cli.py set-format --target headings --style h1 "论文.docx"       # 批量目标（headings|body）
+python cli.py set-format --by-text "标题" --style h1 --rules custom.yaml "论文.docx"
 python cli.py apply-template --template "学校模板.docx" "论文.docx"     # 套用模板样式
 ```
 
@@ -173,9 +189,11 @@ python cli.py apply-template --template "学校模板.docx" "论文.docx"     # 
 
 ```bash
 python cli.py set-page-setup --width 21 --height 29.7 --margin-top 2.5 --margin-bottom 2.5 --margin-left 2.5 --margin-right 2.5 "论文.docx"
-python cli.py set-header --text "XX大学毕业论文" "论文.docx"
+python cli.py set-header --text "XX大学毕业论文" --font "宋体" --size 9 "论文.docx"
 python cli.py set-footer --page-number "论文.docx"
+python cli.py set-footer --text "第 " --page-number --align center --font "宋体" --size 9 "论文.docx"
 python cli.py insert-page-break --after-text "章末" "论文.docx"
+python cli.py insert-page-break --after 42 "论文.docx"
 python cli.py renumber-captions "论文.docx"         # 图/表编号修正（推荐）
 python cli.py renumber-figures "论文.docx"          # 已弃用，请用 renumber-captions
 ```
@@ -188,6 +206,7 @@ python cli.py list-references "论文.docx"                 # 参考文献列表
 python cli.py list-references --verify "论文.docx"       # 引用一致性验证（未引用/未定义/顺序异常）
 python cli.py renumber-references "论文.docx" -o out.docx
 python cli.py add-reference --text "[1] 作者. 标题..." "论文.docx"
+python cli.py add-reference --text "[3] 作者. 标题..." --position 3 "论文.docx"
 python cli.py remove-reference --number 3 "论文.docx"
 ```
 
@@ -195,7 +214,7 @@ python cli.py remove-reference --number 3 "论文.docx"
 
 ```bash
 python cli.py create "论文.docx" --preset gb-academic
-python cli.py create "论文.docx" --from-template "学校模板.docx"
+python cli.py create "模板.docx" --from-template "学校模板.docx" -o "论文.docx"
 ```
 
 ## 导出
@@ -214,6 +233,7 @@ python cli.py extract-text "论文.docx" -o full.json                   # 全文
 python cli.py extract-text "论文.docx" --start 10 --end 50 -o part.json  # 段落范围
 python cli.py extract-text "论文.docx" --section "第3章" -o ch3.json      # 限定章节
 python cli.py extract-rules "论文.docx"                                   # 样式定义（字体/字号/行距）
+python cli.py extract-rules "论文.docx" -o rules.yaml                    # 输出到 YAML 文件
 ```
 
 ## 内容定位参数
@@ -222,6 +242,7 @@ python cli.py extract-rules "论文.docx"                                   # �
 |------|---------|------|
 | `--by-text "子串"` | replace-text / replace-inline / delete-paragraph / set-format / format-inline | 按段落实质内容查找 |
 | `--after-text "子串"` | insert-paragraph / insert-image / insert-table / insert-page-break / write-paragraphs / insert-formula | 在匹配段落后插入 |
+| `--after N` | insert-paragraph / insert-image / insert-table / insert-page-break / write-paragraphs / insert-formula | 索引定位（insert-formulas 的位置在 JSON 中指定） |
 | `--old / --new` | replace-inline | 段内查找替换 |
 | `--target` | format-inline | 定位要改格式的子串 |
 
