@@ -28,8 +28,10 @@ def register(subparsers):
     # 公式
     p = subparsers.add_parser('insert-formula', help='插入 LaTeX 公式')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--after', type=int, required=True, help='在该段落索引之后插入')
-    p.add_argument('--latex', required=True, help='LaTeX 公式字符串')
+    p.add_argument('--after', type=int, default=None, help='在该段落索引之后插入')
+    p.add_argument('--after-text', help='在此文本的段落后插入（内容定位，优先于 --after）')
+    p.add_argument('--latex', help='LaTeX 公式字符串')
+    p.add_argument('--latex-file', help='从文件读取 LaTeX 公式（解决 PowerShell 管道符问题）')
     p.add_argument('--number', help='公式编号，如 (4.1)')
     add_common_args(p)
 

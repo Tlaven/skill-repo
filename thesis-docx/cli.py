@@ -158,9 +158,11 @@ def run_command(args):
         'search': lambda: lib_search.search(doc, query=getattr(args, 'query', None), query_file=getattr(args, 'query_file', None), regex=getattr(args, 'regex', False), writing_style=getattr(args, 'writing_style', False), chapter=getattr(args, 'chapter', None), section=getattr(args, 'section', None), context=getattr(args, 'context', 0), limit=getattr(args, 'limit', 20)),
         'search-by-style': lambda: lib_search.search_by_style(doc, args.style),
         'search-format': lambda: lib_search.search_format(doc, target=getattr(args, 'target', 'all')),
-        'detect-revisions': lambda: _detect_revisions(doc),
-        'accept-revisions': lambda: _accept_revisions(doc, args),
+        'detect-revisions': lambda: _detect_revisions(doc, args),
+        'accept-revisions': lambda: _accept_revisions_range(doc, args),
         'reject-revisions': lambda: _reject_revisions(doc, args),
+        'accept-revision': lambda: _accept_revision(doc, args),
+        'reject-revision': lambda: _reject_revision(doc, args),
         'replace-text': lambda: lib_edit.replace_text(doc, args.paragraph, args.text, output=_out, backup=_bak),
         'replace-inline': lambda: lib_edit.replace_inline(doc, args.paragraph, args.old,
             '' if getattr(args, 'delete', False) else args.new,
@@ -263,20 +265,40 @@ def _cmd_insert_formulas(doc, args):
 #   list-references --verify → 引用一致性验证
 
 
-def _detect_revisions(doc):
+def _detect_revisions(doc, args):
     from lib.detector import detect_revisions
-    return detect_revisions(doc)
+    result = detect_revisions(doc)
+    if getattr(args, 'summary', False):
+        result["data"] = {"summary": result["data"]["summary"]}
+    return result
 
 
-def _accept_revisions(doc, args):
+def _accept_revisions_range(doc, args):
+    start = getattr(args, 'start', None)
+    end = getattr(args, 'end', None)
+    if start is None or end is None:
+        return {"error": "必须指定 --start 和 --end 段落范围参数"}
     from lib.utils import get_output_path
+    from lib.reviser import _process_para, _find_para_elem
     output_path = get_output_path(doc, output=args.output, backup=args.backup)
-    doc.accept_all_revisions()
-    doc.save_zip(output_path)
+    count = 0
+    for idx in range(start, end + 1):
+        try:
+            p = _find_para_elem(doc, idx)
+            ins_list = p.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ins')
+            del_list = p.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}del')
+            if ins_list or del_list:
+                _process_para(p, "accept")
+                count += len(ins_list) + len(del_list)
+        except IndexError:
+            break
+    doc.save(output_path)
     from lib.detector import detect_revisions
     after = detect_revisions(doc)
     return {
         "action": "accepted",
+        "range": [start, end],
+        "accepted_count": count,
         "output": output_path,
         "revisions_remaining": after["summary"]["total_revisions"],
     }
@@ -286,7 +308,7 @@ def _reject_revisions(doc, args):
     from lib.utils import get_output_path
     output_path = get_output_path(doc, output=args.output, backup=args.backup)
     doc.reject_all_revisions()
-    doc.save_zip(output_path)
+    doc.save(output_path)
     from lib.detector import detect_revisions
     after = detect_revisions(doc)
     return {
@@ -296,8 +318,31 @@ def _reject_revisions(doc, args):
     }
 
 
+def _accept_revision(doc, args):
+    from lib.utils import get_output_path
+    output_path = get_output_path(doc, output=args.output, backup=args.backup)
+    result = doc.accept_revision(args.para, args.match)
+    if result.get("accepted"):
+        doc.save(output_path)
+    result["output"] = output_path
+    return result
+
+
+def _reject_revision(doc, args):
+    from lib.utils import get_output_path
+    output_path = get_output_path(doc, output=args.output, backup=args.backup)
+    result = doc.reject_revision(args.para, args.match)
+    if result.get("rejected"):
+        doc.save(output_path)
+    result["output"] = output_path
+    return result
+
+
 def main():
     import io
+    # Windows + PowerShell: 必须把 stdout 包装为 UTF-8，否则管道捕获会丢输出。
+    # 对 python -c "..." 内联写法，需额外加：
+    #   sys.stdout.reconfigure(encoding='utf-8')
     if sys.platform == 'win32' and hasattr(sys.stdout, 'buffer'):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
@@ -339,6 +384,14 @@ def main():
     if args.command in ('replace-text', 'insert-paragraph') and not getattr(args, 'text', None):
         json_output({"error": "请提供 --text 或 --text-file"}, args.command); sys.exit(1)
 
+    # --latex-file
+    latex_file = getattr(args, 'latex_file', None)
+    if latex_file:
+        with open(latex_file, 'r', encoding='utf-8') as f:
+            args.latex = f.read().strip()
+        if not args.latex:
+            json_output({"error": "--latex-file 文件内容为空"}, args.command); sys.exit(1)
+
     # --data-file（解决 PowerShell 双引号被吞的问题）
     DATA_COMMANDS = ('insert-table', 'replace-table', 'write-paragraphs')
     data_file = getattr(args, 'data_file', None)
@@ -354,9 +407,17 @@ def main():
             json_output({"error": "请提供 --data 或 --data-file"}, args.command); sys.exit(1)
 
     AFTER_TEXT_COMMANDS = ('insert-paragraph', 'insert-image', 'insert-table', 'insert-page-break', 'write-paragraphs', 'insert-formula')
+    after_text = getattr(args, 'after_text', None) if hasattr(args, 'after_text') else None
+    if after_text and args.command in AFTER_TEXT_COMMANDS:
+        from lib.core import ThesisDoc as _TD
+        _tmp = _TD(args.file)
+        idx = _tmp.find_paragraph_by_text(after_text)
+        if idx is None:
+            json_output({"error": f"未找到包含 \"{after_text}\" 的段落"}, args.command); sys.exit(1)
+        args.after = idx
     if args.command in AFTER_TEXT_COMMANDS:
         if not hasattr(args, 'after') or args.after is None:
-            json_output({"error": "请提供 --after <索引>"}, args.command); sys.exit(1)
+            json_output({"error": "请提供 --after <索引> 或 --after-text <文本子串>"}, args.command); sys.exit(1)
 
     # --by-text（内容定位，替代 --paragraph）
     BY_TEXT_COMMANDS = ('replace-text', 'replace-inline', 'delete-paragraph', 'set-format', 'format-inline')

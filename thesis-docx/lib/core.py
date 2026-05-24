@@ -196,7 +196,7 @@ class ThesisDoc:
                     img_info["caption_para_index"] = idx
                     return
                 if caption_pattern.match(text) and len(text) <= 60:
-                    if best_match is None or len(text) < len(best_match[0]):
+                    if best_match is None or len(text) > len(best_match[0]):
                         best_match = (text, idx)
         if best_match:
             img_info["nearby_caption"] = best_match[0]
@@ -255,6 +255,17 @@ class ThesisDoc:
     def raw_paragraphs(self):
         return self.doc.paragraphs
 
+    @property
+    def body(self):
+        """文档 body 元素（XML 操作入口）。"""
+        return self.doc.element.body
+
+    @property
+    def raw_tables(self):
+        return self.doc.tables
+
+    # ── 修订操作 ──
+
     def accept_all_revisions(self):
         """接受全部修订标记（插入保留、删除移除）。"""
         from lib.reviser import accept_all_revisions as _accept
@@ -267,9 +278,48 @@ class ThesisDoc:
         _reject(self)
         self._build_index()
 
-    @property
-    def raw_tables(self):
-        return self.doc.tables
+    def accept_revision(self, para_index, match_text):
+        """接受一条修订（按段落索引 + 文本内容匹配）。"""
+        from lib.reviser import accept_revision as _accept_one
+        result = _accept_one(self, para_index, match_text)
+        self._build_index()
+        return result
+
+    def reject_revision(self, para_index, match_text):
+        """拒绝一条修订（按段落索引 + 文本内容匹配）。"""
+        from lib.reviser import reject_revision as _reject_one
+        result = _reject_one(self, para_index, match_text)
+        self._build_index()
+        return result
+
+    # ── 段落操作 ──
+
+    def set_paragraph_text(self, index, text):
+        """清空段落现有所有 run，写入一段纯文本。保留段落样式。"""
+        if index < 0 or index >= len(self.raw_paragraphs):
+            raise IndexError(f"段落索引 {index} 超出范围 (0-{len(self.raw_paragraphs)-1})")
+        from lxml import etree
+        W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        w = lambda tag: f'{{{W_NS}}}{tag}'
+        para = self.raw_paragraphs[index]
+        p_elem = para._element
+        for r in list(p_elem.findall(w('r'))):
+            p_elem.remove(r)
+        for ins in list(p_elem.findall(w('ins'))):
+            p_elem.remove(ins)
+        for d in list(p_elem.findall(w('del'))):
+            p_elem.remove(d)
+        run = etree.SubElement(p_elem, w('r'))
+        t = etree.SubElement(run, w('t'))
+        t.text = text
+        t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
+
+    def verify_index(self):
+        """校验 _para_index 与 raw_paragraphs 长度一致。不一致时自动重建。"""
+        if len(self._para_index) != len(self.raw_paragraphs):
+            self._build_index()
+            return False
+        return True
 
     def find_section(self, title=None, level=None, index=None):
         def _search(nodes, results):
@@ -306,9 +356,19 @@ class ThesisDoc:
         return None
 
     def save(self, output_path=None):
-        path = output_path or self.filepath
-        self.doc.save(path)
-        return path
+        """保存文档。默认使用 save_zip（安全保留公式/图片），
+        而非 python-docx 原生的 doc.save()（会丢失 OMML 公式和插入的图片）。"""
+        return self.save_zip(output_path)
+
+    # ── 上下文管理器 ──
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # 不自动 save，调用方必须显式 save()。
+        # 这样在 with 块内可多次操作，最后统一保存。
+        pass
 
     def _build_rels_xml(self):
         """从内存中的 rels 构建 word/_rels/document.xml.rels XML。"""

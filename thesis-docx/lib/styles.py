@@ -118,7 +118,9 @@ ROLE_TO_STYLE = {
 }
 
 STYLE_NAME_TO_WORD = {
-    "h1": "Heading 1", "h2": "Heading 2", "h3": "Heading 3",
+    "h1": "Heading 1", "heading 1": "Heading 1", "Heading 1": "Heading 1", "标题 1": "Heading 1",
+    "h2": "Heading 2", "heading 2": "Heading 2", "Heading 2": "Heading 2", "标题 2": "Heading 2",
+    "h3": "Heading 3", "heading 3": "Heading 3", "Heading 3": "Heading 3", "标题 3": "Heading 3",
     "body": "Body Text",
     "caption": "Caption", "caption_figure": "Caption", "caption_table": "Caption",
     "reference": "Normal",

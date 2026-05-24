@@ -22,6 +22,16 @@ type: skill
 - 纯文本处理（无格式要求） → 直接文本工具更快
 - 初次写作（非修改已有文档） → 用 Word/WPS
 
+## 文件存放规则
+
+| 文件类型 | 存放到 |
+|---------|-------|
+| Python 操作脚本 | `scripts/` |
+| 图表导出图 | 论文项目 `diagrams/` |
+| LaTeX 临时文件 | `scripts/` |
+
+不往 skill 根目录写过程文件。详见 `lessons.md` → 文件存放约定。
+
 ## Core Pattern
 
 ```
@@ -91,6 +101,9 @@ with ThesisEditor("论文.docx") as editor:
 ```
 
 ## Common Mistakes
+
+### read-full 误用
+`read-full --section "节名"` 的输出仍然是全文地图（~3k tokens），只是在结构中高亮了该节。想只读某节内容要用 `read-section --title "节名" --deep`（≤3000字，含表格/图片/公式）。
 
 ### 段落索引漂移
 `insert-paragraph` / `delete-paragraph` 后所有段落索引立即偏移。

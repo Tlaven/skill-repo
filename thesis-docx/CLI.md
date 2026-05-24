@@ -18,7 +18,8 @@ type: reference
 # 全文地图（~3k tokens，含图表公式标注）
 python cli.py read-full "论文.docx"
 
-# 展开某一节全文（支持 --range 指定段落范围）
+# 全文地图中高亮某一节（注意：仍然输出全文，不是只读该节）
+# 想只读某节 → read-section --title "节名" --deep
 python cli.py read-full --section "节名" "论文.docx"
 python cli.py read-full --range 10 30 "论文.docx"
 
@@ -94,9 +95,9 @@ python cli.py search-format --target headings "论文.docx"    # 仅检查标题
 python cli.py search-format --target body "论文.docx"        # 仅检查正文
 
 python cli.py detect-revisions "论文.docx"               # 检测修订/彩色文字/高亮
-python cli.py accept-revisions "论文.docx"                # 接受全部修订（插入保留、删除移除）
-python cli.py accept-revisions "论文.docx" -o 新论文.docx  # 接受后另存
-python cli.py accept-revisions "论文.docx" --backup       # 接受前自动备份
+python cli.py accept-revisions --start 10 --end 50 "论文.docx"  # 接受指定段落范围的修订
+python cli.py accept-revisions --start 10 --end 50 -o 新论文.docx
+python cli.py accept-revisions --start 10 --end 50 --backup
 python cli.py reject-revisions "论文.docx"                # 拒绝全部修订（插入移除、删除恢复）
 ```
 
@@ -168,9 +169,10 @@ python cli.py insert-table --after 45 --data-file data.json "论文.docx"
 python cli.py replace-table --index 2 --data '[["列1","列2"],["值1","值2"]]' "论文.docx"
 python cli.py replace-table --index 2 --data-file data.json "论文.docx"
 
-# 公式（全部 save_zip，可随时插入）
+# 公式（全部 save_zip，可随时插入；--after-text 替代 --after 防索引漂移）
 python cli.py insert-formulas --json formulas.json "论文.docx"
 python cli.py insert-formula --after 50 --latex "E=mc^2" --number "(3.1)" "论文.docx"
+python cli.py insert-formula --after-text "锚定文字" --latex-file formula.txt --number "(3.2)" "论文.docx"
 
 # 删除批注
 python cli.py delete-comments "论文.docx"
@@ -249,7 +251,8 @@ python cli.py extract-rules "论文.docx" -o rules.yaml                    # 输
 | 参数 | 适用命令 | 说明 |
 |------|---------|------|
 | `--by-text "子串"` | replace-text / replace-inline / delete-paragraph / set-format / format-inline | 按段落实质内容查找 |
-| `--after N` | insert-paragraph / insert-image / insert-table / insert-page-break / write-paragraphs / insert-formula | 索引定位（insert-formulas 的位置在 JSON 中指定） |
+| `--after N` | insert-paragraph / insert-image / insert-table / insert-page-break / write-paragraphs / insert-formula | 索引定位（仅当 `--after-text` 未用时） |
+| `--after-text "子串"` | insert-paragraph / insert-image / insert-table / insert-formula / write-paragraphs / insert-page-break | 内容定位，优先于 `--after`（防索引漂移） |
 | `--old / --new` | replace-inline | 段内查找替换 |
 | `--target` | format-inline | 定位要改格式的子串 |
 
@@ -271,7 +274,6 @@ python cli.py extract-rules "论文.docx" -o rules.yaml                    # 输
 | `batch_fix.py` / `batch_fix2.py` | 多步批量修复（页面设置/编号/占位符/段落删除） |
 | `check_abbrev.py` | 扫描英文简称首次出现是否符合全称规范 |
 | `detect_colors_revisions.py` | 已迁移为 CLI 命令 `detect-revisions`，见上方 |
-| `lib/reviser.py` | accept/reject-revisions 的底层实现（accept_all_revisions / reject_all_revisions） |
 
 ## 架构参考
 

@@ -180,6 +180,27 @@ class ThesisEditor:
         self.doc._build_index()
         return result
 
+    def accept_revisions(self, start, end):
+        from lib.reviser import _process_para, _find_para_elem
+        count = 0
+        for idx in range(start, end + 1):
+            try:
+                p = _find_para_elem(self.doc, idx)
+                ins_list = p.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ins')
+                del_list = p.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}del')
+                if ins_list or del_list:
+                    _process_para(p, "accept")
+                    count += len(ins_list) + len(del_list)
+            except IndexError:
+                break
+        from lib.detector import detect_revisions
+        after = detect_revisions(self.doc)
+        return {"accepted": count, "revisions_remaining": after["summary"]["total_revisions"]}
+
+    def detect_revisions(self):
+        from lib.detector import detect_revisions
+        return detect_revisions(self.doc)
+
     def set_format(self, style, paragraph=None, start=None, end=None, target=None, rules=None):
         from lib.editor import set_format
         return set_format(self.doc, style=style, paragraph=paragraph, start=start,

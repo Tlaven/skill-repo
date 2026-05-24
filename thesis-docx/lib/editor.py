@@ -11,13 +11,22 @@ from lib.styles import STYLE_NAME_TO_WORD
 from lib.fixer import clear_direct_formatting, ensure_word_styles
 
 
+def _clear_para_runs(para):
+    """移除段落的所有 run、修订插入（ins）和修订删除（del）元素。"""
+    from lxml import etree as _et
+    W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+    p_elem = para._element
+    for tag in (f'{{{W}}}r', f'{{{W}}}ins', f'{{{W}}}del'):
+        for child in list(p_elem.findall(tag)):
+            p_elem.remove(child)
+
+
 def replace_text(doc, paragraph, text, output=None, backup=False):
     """替换段落文字。保持段落样式不变。"""
     output_path = get_output_path(doc, output=output, backup=backup)
     para = doc.raw_paragraphs[paragraph]
     old_text = para.text or ""
-    for run in para.runs:
-        run._element.getparent().remove(run._element)
+    _clear_para_runs(para)
     para.add_run(text)
     doc.save_zip(output_path)
     return {"paragraph": paragraph, "old_text": old_text, "new_text": text, "output": output_path}
@@ -66,8 +75,7 @@ def replace_batch_by_index(doc, pairs_file, output=None, backup=False):
             continue
         para = doc.raw_paragraphs[idx]
         old_text = para.text or ""
-        for run in para.runs:
-            run._element.getparent().remove(run._element)
+        _clear_para_runs(para)
         para.add_run(new_text)
         details.append({"paragraph": idx, "old_chars": len(old_text), "new_chars": len(new_text)})
     doc.save_zip(output_path)
@@ -82,10 +90,8 @@ def _replace_in_paragraph(para, old_text, new_text):
     if old_text not in full_text:
         return False
     new_full = full_text.replace(old_text, new_text)
+    _clear_para_runs(para)
     p_element = para._element
-    for run in para.runs:
-        if run._element.getparent() is p_element:
-            p_element.remove(run._element)
     new_run_elem = etree.SubElement(p_element, f'{{{NSMAP["w"]}}}r')
     t = etree.SubElement(new_run_elem, f'{{{NSMAP["w"]}}}t')
     t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
@@ -124,8 +130,7 @@ def replace_inline(doc, paragraph, old, new, output=None, backup=False,
     if not replaced:
         doc_para = doc.paragraphs[paragraph]
         old_full = doc_para["text"]
-        for r in para.runs:
-            r._element.getparent().remove(r._element)
+        _clear_para_runs(para)
         para.add_run(old_full.replace(old, new, 1))
     doc.save_zip(output_path)
     return {"paragraph": paragraph, "old_substr": old, "new_substr": new,
@@ -331,10 +336,9 @@ def replace_table(doc, index, data, output=None, backup=False):
         for col_idx, cell_text in enumerate(row_data):
             if col_idx < num_cols:
                 cell = table.cell(row_idx, col_idx)
-                for paragraph in cell.paragraphs:
-                    for run in paragraph.runs:
-                        run._element.getparent().remove(run._element)
-                    paragraph._element.clear()
+                for cell_para in cell.paragraphs:
+                    _clear_para_runs(cell_para)
+                    cell_para._element.clear()
                     new_run = etree.SubElement(paragraph._element, f'{{{NSMAP["w"]}}}r')
                     t = etree.SubElement(new_run, f'{{{NSMAP["w"]}}}t')
                     t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
@@ -418,6 +422,9 @@ def insert_image(doc, after, image, width=None, caption=None, output=None, backu
     output_path = get_output_path(doc, output=output, backup=backup)
     if not os.path.exists(image):
         return {"error": f"图片文件不存在: {image}"}
+    ext = os.path.splitext(image)[1].lower()
+    if ext == '.svg':
+        return {"error": f"不支持 SVG 格式图片（python-docx 限制）。请将图片转换为 PNG/JPEG 后再插入。"}
     section = doc.doc.sections[0]
     page_width_cm = section.page_width / 360000
     margin_left_cm = section.left_margin / 360000
@@ -506,10 +513,13 @@ def replace_image(doc, image, caption=None, paragraph=None, media=None, output=N
 
 def _resolve_image_target(doc, caption=None, paragraph=None, media=None):
     if caption:
+        normalized = caption.replace(' ', '').replace('\u00a0', '')
         for img in doc.images:
             nc = img.get("nearby_caption")
-            if nc and caption in nc:
-                rid = img["r_id"]
+            if nc:
+                nc_norm = nc.replace(' ', '').replace('\u00a0', '')
+                if normalized in nc_norm or nc_norm in normalized:
+                    rid = img["r_id"]
                 entry = _rid_to_media_entry(doc, rid)
                 if entry:
                     return entry, {"method": f"caption '{caption}'", "size_bytes": img.get("size_bytes")}

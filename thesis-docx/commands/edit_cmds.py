@@ -52,7 +52,8 @@ def register(subparsers):
 
     p = subparsers.add_parser('insert-paragraph', help='插入段落')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--after', type=int, required=True, help='在哪个段落之后插入（索引）')
+    p.add_argument('--after', type=int, default=None, help='在哪个段落之后插入（索引）')
+    p.add_argument('--after-text', help='在此文本的段落后插入（内容定位，优先于 --after）')
     p.add_argument('--text', help='段落文字')
     p.add_argument('--text-file', help='从文件读取段落文字')
     p.add_argument('--style', default='body', help='Word 样式 (body|h1|h2|h3|caption|reference)')
@@ -61,7 +62,8 @@ def register(subparsers):
 
     p = subparsers.add_parser('write-paragraphs', help='批量插入多段（从后往前，防索引漂移）')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--after', type=int, required=True, help='在哪个段落之后插入（索引）')
+    p.add_argument('--after', type=int, default=None, help='在哪个段落之后插入（索引）')
+    p.add_argument('--after-text', help='在此文本的段落后插入（内容定位，优先于 --after）')
     p.add_argument('--data', help='JSON 数组（与 --data-file 二选一）')
     p.add_argument('--data-file', help='从文件读取段落数组 (JSON)')
     add_common_args(p)
@@ -92,14 +94,16 @@ def register(subparsers):
 
     p = subparsers.add_parser('insert-table', help='在段落后插入表格')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--after', type=int, required=True, help='在哪个段落之后插入（索引）')
+    p.add_argument('--after', type=int, default=None, help='在哪个段落之后插入（索引）')
+    p.add_argument('--after-text', help='在此文本的段落后插入（内容定位，优先于 --after）')
     p.add_argument('--data', help='JSON二维数组（与 --data-file 二选一）')
     p.add_argument('--data-file', help='从文件读取表格数据 (JSON)')
     add_common_args(p)
 
     p = subparsers.add_parser('insert-image', help='在段落后插入图片')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--after', type=int, required=True, help='在哪个段落之后插入（索引）')
+    p.add_argument('--after', type=int, default=None, help='在哪个段落之后插入（索引）')
+    p.add_argument('--after-text', help='在此文本的段落后插入（内容定位，优先于 --after）')
     p.add_argument('--image', required=True, help='图片文件路径')
     p.add_argument('--width', type=float, help='图片宽度 (cm)')
     p.add_argument('--caption', help='图片标题')
@@ -139,12 +143,29 @@ def register(subparsers):
 
     p = subparsers.add_parser('detect-revisions', help='检测修订、彩色文字、高亮等异常标记')
     p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--summary', action='store_true', help='仅输出修订统计摘要，不显示逐条明细')
     add_common_args(p)
 
-    p = subparsers.add_parser('accept-revisions', help='接受全部修订（插入保留、删除移除）')
+    p = subparsers.add_parser('accept-revisions', help='接受指定段落范围的修订（必须指定 --start 和 --end）')
     p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--start', type=int, required=True, help='起始段落索引')
+    p.add_argument('--end', type=int, required=True, help='终止段落索引')
     add_common_args(p)
 
     p = subparsers.add_parser('reject-revisions', help='拒绝全部修订（插入移除、删除恢复）')
     p.add_argument('file', help='输入 .docx 文件')
     add_common_args(p)
+
+    p = subparsers.add_parser('accept-revision', help='接受一条修订（按段落 + 文本匹配）')
+    p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--para', type=int, required=True, help='段落索引')
+    p.add_argument('--match', required=True, help='修订文本内容（子串匹配）')
+    add_common_args(p)
+
+    p = subparsers.add_parser('reject-revision', help='拒绝一条修订（按段落 + 文本匹配）')
+    p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--para', type=int, required=True, help='段落索引')
+    p.add_argument('--match', required=True, help='修订文本内容（子串匹配）')
+    add_common_args(p)
+
+
