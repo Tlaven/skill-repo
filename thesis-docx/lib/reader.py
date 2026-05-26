@@ -136,9 +136,10 @@ def read_section(doc, title=None, level=None, index=None, deep=False, verify=Fal
     """
     if deep:
         result = _read_section_deep(doc, title=title, level=level, index=index)
-        if "error" in result or verify:
+        if "error" in result:
             return result
-        result["verify"] = _verify_section_body(doc, result.get("section", {}))
+        if verify:
+            result["verify"] = _verify_section_body(doc, result.get("section", {}))
         return result
     section = doc.find_section(title=title, level=level, index=index)
     if section is None:
