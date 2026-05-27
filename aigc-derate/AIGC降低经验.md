@@ -8,37 +8,10 @@
 
 ## 工具链
 
-### thesis-docx CLI（核心工具）
+### editing-thesis-docx CLI（核心工具）
 
-```bash
-# 读取文档结构（获取段落索引）
-python cli.py read-structure "论文.docx"
-
-# 读取统计
-python cli.py read-stats "论文.docx"
-
-# 按章节读内容
-python cli.py read-section --title "章节名" "论文.docx"
-
-# 搜索关键词
-python cli.py search --query "关键词" "论文.docx"
-
-# 替换整段
-python cli.py replace-text --paragraph N --text "新内容" "论文.docx"
-
-# 批量替换（高效，推荐）
-python cli.py replace-batch-by-index --pairs-file pairs.json "论文.docx"
-# pairs.json 格式: {"43": "新文本", "49": "新文本"}
-
-# AI风格检测
-python cli.py check-style "论文.docx"
-
-# 段落长度检查
-python cli.py check-paragraphs --threshold 200 "论文.docx"
-
-# 备份
-python cli.py replace-batch-by-index --pairs-file pairs.json --backup "论文.docx"
-```
+使用 editing-thesis-docx skill 的 CLI 操作文档。完整命令参考见该 skill 的 CLI.md。
+常用命令：`read-structure`、`read-stats`、`read-section`、`search`、`replace-text`、`replace-batch-by-index`、`check-style`、`check-paragraphs`。
 
 ### 辅助脚本
 

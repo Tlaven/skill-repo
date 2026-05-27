@@ -32,6 +32,7 @@ class ThesisDoc:
         self._build_table_index()
 
     def _build_para_index(self):
+        self._para_index = []
         current_chapter_path = ""
         chapter_counters = {}
         for i, para in enumerate(self.doc.paragraphs):
@@ -139,6 +140,7 @@ class ThesisDoc:
                 i += 1
 
     def _build_image_index(self):
+        self._images = []
         image_rels = {}
         for rel in self.doc.part.rels.values():
             if "image" in rel.reltype:
@@ -206,6 +208,7 @@ class ThesisDoc:
             img_info["caption_para_index"] = None
 
     def _build_table_index(self):
+        self._tables = []
         for idx, table in enumerate(self.doc.tables):
             rows = []
             for row in table.rows:

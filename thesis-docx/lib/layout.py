@@ -120,8 +120,8 @@ def build_chapter_map(doc):
 
 def renumber_figures(doc, output=None, backup=False):
     output_path = get_output_path(doc, output=output, backup=backup)
-    fig_pattern = re.compile(r'(图\s*)(\d+)([-.]\s*)(\d+)')
-    tbl_pattern = re.compile(r'(表\s*)(\d+)([-.]\s*)(\d+)')
+    fig_pattern = re.compile(r'^\s*(图\s*)(\d+)([-.]\s*)(\d+)')
+    tbl_pattern = re.compile(r'^\s*(表\s*)(\d+)([-.]\s*)(\d+)')
     chapter_map = build_chapter_map(doc)
     chapter_fig_counters = {}
     chapter_tbl_counters = {}
@@ -130,19 +130,29 @@ def renumber_figures(doc, output=None, backup=False):
         text = p_info.get("text", "")
         para_idx = p_info["index"]
         para = doc.raw_paragraphs[para_idx]
+        # 只处理 Caption 样式的段落，避免正文中"表4-2展示了…"被误计数
+        if p_info.get("style") != "Caption":
+            continue
         for pattern, counters, label in [
             (fig_pattern, chapter_fig_counters, "图"),
             (tbl_pattern, chapter_tbl_counters, "表"),
         ]:
-            for match in pattern.finditer(text):
+            matches = list(pattern.finditer(text))
+            if not matches:
+                continue
+            current_chapter = chapter_map.get(para_idx, int(matches[0].group(2)))
+            counters.setdefault(current_chapter, 0)
+            counters[current_chapter] += 1
+            new_num = counters[current_chapter]
+            seen_labels = set()
+            for match in matches:
                 old_chapter = int(match.group(2))
                 old_num = int(match.group(4))
-                current_chapter = chapter_map.get(para_idx, old_chapter)
-                counters.setdefault(current_chapter, 0)
-                counters[current_chapter] += 1
-                new_num = counters[current_chapter]
+                old_label = match.group(0)
+                if old_label in seen_labels:
+                    continue
+                seen_labels.add(old_label)
                 if current_chapter != old_chapter or new_num != old_num:
-                    old_label = match.group(0)
                     new_label = f"{match.group(1)}{current_chapter}{match.group(3)}{new_num}"
                     _replace_in_runs(para, old_label, new_label)
                     changes.append({"para_index": para_idx, "old": old_label, "new": new_label})

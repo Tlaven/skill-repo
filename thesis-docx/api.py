@@ -95,10 +95,10 @@ class ThesisEditor:
 
     # ==================== 搜索 ====================
 
-    def search(self, query, regex=False, chapter=None, section=None, context=0, limit=20):
+    def search(self, query=None, regex=False, chapter=None, section=None, context=0, limit=20, writing_style=False):
         from lib.searcher import search
         return search(self.doc, query=query, regex=regex, chapter=chapter,
-                      section=section, context=context, limit=limit)
+                      section=section, context=context, limit=limit, writing_style=writing_style)
 
     def search_by_style(self, style):
         from lib.searcher import search_by_style
@@ -118,15 +118,24 @@ class ThesisEditor:
                 return i
         return None
 
-    def replace_text(self, index, text):
+    def replace_text(self, index=None, text=None, by_text=None):
         self._ensure_backup()
+        if index is None and by_text is not None:
+            index = self._resolve_by_text(by_text)
+            if index is None:
+                return {"error": f"未找到包含 '{by_text}' 的段落"}
+        if index is None:
+            return {"error": "请提供 index 或 by_text"}
         from lib.editor import replace_text
         result = replace_text(self.doc, paragraph=index, text=text)
+        self.doc._build_index()
         return self._track_op(result, 'replace-text')
 
     def replace_inline(self, paragraph=None, by_text=None, old=None, new=None,
                        bold=None, font=None, font_east=None, size=None, color=None):
         self._ensure_backup()
+        if paragraph is None and by_text is None:
+            return {"error": "请提供 paragraph 或 by_text"}
         from lib.editor import replace_inline
         if paragraph is None and by_text is not None:
             paragraph = self._resolve_by_text(by_text)
@@ -135,10 +144,14 @@ class ThesisEditor:
         result = replace_inline(self.doc, paragraph=paragraph, old=old, new=new or "",
                               bold=bold, font=font, font_east=font_east,
                               size=size, color=color)
+        self.doc._build_index()
         return self._track_op(result, 'replace-inline')
 
     def format_inline(self, paragraph=None, by_text=None, target=None,
                       bold=None, font=None, font_east=None, size=None, color=None):
+        self._ensure_backup()
+        if paragraph is None and by_text is None:
+            return {"error": "请提供 paragraph 或 by_text"}
         from lib.editor import format_inline
         if paragraph is None and by_text is not None:
             paragraph = self._resolve_by_text(by_text)
@@ -147,12 +160,14 @@ class ThesisEditor:
         result = format_inline(self.doc, paragraph=paragraph, target=target,
                              bold=bold, font=font, font_east=font_east,
                              size=size, color=color)
+        self.doc._build_index()
         return self._track_op(result, 'format-inline')
 
     def replace_batch(self, pairs, chapter=None):
         self._ensure_backup()
         from lib.editor import replace_batch
         result = replace_batch(self.doc, pairs=pairs, chapter=chapter)
+        self.doc._build_index()
         return self._track_op(result, 'replace-batch')
 
     def replace_batch_by_index(self, pairs):
@@ -164,11 +179,12 @@ class ThesisEditor:
         try:
             from lib.editor import replace_batch_by_index
             result = replace_batch_by_index(self.doc, pairs_file=tmp_path)
+            self.doc._build_index()
             return self._track_op(result, 'replace-batch-by-index')
         finally:
             os.unlink(tmp_path)
 
-    def insert_paragraph(self, after, text=None, style='body', after_text=None):
+    def insert_paragraph(self, after=None, text=None, style='body', after_text=None):
         self._ensure_backup()
         if after is None and after_text is not None:
             after = self._resolve_by_text(after_text)
@@ -179,7 +195,7 @@ class ThesisEditor:
         self.doc._build_index()
         return self._track_op(result, 'insert-paragraph')
 
-    def write_paragraphs(self, after, data, after_text=None):
+    def write_paragraphs(self, after=None, data=None, after_text=None):
         self._ensure_backup()
         if after is None and after_text is not None:
             after = self._resolve_by_text(after_text)
@@ -226,6 +242,7 @@ class ThesisEditor:
         return self._track_op(result, 'move-paragraph')
 
     def accept_revisions(self, start, end):
+        self._ensure_backup()
         from lib.reviser import _process_para, _find_para_elem
         count = 0
         for idx in range(start, end + 1):
@@ -238,6 +255,7 @@ class ThesisEditor:
                     count += len(ins_list) + len(del_list)
             except IndexError:
                 break
+        self.doc._build_index()
         from lib.detector import detect_revisions
         after = detect_revisions(self.doc)
         result = {"accepted": count, "revisions_remaining": after["summary"]["total_revisions"]}
@@ -252,6 +270,8 @@ class ThesisEditor:
         from lib.editor import set_format
         result = set_format(self.doc, style=style, paragraph=paragraph, start=start,
                          end=end, target=target, rules=rules)
+        if "error" not in result:
+            self.doc._build_index()
         return self._track_op(result, 'set-format')
 
     def replace_table(self, index, data):
@@ -260,7 +280,7 @@ class ThesisEditor:
         result = replace_table(self.doc, index=index, data=data)
         return self._track_op(result, 'replace-table')
 
-    def insert_table(self, after, data=None, caption=None, three_line=False, after_text=None):
+    def insert_table(self, after=None, data=None, caption=None, three_line=False, after_text=None):
         self._ensure_backup()
         if after is None and after_text is not None:
             after = self._resolve_by_text(after_text)
@@ -277,7 +297,7 @@ class ThesisEditor:
         result = set_table_border(self.doc, index=index, three_line=three_line)
         return self._track_op(result, 'set-table-border')
 
-    def insert_image(self, after, image=None, width=None, caption=None, after_text=None):
+    def insert_image(self, after=None, image=None, width=None, caption=None, after_text=None):
         self._ensure_backup()
         if after is None and after_text is not None:
             after = self._resolve_by_text(after_text)
@@ -454,6 +474,7 @@ class ThesisEditor:
             else:
                 details.append({"anchor": anchor[:30], "status": "error", "error": result["error"]})
 
+        self.doc._build_index()
         result = {"total_replaced": total, "details": details}
         return self._track_op(result, 'rewrite-paragraphs')
 
@@ -490,7 +511,7 @@ class ThesisEditor:
                              margin_left=margin_left, margin_right=margin_right)
         return self._track_op(result, 'set-page-setup')
 
-    def insert_page_break(self, after, after_text=None):
+    def insert_page_break(self, after=None, after_text=None):
         if after is None and after_text is not None:
             after = self._resolve_by_text(after_text)
             if after is None:
@@ -543,8 +564,14 @@ class ThesisEditor:
 
     # ==================== 公式 ====================
 
-    def insert_formula(self, after, latex=None, number=None):
+    def insert_formula(self, after=None, latex=None, number=None, after_text=None):
         self._ensure_backup()
+        if after is None and after_text is not None:
+            after = self._resolve_by_text(after_text)
+            if after is None:
+                return {"error": f"未找到包含 '{after_text}' 的段落"}
+        if after is None:
+            return {"error": "请提供 after 或 after_text"}
         from lib.formula import insert_formula
         result = insert_formula(self.doc, after_index=after, latex_str=latex, eq_number=number)
         self.doc._build_index()
@@ -627,13 +654,14 @@ class ThesisEditor:
     # ==================== 安全 ====================
 
     def _ensure_backup(self):
-        """第一次破坏性操作前自动保存 .bak 备份。"""
+        """第一次破坏性操作前自动保存带时间戳的备份。"""
         if not self._auto_backup or self._backup_done:
             return
         import shutil
-        backup_path = self.filepath + '.bak'
-        if not os.path.exists(backup_path):
-            shutil.copy2(self.filepath, backup_path)
+        from datetime import datetime
+        ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_path = f"{self.filepath}.{ts}.bak"
+        shutil.copy2(self.filepath, backup_path)
         self._backup_done = True
 
     # ==================== 保存 ====================

@@ -8,9 +8,15 @@
 """
 import json, sys, argparse
 from docx import Document
+from config import CONFIG
 
 
-def detect_colors(docx_path, output_path=None, red_hex='F12828', yellow_hex='F39800'):
+def detect_colors(docx_path, output_path=None, red_hex=None, yellow_hex=None):
+    if red_hex is None:
+        red_hex = CONFIG['red_hex']
+    if yellow_hex is None:
+        yellow_hex = CONFIG['yellow_hex']
+
     doc = Document(docx_path)
     RED = red_hex.upper()
     YELLOW = yellow_hex.upper()
@@ -31,7 +37,8 @@ def detect_colors(docx_path, output_path=None, red_hex='F12828', yellow_hex='F39
                         red_runs.append(t)
                     elif c == YELLOW:
                         yellow_runs.append(t)
-            except Exception:
+            except (AttributeError, TypeError):
+                # 部分运行的 color.rgb 不可访问（主题颜色、继承颜色等）
                 pass
         if red_runs:
             red_paras[i] = {'text': para.text, 'red_samples': red_runs[:5]}
@@ -58,8 +65,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='检测docx中红色/黄色标记文本')
     parser.add_argument('file', help='docx文件路径')
     parser.add_argument('-o', '--output', default='colors.json', help='输出JSON路径')
-    parser.add_argument('--red', default='F12828', help='红色hex值（默认F12828）')
-    parser.add_argument('--yellow', default='F39800', help='黄色hex值（默认F39800）')
+    parser.add_argument('--red', default=CONFIG['red_hex'], help=f"红色hex值（默认{CONFIG['red_hex']}）")
+    parser.add_argument('--yellow', default=CONFIG['yellow_hex'], help=f"黄色hex值（默认{CONFIG['yellow_hex']}）")
     args = parser.parse_args()
 
     detect_colors(args.file, args.output, args.red, args.yellow)

@@ -324,6 +324,11 @@ def set_format(doc, style, paragraph=None, start=None, end=None, target=None, ru
     if not style:
         return {"error": "请指定 --style <name>"}
     word_style = STYLE_NAME_TO_WORD.get(style, style)
+    try:
+        _ = doc.doc.styles[word_style]
+    except KeyError:
+        available = [s.name for s in doc.doc.styles if s.name != 'Normal']
+        return {"error": f"样式 '{word_style}' 不存在于文档中。可选样式: {available[:20]}"}
     ensure_word_styles(doc.doc, {word_style}, rules)
     target_indices = _resolve_format_targets(doc, paragraph=paragraph, start=start, end=end, target=target)
     if isinstance(target_indices, dict) and "error" in target_indices:
@@ -331,10 +336,7 @@ def set_format(doc, style, paragraph=None, start=None, end=None, target=None, ru
     modified = 0
     for para_idx in target_indices:
         para = doc.raw_paragraphs[para_idx]
-        try:
-            para.style = doc.doc.styles[word_style]
-        except KeyError:
-            continue
+        para.style = doc.doc.styles[word_style]
         clear_direct_formatting(para)
         modified += 1
     doc.save_zip(output_path)
@@ -572,6 +574,8 @@ def insert_image(doc, after, image, width=None, caption=None, output=None, backu
     ext = os.path.splitext(image)[1].lower()
     if ext == '.svg':
         return {"error": f"不支持 SVG 格式图片（python-docx 限制）。请将图片转换为 PNG/JPEG 后再插入。"}
+    if ext not in ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tif', '.tiff', '.webp'):
+        return {"error": f"不支持的文件格式 '{ext}'。请使用 PNG/JPEG/GIF/BMP/TIFF/WEBP 格式图片。"}
     section = doc.doc.sections[0]
     page_width_cm = section.page_width / 360000
     margin_left_cm = section.left_margin / 360000

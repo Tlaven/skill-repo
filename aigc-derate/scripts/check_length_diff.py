@@ -8,9 +8,12 @@
 """
 import json, sys, argparse
 from docx import Document
+from config import CONFIG
 
 
-def check_length_diff(old_docx, new_docx, threshold=0.05):
+def check_length_diff(old_docx, new_docx, threshold=None):
+    if threshold is None:
+        threshold = CONFIG['length_diff_threshold']
     old_doc = Document(old_docx)
     new_doc = Document(new_docx)
 
@@ -49,8 +52,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='检查改写前后段落字数偏差')
     parser.add_argument('old_docx', help='改写前备份的docx')
     parser.add_argument('new_docx', help='改写后的docx')
-    parser.add_argument('--threshold', type=float, default=0.05,
-                        help='偏差阈值（默认0.05=5%%）')
+    parser.add_argument('--threshold', type=float, default=CONFIG['length_diff_threshold'],
+                        help=f"偏差阈值（默认{CONFIG['length_diff_threshold']*100:.0f}%%）")
     parser.add_argument('--json', help='输出JSON结果到文件')
     args = parser.parse_args()
 
