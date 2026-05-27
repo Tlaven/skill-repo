@@ -1,7 +1,7 @@
 """命令通用工具"""
 import argparse
 
-STRUCTURE_CHANGE_COMMANDS = {'insert-paragraph', 'delete-paragraph', 'write-paragraphs', 'insert-formula', 'insert-formulas', 'insert-table', 'insert-image', 'insert-page-break'}
+STRUCTURE_CHANGE_COMMANDS = {'insert-paragraph', 'delete-paragraph', 'move-paragraph', 'write-paragraphs', 'insert-formula', 'insert-formulas', 'insert-table', 'insert-image', 'insert-page-break', 'set-table-border'}
 
 
 def add_common_args(parser):

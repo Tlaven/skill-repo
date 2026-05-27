@@ -74,6 +74,14 @@ def register(subparsers):
     p.add_argument('--by-text', help='包含此文本的段落（内容定位，优先于 --paragraph）')
     add_common_args(p)
 
+    p = subparsers.add_parser('move-paragraph', help='原子移动段落到指定位置（失败自动回滚）')
+    p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--paragraph', type=int, default=None, help='源段落索引')
+    p.add_argument('--by-text', default=None, help='包含此文本的源段落（内容定位，优先于 --paragraph）')
+    p.add_argument('--after', type=int, default=None, help='目标位置：在该索引段落后插入')
+    p.add_argument('--after-text', default=None, help='目标位置：在该文本的段落后插入（优先于 --after）')
+    add_common_args(p)
+
     p = subparsers.add_parser('set-format', help='设置段落格式')
     p.add_argument('file', help='输入 .docx 文件')
     p.add_argument('--paragraph', type=int, help='段落索引（单段落模式）')
@@ -98,6 +106,8 @@ def register(subparsers):
     p.add_argument('--after-text', help='在此文本的段落后插入（内容定位，优先于 --after）')
     p.add_argument('--data', help='JSON二维数组（与 --data-file 二选一）')
     p.add_argument('--data-file', help='从文件读取表格数据 (JSON)')
+    p.add_argument('--caption', help='表格标题（插入在表上方）')
+    p.add_argument('--three-line', action='store_true', help='应用三线表样式')
     add_common_args(p)
 
     p = subparsers.add_parser('insert-image', help='在段落后插入图片')
@@ -166,6 +176,12 @@ def register(subparsers):
     p.add_argument('file', help='输入 .docx 文件')
     p.add_argument('--para', type=int, required=True, help='段落索引')
     p.add_argument('--match', required=True, help='修订文本内容（子串匹配）')
+    add_common_args(p)
+
+    p = subparsers.add_parser('set-table-border', help='设置表格边框样式')
+    p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--index', type=int, required=True, help='表格索引')
+    p.add_argument('--three-line', action='store_true', help='应用三线表样式')
     add_common_args(p)
 
 

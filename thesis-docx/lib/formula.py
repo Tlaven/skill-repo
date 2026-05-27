@@ -263,10 +263,24 @@ def latex_to_omml(latex_str):
     return converter.convert(mathml)
 
 
+def _clean_formula_placeholder(para_element):
+    """清除段落中的 FORMULA_X_X 占位符文本。"""
+    import re
+    ns = {'w': W_NS}
+    for t_elem in para_element.findall(f'.//{{{W_NS}}}t'):
+        if t_elem.text and re.search(r'FORMULA_\d+_\d+', t_elem.text):
+            t_elem.text = re.sub(r'\s*FORMULA_\d+_\d+\s*', '', t_elem.text)
+            if not t_elem.text.strip():
+                parent = t_elem.getparent()
+                if parent is not None:
+                    parent.getparent().remove(parent)
+
+
 def insert_formula(doc, after_index, latex_str, eq_number=None, centered=True):
     omath = latex_to_omml(latex_str)
     new_p = _create_formula_paragraph(omath, eq_number, centered)
     target = doc.doc.paragraphs[after_index]._element
+    _clean_formula_placeholder(target)
     target.addnext(new_p)
     ns = {'m': M_NS}
     mt_elems = new_p.findall('.//m:t', ns)
@@ -293,6 +307,7 @@ def insert_formulas_batch(doc, formulas):
         else:
             after_idx = f['after']
             insert_after_elem = doc.doc.paragraphs[after_idx]._element
+            _clean_formula_placeholder(insert_after_elem)
         omath = latex_to_omml(latex)
         new_p = _create_formula_paragraph(omath, number)
         insert_after_elem.addnext(new_p)

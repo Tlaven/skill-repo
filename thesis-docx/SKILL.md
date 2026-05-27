@@ -10,124 +10,182 @@ type: skill
 
 ## When to Use
 
-**使用场景：**
 - 用户提到 .docx 文件且是中文论文（毕业论文/学位论文）
 - 需要查看/修改论文的段落、表格、图片、公式内容
 - 需要检查论文格式规范（标题样式、页面设置、引用一致性）
 - 需要插入图片/表格/公式到指定位置
 - 需要批量替换文字（如术语统一、编号修正）
+- 需要往空模板中填充论文内容
 
-**不适合：**
-- 非 .docx 格式的文档 → 先转换
-- 纯文本处理（无格式要求） → 直接文本工具更快
-- 初次写作（非修改已有文档） → 用 Word/WPS
+## 定位
 
-## 文件存放规则
+本工具是**论文文档的结构/格式领域专家**。擅长：
+- 文档结构操作（章节、段落、表格、图片、公式的增删改移）
+- 格式检查与修复（样式、页面设置、引用一致性）
+- 基于规则的多步操作（编号修正、批量替换、整节重写）
 
-| 文件类型 | 存放到 |
-|---------|-------|
-| Python 操作脚本 | `scripts/` |
-| 图表导出图 | 论文项目 `diagrams/` |
-| LaTeX 临时文件 | `scripts/` |
+**不负责内容判断**。段落写得好不好、论点是否充分——这是你（Agent）的智能，不是本工具的职责。
 
-不往 skill 根目录写过程文件。详见 `lessons.md` → 文件存放约定。
+## 运行环境
 
-## Core Pattern
+- **工作目录**：CLI 命令必须在 skill 根目录（`thesis-docx/`）下运行
+- **Python 依赖**：`python-docx`, `lxml`, `latex2mathml`（pip install）
+- **Windows 限制**：不要用 `python -c "..."` 执行代码，写成 `.py` 脚本文件再 `python script.py`
+- **所有输出为 JSON**，用 `json.loads()` 解析
 
+## Critical Rules
+
+违反以下规则会导致数据丢失或损坏：
+
+### 1. 永远用内容定位，不用索引
+
+```python
+# ✅ 正确（ThesisEditor）
+editor.replace_text(by_text="旧段落", text="新内容")
+editor.insert_table(after_text="锚定段落", data=[...])
+
+# ❌ 危险（insert/delete 后索引漂移）
+editor.insert_paragraph(after=43, ...)
+editor.insert_paragraph(after=43, ...)  # 第二次的 43 已经偏了
 ```
-诊断 → 操作 → 验证 → 下一操作
- ↑                    |
- └──── 失败回滚 ──────┘
-```
 
-每次修改后都验证结果，失败时回滚重试。
+### 2. 保存必须用 save_zip()
 
-## Quick Reference
+`python-docx` 原生的 `doc.save()` 会**丢失 OMML 公式和插入的图片**。eval 模式和 ThesisEditor 已自动处理。
 
-| 你想做什么 | 命令/方式 |
-|-----------|----------|
-| 快速看全文结构 | `read-full "论文.docx"` |
-| 展开某节内容 | `read-section --title "节名" --deep` |
-| 改整段文字 | `replace-text --by-text "旧" --text "新"` |
-| 改段内几个词 | `replace-inline --by-text "锚定段" --old "旧" --new "新"` |
-| 改格式不改字 | `format-inline --by-text "锚定段" --target "子串" --bold` |
-| 删一段 | `delete-paragraph --by-text "内容"` |
-| 插图片 | `insert-image --after-text "锚定" --image fig.png --caption "图3-1 标题"` |
-| 插表格 | `insert-table --after-text "锚定" --data '[["列1","列2"],["v1","v2"]]'` |
-| 插公式 | `insert-formula --after-text "锚定" --latex "E=mc^2" --number "(3.1)"` |
-| 格式检查 | `read-structure --verify "论文.docx"` |
-| 页面检查 | `read-page-setup --verify "论文.docx"` |
-| 引用检查 | `list-references --verify "论文.docx"` |
-| 批量多步操作 | `ThesisEditor` Python API（见下方） |
+### 3. 不支持 SVG 图片
 
-不确定用哪个命令 → 看 CLI.md 按类别找。
+所有插图必须为 **PNG 或 JPEG**。
+
+### 4. 公式占位符已自动清理
+
+`insert_formula` 会自动清理 `FORMULA_X_X` 占位符。
 
 ## 操作方式
 
-根据复杂度选择：
+**读用 CLI，写用 eval。**
 
 | 场景 | 方式 |
 |------|------|
-| 单步操作（1-2 次修改） | `python cli.py <command> <file> [options]` |
-| 多步复杂操作（≥3 次，跨类型） | `from api import ThesisEditor` → 单进程脚本 |
-| CLI/API 无法满足 | 在 `scripts/` 下写 python 脚本解决，并保留复用 |
+| 读文档 | `python cli.py read-* / search`（见下方读操作表） |
+| 改文档（任何修改） | `python cli.py eval "论文.docx" --script-file ops.py` |
 
-所有输出 JSON。
+不要用 CLI 做写操作。eval 模式解决所有写场景，不存在"太简单不需要 eval"的情况。
 
-### 思维模型
+## eval 模式
 
-| 原语 | 对应命令 |
-|------|---------|
-| 读内容 | `read-*` / `search` |
-| 替换内容 | `replace-*` |
-| 增加内容 | `insert-*` |
-| 删 | `delete-*` |
-| 检查 | 读 checklist.md |
-
-### 多步操作脚本模板
-
-`ThesisEditor`（`api.py`）是 CLI 的编程等价物——提供与 CLI 命令基本对应的 Python 方法。它与 CLI 共用同一套底层逻辑，区别只是不经过 argparse 解析参数。
-
-≥3 次修改或跨操作类型时用 `ThesisEditor` 写单进程脚本，避免多次 CLI 调用的打开/保存开销和索引漂移：
-
-```python
-from api import ThesisEditor
-with ThesisEditor("论文.docx") as editor:
-    editor.set_page_setup(width=21, height=29.7, margin_top=2.5)
-    editor.replace_inline(by_text="图6-1", old="图6-1", new="图3-1")
-    editor.replace_inline(by_text="式(4.1)", old="式(4.1)", new="式(2.1)")
-    editor.delete_paragraph(by_text="要删除的段落")
-    editor.save()
+```bash
+python cli.py eval "论文.docx" --script-file ops.py
 ```
 
-## Common Mistakes
+`editor`（ThesisEditor 实例）自动注入，无需 import、无需 save：
 
-### read-full 误用
-`read-full --section "节名"` 的输出仍然是全文地图（~3k tokens），只是在结构中高亮了该节。想只读某节内容要用 `read-section --title "节名" --deep`（≤3000字，含表格/图片/公式）。
+```python
+# ops.py
+editor.replace_all({"图6-": "图3-"}, scope="chapter:3")
+editor.rewrite_section("3.2 数据处理", paragraphs=[
+    {"text": "新的第一段内容", "style": "body"},
+    {"text": "新的第二段内容", "style": "body"},
+])
+editor.delete_paragraph(by_text="要删除的段落")
+```
 
-### 段落索引漂移
-`insert-paragraph` / `delete-paragraph` 后所有段落索引立即偏移。
-**解法：** 优先用 `--by-text "子串"` / `--after-text "子串"` 内容定位代替索引定位。≥3 次修改写单进程脚本。
+### 高级方法（优先使用）
 
-### FORMULA_X_X 残留
-`insert-formula` 不自动清理占位符。
-**解法：** 插入公式后手动 `replace-inline --old "FORMULA_3_1" --delete`。
+| 方法 | 用途 |
+|------|------|
+| `editor.replace_all(mapping, scope)` | 批量替换。mapping=`{"旧":"新"}`，scope=`"chapter:3"` / `"section:标题"` / None(全文档) |
+| `editor.rewrite_section(title, paragraphs)` | 整节重写。paragraphs=`[{"text":"...", "style":"body"}, ...]` |
+| `editor.rewrite_paragraphs(mapping)` | 多段按内容定位替换。mapping=`{"锚定文本":"新全文"}` |
+| `editor.fix_format(preset="gb-academic")` | 自动修复格式（样式+页面+引用） |
+| `editor.assign_styles(preset="gb-academic")` | 样式识别+分配 |
 
-### 保存丢失公式/图片
-`python-docx` 原生的 `doc.save()` 会丢失 OMML 公式和图片。
-**解法：** 所有保存都用 `save_zip()`（CLI、API 已默认使用，仅当自己写底层代码时注意）。
+### 原语方法
 
-### 手动插入段落后的样式
-通过 XML 直接插入的段落，样式可能不被 Word 正确识别。
-**解法：** 保存后运行 `assign-styles`。
+高级方法不够用时用这些：
 
-更多操作经验见 lessons.md。
+| 方法 | 用途 |
+|------|------|
+| `editor.replace_text(index=, text=)` | 替换整段 |
+| `editor.replace_inline(by_text=, old=, new=)` | 段内子串替换（保留格式） |
+| `editor.format_inline(by_text=, target=, bold=)` | 改格式不改文字 |
+| `editor.delete_paragraph(by_text=)` | 删段落 |
+| `editor.move_paragraph(by_text=, after_text=)` | 移动段落（原子操作） |
+| `editor.insert_table(after_text=, data=, caption=, three_line=True)` | 插表格 |
+| `editor.insert_image(after_text=, image=, caption=)` | 插图片 |
+| `editor.insert_formula(after=, latex=, number=)` | 插公式 |
+| `editor.raw_doc` | python-docx Document 对象（escape hatch） |
+
+### 读方法
+
+| 方法 | 用途 |
+|------|------|
+| `editor.read_full()` | 全文结构 |
+| `editor.read_section(title=, deep=True)` | 章节内容 |
+| `editor.search(query=)` | 搜索关键词 |
+| `editor.find_text("关键词")` | 快捷查找，返回首匹配文本 |
+| `editor.read_stats()` | 字数/段落/图表统计 |
+
+## 任务流程
+
+### 类型 A：单一操作
+
+→ 写一个 eval 脚本，一行即可。
+
+### 类型 B：质量审查或改良
+
+→ **先读 `checklist.md`**，按清单逐项排查，列出问题清单后再用 eval 修改。
+
+### 类型 C：格式修复
+
+→ **先读 `lessons.md`** 了解避坑点，再 `editor.fix_format()` 或 `editor.assign_styles()`。
+
+### 类型 D：内容填充
+
+→ `editor.read_full()` 了解结构，再 `editor.rewrite_section()` 批量写入。
+
+## 读操作 (CLI)
+
+eval 模式外需要快速查看时用 CLI：
+
+| 你想做什么 | 命令 |
+|-----------|------|
+| 看全文结构 | `python cli.py read-full "论文.docx"` |
+| 读某节内容 | `python cli.py read-section --title "节名" --deep "论文.docx"` |
+| 搜索关键词 | `python cli.py search --query "关键词" "论文.docx"` |
+| 格式检查 | `python cli.py read-structure --verify "论文.docx"` |
+| 页面检查 | `python cli.py read-page-setup --verify "论文.docx"` |
+| 引用检查 | `python cli.py list-references --verify "论文.docx"` |
+
+## _guide 提示
+
+操作输出中可能包含 `_guide` 字段，提供上下文相关的使用建议。这些提示在关键节点自动触发（第一次写操作、结构性变更后），帮助正确使用本工具。
+
+## 数据格式
+
+### 表格 data
+
+二维 JSON 数组，第一行为表头：`[["列1","列2"],["v1","v2"]]`。加 `three_line=True` 用三线表。
+
+### 段落 paragraphs
+
+`[{"text": "正文", "style": "body"}]`。style 可选：`body`, `h1`, `h2`, `h3`, `caption`, `reference`。
+
+### 公式 latex
+
+标准 LaTeX：`NDVI = \\frac{NIR - R}{NIR + R}`，编号用 `number="(2.1)"`。
+
+## 文件存放
+
+| 文件类型 | 存放到 | 生命周期 |
+|---------|-------|---------|
+| eval 临时脚本 | 任意位置 | 会话结束前删除 |
+| 图表导出图 | 论文项目目录下 `diagrams/` | 永久 |
 
 ## 文档地图
 
 | 你要做什么 | 先看 | 在哪 |
 |-----------|------|------|
-| 查命令参考 | 完整参考 | CLI.md |
-| 避坑 | 索引漂移 / 公式 / 批注 | lessons.md |
-| 学术论文规范检查 | checklist 逐项排查 | checklist.md |
-| 复杂脚本复用 | 批量修复/缩写检查 | scripts/ 目录 |
+| 避坑 | 操作经验 | `lessons.md` |
+| 质量检查 | 逐项排查 | `checklist.md` |
+| 查底层命令 | CLI 参考 | `CLI.md` |

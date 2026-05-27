@@ -127,6 +127,9 @@ def run_command(args):
         from lib.creator import create_thesis
         return create_thesis(doc, output=args.output, preset=getattr(args, 'preset', None))
 
+    if args.command == 'eval':
+        return _cmd_eval(args)
+
     args.file = resolve_file(args.file)
     if hasattr(args, 'file_new') and args.file_new:
         args.file_new = resolve_file(args.file_new)
@@ -178,9 +181,10 @@ def run_command(args):
         'insert-paragraph': lambda: lib_edit.insert_paragraph(doc, args.after, args.text, style=getattr(args, 'style', 'body'), rules=getattr(args, 'rules', None), output=_out, backup=_bak),
         'write-paragraphs': lambda: lib_edit.write_paragraphs(doc, args.after, json.loads(args.data), output=_out, backup=_bak),
         'delete-paragraph': lambda: lib_edit.delete_paragraph(doc, args.paragraph, output=_out, backup=_bak),
+        'move-paragraph': lambda: lib_edit.move_paragraph(doc, args.paragraph, args.after, output=_out, backup=_bak),
         'set-format': lambda: lib_edit.set_format(doc, args.style, paragraph=getattr(args, 'paragraph', None), start=getattr(args, 'start', None), end=getattr(args, 'end', None), target=getattr(args, 'target', None), rules=getattr(args, 'rules', None), output=_out, backup=_bak),
         'replace-table': lambda: lib_edit.replace_table(doc, args.index, json.loads(args.data), output=_out, backup=_bak),
-        'insert-table': lambda: lib_edit.insert_table(doc, args.after, json.loads(args.data), output=_out, backup=_bak),
+        'insert-table': lambda: lib_edit.insert_table(doc, args.after, json.loads(args.data), caption=getattr(args, 'caption', None), three_line=getattr(args, 'three_line', False), output=_out, backup=_bak),
         'insert-image': lambda: lib_edit.insert_image(doc, args.after, args.image, width=getattr(args, 'width', None), caption=getattr(args, 'caption', None), output=_out, backup=_bak),
         'replace-image': lambda: lib_edit.replace_image(doc, args.image, caption=getattr(args, 'caption', None), paragraph=getattr(args, 'paragraph', None), media=getattr(args, 'media', None), output=_out, backup=_bak),
         'delete-comments': lambda: lib_fixer.delete_comments(doc, output=_out, backup=_bak),
@@ -208,12 +212,47 @@ def run_command(args):
         'renumber-captions': lambda: lib_layout.renumber_figures(doc, output=_out, backup=_bak),
         'renumber-figures': lambda: lib_layout.renumber_figures(doc, output=_out, backup=_bak),
         'apply-template': lambda: lib_fixer.apply_template(doc, args.template, output=_out, backup=_bak),
+        'set-table-border': lambda: lib_edit.set_table_border(doc, args.index, three_line=getattr(args, 'three_line', False), output=_out, backup=_bak),
     }
 
     if args.command not in cmd_map:
         return {"error": f"未知命令: {args.command}"}
 
     return cmd_map[args.command]()
+
+
+def _cmd_eval(args):
+    """eval 命令：用 ThesisEditor 执行 Python 脚本。"""
+    import traceback
+    from api import ThesisEditor
+    filepath = resolve_file(args.file)
+    script_file = args.script_file
+    if not os.path.exists(script_file):
+        return {"error": f"脚本文件不存在: {script_file}"}
+
+    try:
+        editor = ThesisEditor(filepath)
+        with open(script_file, 'r', encoding='utf-8') as f:
+            code = f.read()
+
+        script_vars = {
+            "editor": editor,
+            "doc": editor.raw_doc,
+        }
+        exec(compile(code, script_file, 'exec'), script_vars)
+
+        output_path = editor.save()
+        return {
+            "status": "success",
+            "output": output_path,
+            "operations": editor._op_count,
+        }
+    except Exception as e:
+        tb = traceback.format_exc()
+        return {
+            "error": f"{type(e).__name__}: {str(e)}",
+            "traceback": tb,
+        }
 
 
 def _cmd_insert_formula(doc, args):
@@ -338,6 +377,20 @@ def _reject_revision(doc, args):
     return result
 
 
+def _check_verify_issues(result):
+    """检查 verify 结果中是否包含问题。"""
+    if isinstance(result, dict):
+        data = result.get("data", result)
+        if isinstance(data, dict):
+            issues = data.get("issues", data.get("verify", []))
+            if isinstance(issues, list) and len(issues) > 0:
+                return True
+            warnings = data.get("warnings", [])
+            if isinstance(warnings, list) and len(warnings) > 0:
+                return True
+    return False
+
+
 def main():
     import io
     # Windows + PowerShell: 必须把 stdout 包装为 UTF-8，否则管道捕获会丢输出。
@@ -346,6 +399,7 @@ def main():
     if sys.platform == 'win32' and hasattr(sys.stdout, 'buffer'):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    main._write_count = 0
 
     for i in range(1, len(sys.argv)):
         if '\\' in sys.argv[i] and not sys.argv[i].startswith('-'):
@@ -420,7 +474,7 @@ def main():
             json_output({"error": "请提供 --after <索引> 或 --after-text <文本子串>"}, args.command); sys.exit(1)
 
     # --by-text（内容定位，替代 --paragraph）
-    BY_TEXT_COMMANDS = ('replace-text', 'replace-inline', 'delete-paragraph', 'set-format', 'format-inline')
+    BY_TEXT_COMMANDS = ('replace-text', 'replace-inline', 'delete-paragraph', 'move-paragraph', 'set-format', 'format-inline')
     if getattr(args, 'by_text', None) and args.command in BY_TEXT_COMMANDS:
         from lib.core import ThesisDoc as _TD
         _tmp = _TD(args.file)
@@ -434,6 +488,19 @@ def main():
         elif not hasattr(args, 'paragraph') or args.paragraph is None:
             json_output({"error": "请提供 --paragraph <索引> 或 --by-text <文本子串>"}, args.command); sys.exit(1)
 
+    # move-paragraph 的 --after-text 预处理
+    if args.command == 'move-paragraph':
+        after_text_val = getattr(args, 'after_text', None)
+        if after_text_val:
+            from lib.core import ThesisDoc as _TD
+            _tmp = _TD(args.file)
+            idx = _tmp.find_paragraph_by_text(after_text_val)
+            if idx is None:
+                json_output({"error": f"未找到包含 \"{after_text_val}\" 的锚定段落"}, args.command); sys.exit(1)
+            args.after = idx
+        if getattr(args, 'after', None) is None:
+            json_output({"error": "请提供 --after <索引> 或 --after-text <文本子串>"}, args.command); sys.exit(1)
+
     if getattr(args, 'command', None) == 'search' and not getattr(args, 'query', None) and not getattr(args, 'writing_style', False):
         parser.parse_args(['search', '--help']); sys.exit(1)
 
@@ -442,6 +509,24 @@ def main():
         note = None
         if args.command in STRUCTURE_CHANGE_COMMANDS and "error" not in result:
             note = "段落索引已偏移，后续操作前请先对输出文件执行 read-structure 获取新索引"
+
+        # _guide 机制：在关键节点附加使用提示
+        if "error" not in result:
+            from lib.guide import get_guide, WRITE_COMMANDS
+            is_write = args.command in WRITE_COMMANDS
+            guide_ctx = {
+                "command": args.command,
+                "is_first_write": is_write and not getattr(main, '_write_count', 0),
+                "is_structure_change": args.command in STRUCTURE_CHANGE_COMMANDS,
+                "has_verify_issues": _check_verify_issues(result),
+            }
+            if is_write:
+                main._write_count = getattr(main, '_write_count', 0) + 1
+                guide_ctx["cli_write_count"] = main._write_count - 1
+            guide_hints = get_guide(guide_ctx)
+            if guide_hints:
+                result["_guide"] = guide_hints
+
         json_output(result, args.command, note=note)
     except FileNotFoundError as e:
         json_output({"error": str(e)}, args.command); sys.exit(1)

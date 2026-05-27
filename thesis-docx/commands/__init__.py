@@ -1,6 +1,6 @@
 """commands/ — CLI 命令定义层，只负责 argparse + 粘合 lib/。"""
 from commands.common import STRUCTURE_CHANGE_COMMANDS
-from commands import read_cmds, edit_cmds, format_cmds, create_cmds, ref_cmds, export_cmds, extract_cmds
+from commands import read_cmds, edit_cmds, format_cmds, create_cmds, ref_cmds, export_cmds, extract_cmds, eval_cmds
 
 
 def register_all(subparsers):
@@ -12,3 +12,4 @@ def register_all(subparsers):
     ref_cmds.register(subparsers)
     export_cmds.register(subparsers)
     extract_cmds.register(subparsers)
+    eval_cmds.register(subparsers)

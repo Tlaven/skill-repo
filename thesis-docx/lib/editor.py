@@ -46,6 +46,7 @@ def replace_batch(doc, pairs, chapter=None, output=None, backup=False):
     for pair in pairs:
         old = pair.get("old", ""); new = pair.get("new", "")
         count = 0
+        first_preview = None
         for i, para_info in enumerate(doc.paragraphs):
             if para_range and (i < para_range[0] or i > para_range[1]):
                 continue
@@ -55,7 +56,14 @@ def replace_batch(doc, pairs, chapter=None, output=None, backup=False):
             replaced = _replace_in_paragraph(para, old, new)
             if replaced:
                 count += 1; total_replacements += 1
-        details.append({"old": old, "new": new, "replacements": count})
+                if first_preview is None:
+                    first_preview = para_info["text"][:80]
+        detail = {"old": old, "new": new, "replacements": count}
+        if first_preview:
+            detail["first_match_preview"] = first_preview
+        elif count == 0:
+            detail["warning"] = "未找到匹配文本"
+        details.append(detail)
     doc.save_zip(output_path)
     return {"total_replacements": total_replacements, "details": details, "output": output_path}
 
@@ -77,7 +85,8 @@ def replace_batch_by_index(doc, pairs_file, output=None, backup=False):
         old_text = para.text or ""
         _clear_para_runs(para)
         para.add_run(new_text)
-        details.append({"paragraph": idx, "old_chars": len(old_text), "new_chars": len(new_text)})
+        details.append({"paragraph": idx, "old_chars": len(old_text), "new_chars": len(new_text),
+                        "old_preview": old_text[:100], "new_preview": new_text[:100]})
     doc.save_zip(output_path)
     return {"total_replaced": len([d for d in details if "error" not in d]), "details": details, "output": output_path}
 
@@ -201,12 +210,12 @@ def _apply_run_format(run, bold=None, font=None, font_east=None, size=None, colo
 
 
 def insert_paragraph(doc, after, text, style='body', rules=None, output=None, backup=False):
-    """在指定位置插入段落。"""
+    """在指定位置插入段落。自动继承锚定段落的对齐、行距和缩进格式。"""
     output_path = get_output_path(doc, output=output, backup=backup)
     ref_para = doc.raw_paragraphs[after]
     word_style = STYLE_NAME_TO_WORD.get(style, style)
     ensure_word_styles(doc.doc, {word_style}, rules)
-    new_para = _create_clean_paragraph(text, word_style)
+    new_para = _create_clean_paragraph(text, word_style, ref_para=ref_para)
     ref_para._element.addnext(new_para)
     doc.save_zip(output_path)
     doc._build_index()
@@ -239,14 +248,23 @@ def write_paragraphs(doc, after, data, output=None, backup=False):
     return {"after_paragraph": after, "total_inserted": len(data), "inserted": inserted, "output": output_path}
 
 
-def _create_clean_paragraph(text, word_style_name):
+def _create_clean_paragraph(text, word_style_name, ref_para=None):
     from docx.oxml import parse_xml
+    from copy import deepcopy
     W = NSMAP["w"]
     xml_space = '{http://www.w3.org/XML/1998/namespace}space'
     p_raw = etree.Element(f'{{{W}}}p')
     pPr = etree.SubElement(p_raw, f'{{{W}}}pPr')
     pStyle = etree.SubElement(pPr, f'{{{W}}}pStyle')
     pStyle.set(f'{{{W}}}val', word_style_name)
+    # 从锚定段落复制 alignment/spacing/ind 格式
+    if ref_para is not None:
+        ref_pPr = ref_para._element.find(f'{{{W}}}pPr')
+        if ref_pPr is not None:
+            for tag in ('jc', 'spacing', 'ind'):
+                child = ref_pPr.find(f'{{{W}}}{tag}')
+                if child is not None:
+                    pPr.append(deepcopy(child))
     r = etree.SubElement(p_raw, f'{{{W}}}r')
     t = etree.SubElement(r, f'{{{W}}}t')
     t.set(xml_space, 'preserve')
@@ -263,6 +281,42 @@ def delete_paragraph(doc, paragraph, output=None, backup=False):
     doc.save_zip(output_path)
     doc._build_index()
     return {"deleted_paragraph": paragraph, "deleted_text": deleted_text, "output": output_path}
+
+
+def move_paragraph(doc, paragraph, after, output=None, backup=False):
+    """原子移动段落：将 paragraph 段落移到 after 段落之后。失败时回滚。"""
+    output_path = get_output_path(doc, output=output, backup=backup)
+    src_para = doc.raw_paragraphs[paragraph]
+    src_text = src_para.text or ""
+    src_elem = src_para._element
+
+    # 克隆源段落元素（深拷贝）
+    from copy import deepcopy
+    cloned_elem = deepcopy(src_elem)
+
+    try:
+        # 先插入克隆到目标位置
+        if after is not None and after >= 0:
+            dst_para = doc.raw_paragraphs[after]
+            dst_para._element.addnext(cloned_elem)
+        else:
+            # after=None 表示移到文档开头
+            body = doc.raw_paragraphs[0]._element.getparent()
+            body.insert(0, cloned_elem)
+
+        # 再删除原段落
+        src_elem.getparent().remove(src_elem)
+        doc.save_zip(output_path)
+        doc._build_index()
+        return {"moved_paragraph": paragraph, "after_paragraph": after,
+                "moved_text": src_text[:80], "output": output_path}
+    except Exception:
+        # 回滚：移除克隆（如果已插入），保持原段落不变
+        parent = cloned_elem.getparent()
+        if parent is not None:
+            parent.remove(cloned_elem)
+        doc._build_index()
+        raise
 
 
 def set_format(doc, style, paragraph=None, start=None, end=None, target=None, rules=None, output=None, backup=False):
@@ -331,24 +385,31 @@ def replace_table(doc, index, data, output=None, backup=False):
     current_cols = len(table.columns)
     if current_cols < num_cols:
         for _ in range(num_cols - current_cols):
-            table.add_column()
+            try:
+                existing_width = table.columns[0].width if table.columns else 914400
+            except Exception:
+                existing_width = 914400
+            table.add_column(existing_width)
     for row_idx, row_data in enumerate(data):
         for col_idx, cell_text in enumerate(row_data):
             if col_idx < num_cols:
                 cell = table.cell(row_idx, col_idx)
-                for cell_para in cell.paragraphs:
-                    _clear_para_runs(cell_para)
-                    cell_para._element.clear()
-                    new_run = etree.SubElement(paragraph._element, f'{{{NSMAP["w"]}}}r')
-                    t = etree.SubElement(new_run, f'{{{NSMAP["w"]}}}t')
-                    t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
-                    t.text = str(cell_text) if cell_text is not None else ""
+                paras = cell.paragraphs
+                for p in paras[1:]:
+                    p._element.getparent().remove(p._element)
+                target_para = cell.paragraphs[0]
+                _clear_para_runs(target_para)
+                target_para._element.clear()
+                new_run = etree.SubElement(target_para._element, f'{{{NSMAP["w"]}}}r')
+                t = etree.SubElement(new_run, f'{{{NSMAP["w"]}}}t')
+                t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
+                t.text = str(cell_text) if cell_text is not None else ""
     doc.save_zip(output_path)
     return {"table_index": index, "rows": num_rows, "cols": num_cols,
             "data_preview": [row[:3] for row in data[:3]], "output": output_path}
 
 
-def insert_table(doc, after, data, output=None, backup=False):
+def insert_table(doc, after, data, caption=None, three_line=False, output=None, backup=False):
     output_path = get_output_path(doc, output=output, backup=backup)
     if not data or not isinstance(data[0], list):
         return {"error": "数据格式错误：需要二维数组"}
@@ -358,14 +419,100 @@ def insert_table(doc, after, data, output=None, backup=False):
         for col_idx, cell_text in enumerate(row_data):
             if col_idx < num_cols:
                 table.cell(row_idx, col_idx).text = str(cell_text) if cell_text is not None else ""
+    if three_line and num_rows >= 2:
+        apply_three_line_table(table._tbl, num_rows, num_cols)
     ref_para = doc.raw_paragraphs[after]
     tbl_element = table._tbl
     tbl_element.getparent().remove(tbl_element)
-    ref_para._element.addnext(tbl_element)
+    if caption:
+        cap_style = _detect_caption_style(doc)
+        cap_p = _create_clean_paragraph(caption, cap_style)
+        ref_para._element.addnext(cap_p)
+        cap_p.addnext(tbl_element)
+    else:
+        ref_para._element.addnext(tbl_element)
     doc.save_zip(output_path)
     doc._build_index()
-    return {"after_paragraph": after, "rows": num_rows, "cols": num_cols,
-            "data_preview": [row[:3] for row in data[:3]], "output": output_path}
+    result = {"after_paragraph": after, "rows": num_rows, "cols": num_cols,
+              "data_preview": [row[:3] for row in data[:3]], "output": output_path}
+    if caption:
+        result["caption"] = caption
+    if three_line:
+        result["three_line"] = True
+    return result
+
+
+def apply_three_line_table(tbl_element, num_rows, num_cols):
+    """对表格 XML 应用三线表样式：顶线(1.5pt)、表头线(0.75pt)、底线(1.5pt)，无竖线。"""
+    W = NSMAP['w']
+    sz_top = '12'
+    sz_header = '6'
+    sz_bottom = '12'
+
+    def _set_cell_borders(tc, top=None, bottom=None, left_none=True, right_none=True):
+        tcPr = tc.find(f'{{{W}}}tcPr')
+        if tcPr is None:
+            tcPr = etree.SubElement(tc, f'{{{W}}}tcPr')
+            tc.insert(0, tcPr)
+        tcBorders = tcPr.find(f'{{{W}}}tcBorders')
+        if tcBorders is None:
+            tcBorders = etree.SubElement(tcPr, f'{{{W}}}tcBorders')
+        for side in ('top', 'bottom', 'start', 'end'):
+            existing = tcBorders.find(f'{{{W}}}{side}')
+            if existing is not None:
+                tcBorders.remove(existing)
+        sides = {}
+        if top is not None:
+            sides['top'] = top
+        if bottom is not None:
+            sides['bottom'] = bottom
+        if left_none:
+            el = etree.SubElement(tcBorders, f'{{{W}}}start')
+            el.set(f'{{{W}}}val', 'nil')
+        if right_none:
+            el = etree.SubElement(tcBorders, f'{{{W}}}end')
+            el.set(f'{{{W}}}val', 'nil')
+        for side, sz in sides.items():
+            el = etree.SubElement(tcBorders, f'{{{W}}}{side}')
+            el.set(f'{{{W}}}val', 'single')
+            el.set(f'{{{W}}}sz', sz)
+            el.set(f'{{{W}}}space', '0')
+            el.set(f'{{{W}}}color', '000000')
+
+    def _set_row_borders(tr, top=None, bottom=None):
+        for tc in tr.findall(f'{{{W}}}tc'):
+            _set_cell_borders(tc, top=top, bottom=bottom)
+
+    tr_list = tbl_element.findall(f'{{{W}}}tr')
+    if not tr_list:
+        return
+    _set_row_borders(tr_list[0], top=sz_top, bottom=sz_header)
+    for tr in tr_list[1:-1]:
+        _set_row_borders(tr)
+    if len(tr_list) > 1:
+        _set_row_borders(tr_list[-1], bottom=sz_bottom)
+
+    tblPr = tbl_element.find(f'{{{W}}}tblPr')
+    if tblPr is not None:
+        borders = tblPr.find(f'{{{W}}}tblBorders')
+        if borders is None:
+            borders = etree.SubElement(tblPr, f'{{{W}}}tblBorders')
+        for side in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
+            existing = borders.find(f'{{{W}}}{side}')
+            if existing is None:
+                existing = etree.SubElement(borders, f'{{{W}}}{side}')
+            existing.set(f'{{{W}}}val', 'nil')
+
+
+def set_table_border(doc, index, three_line=False, output=None, backup=False):
+    output_path = get_output_path(doc, output=output, backup=backup)
+    if index < 0 or index >= len(doc.raw_tables):
+        return {"error": f"表格索引 {index} 超出范围 (0-{len(doc.raw_tables)-1})"}
+    table = doc.raw_tables[index]
+    if three_line:
+        apply_three_line_table(table._tbl, len(table.rows), len(table.columns))
+    doc.save_zip(output_path)
+    return {"table_index": index, "three_line": three_line, "output": output_path}
 
 
 def _get_caption_style_id(doc):

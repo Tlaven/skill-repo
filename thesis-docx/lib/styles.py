@@ -13,8 +13,8 @@ PAGE_RULES = {
 }
 
 # deep 模式安全限制
-MAX_DEEP_CHARS = 3000
-MAX_DEEP_PARAS = 40
+MAX_DEEP_CHARS = 10000
+MAX_DEEP_PARAS = 80
 
 # assign-styles 跳过前 N 段（封面/声明区域）
 SKIP_FIRST_N_PARAS = 13
