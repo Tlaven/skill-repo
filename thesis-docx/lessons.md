@@ -117,3 +117,62 @@ SKILL.md 中教用户用的参数签名如果和 `api.py` 不匹配，用户的 
 | `replace_text(index=, text=)` | `replace_text(by_text=, text=)` | SKILL.md 更新 |
 | `insert_table(three_line=True)` | `insert_table(three_line=False)` | SKILL.md 更新 |
 | `insert_formula(after=, ...)` | `insert_formula(after_text=, ...)` | API + SKILL.md 更新 |
+
+## 修订模式替代方案
+
+本工具不创建修订标记。如需带修订标记（Track Changes）的修改：
+
+### 方案 A：Word 比较（推荐）
+
+1. `shutil.copy2(src, backup)` 备份原文
+2. 用 eval 模式做修改
+3. 在 Word 中：审阅 → 比较 → 比较两个版本的文档
+4. 接受/拒绝修订
+
+### 方案 B：win32com 脚本
+
+在 Windows 且有 Word 安装的环境下使用。关键模式：
+
+```python
+import win32com.client as win32
+word = win32.Dispatch("Word.Application")
+doc = word.Documents.Open("论文.docx")
+doc.TrackRevisions = True
+doc.Range(0, 0).Select()
+word.Selection.Find.Text = "旧词"
+if word.Selection.Find.Execute():
+    word.Selection.Delete()
+    word.Selection.TypeText("新词")
+doc.SaveAs2("输出.docx", FileFormat=16)
+```
+
+注意：win32com 不是本工具的依赖，需单独安装 `pywin32`。
+
+## 单段落 TOC 的定位方法
+
+英文目录（TOC）可能存储为单个段落内的多个 run，`search` 命令无法覆盖。
+用 `search-xml` 命令搜索底层 XML 文本：
+
+```bash
+python cli.py search-xml --query "chapter summary" "论文.docx"
+python cli.py search-xml --query "CONTENTS" --context 200 "论文.docx"
+```
+
+## PowerShell 下的搜索替代
+
+`search --query "A|B"` 中 `|` 被 PowerShell 拦截。三种解决方式：
+
+1. 分两次搜索
+2. 将关键词写入文本文件：`echo A > queries.txt; echo B >> queries.txt` 再 `search --query-file queries.txt`
+3. 在 bash/WSL 中运行（如可用）
+
+## 表格插入后索引验证
+
+`insert_table` 和 `replace_table` 依赖固定索引。插入新表后所有后续表索引 +1。
+验证当前索引的方法：
+
+```bash
+python cli.py read-table-context --index N "论文.docx"
+```
+
+先确认题注文本所在段落，用 `after_text` 参数代替索引定位。

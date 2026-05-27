@@ -1,6 +1,6 @@
 ---
 name: thesis-docx
-description: "Use when the user mentions .docx files that are Chinese theses; also when 论文, 毕业论文, or 学位论文 is mentioned"
+description: "Use when the user mentions .docx files that are Chinese theses; also when 论文, 毕业论文, or 学位论文 is mentioned. NOT for workflows requiring Track Changes creation (revision marks). All write operations are direct (no w:ins/w:del)."
 type: skill
 ---
 
@@ -65,6 +65,13 @@ editor.insert_paragraph(after=43, ...)  # 第二次的 43 已经偏了
 ### 4. 公式占位符已自动清理
 
 `insert_formula` 会自动清理 `FORMULA_X_X` 占位符。
+
+### 5. 本工具不创建修订标记
+
+所有写操作（`replace_text`、`insert_table`、`rewrite_section` 等）均为**直接写入**，不会在 Word 中生成修订标记（`<w:ins>`/`<w:del>`）。如需带修订标记的修改，替代方案：
+- 修改前用 `shutil.copy2()` 备份原文件
+- 修改后用 Word「审阅 → 比较」功能对比新旧版本生成修订记录
+- 或使用 win32com 脚本（见 `lessons.md` §修订模式替代方案）
 
 ## 操作方式
 
@@ -253,3 +260,26 @@ eval 模式外需要快速查看时用 CLI：
 | 避坑 | 操作经验 | `lessons.md` |
 | 质量检查 | 逐项排查 | `checklist.md` |
 | 查底层命令 | CLI 参考 | `CLI.md` |
+
+## 已知限制
+
+### 1. 不创建修订标记
+
+所有写操作为直接写入，不产生 Word 修订标记。详见 Critical Rules §5。
+
+### 2. 修订标记影响读准确性
+
+文档含 `<w:ins>`/`<w:del>` 时，`paragraph.text` 可能不准确（丢失插入文本或残留删除文本）。
+始终以 Word 中「审阅 → 所有标记」视图为最终依据。
+使用 `detect-revisions` 确认修订内容，而非依赖 `read-paragraphs` 的文本输出。
+
+### 3. TOC 字段文本在搜索盲区
+
+自动目录（TOC 字段）中的文字可能以单段落多 run 形式存在，`search` 命令无法覆盖。
+使用 `search-xml` 命令（见 CLI.md）直接搜索底层 XML。
+
+### 4. Windows PowerShell 中 `|` 需转义
+
+`search --query "A|B"` 中的 `|` 被 PowerShell 解释为管道。替代方案：
+- 多次搜索 `--query "A"` + `--query "B"`
+- 或使用 `--query-file queries.txt`（每行一个关键词）

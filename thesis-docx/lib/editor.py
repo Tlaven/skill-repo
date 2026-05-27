@@ -367,8 +367,36 @@ def _resolve_format_targets(doc, paragraph=None, start=None, end=None, target=No
     return {"error": "请指定 --paragraph N 或 --start N --end M 或 --target body|headings"}
 
 
-def replace_table(doc, index, data, output=None, backup=False):
+def _find_table_by_text(doc, text):
+    """通过题注文本定位表格索引。在表格附近段落中搜索包含 text 的题注。"""
+    W = NSMAP['w']
+    body = doc.doc.element.body
+    tables = doc.raw_tables
+
+    for i, table in enumerate(tables):
+        tbl_elem = table._tbl
+        prev = tbl_elem.getprevious()
+        while prev is not None:
+            if prev.tag.endswith('}p'):
+                para_text = ''.join(
+                    t.text or '' for t in prev.findall(f'.//{{{W}}}t')
+                )
+                if text in para_text:
+                    return i
+            prev = prev.getprevious()
+            if prev.tag.endswith('}tbl'):
+                break
+    return None
+
+
+def replace_table(doc, index, data, by_text=None, output=None, backup=False):
     output_path = get_output_path(doc, output=output, backup=backup)
+    if index is None and by_text is not None:
+        index = _find_table_by_text(doc, by_text)
+        if index is None:
+            return {"error": f"未找到包含 '{by_text}' 的表格题注"}
+    if index is None:
+        return {"error": "请提供 index 或 by_text"}
     if index < 0 or index >= len(doc.raw_tables):
         return {"error": f"表格索引 {index} 超出范围 (0-{len(doc.raw_tables)-1})"}
     if not data or not isinstance(data[0], list):
@@ -441,69 +469,50 @@ def insert_table(doc, after, data, caption=None, three_line=False, output=None, 
         result["caption"] = caption
     if three_line:
         result["three_line"] = True
+    result["new_table_index"] = len(doc.raw_tables) - 1
     return result
 
 
 def apply_three_line_table(tbl_element, num_rows, num_cols):
     """对表格 XML 应用三线表样式：顶线(1.5pt)、表头线(0.75pt)、底线(1.5pt)，无竖线。"""
     W = NSMAP['w']
-    sz_top = '12'
-    sz_header = '6'
-    sz_bottom = '12'
-
-    def _set_cell_borders(tc, top=None, bottom=None, left_none=True, right_none=True):
-        tcPr = tc.find(f'{{{W}}}tcPr')
-        if tcPr is None:
-            tcPr = etree.SubElement(tc, f'{{{W}}}tcPr')
-            tc.insert(0, tcPr)
-        tcBorders = tcPr.find(f'{{{W}}}tcBorders')
-        if tcBorders is None:
-            tcBorders = etree.SubElement(tcPr, f'{{{W}}}tcBorders')
-        for side in ('top', 'bottom', 'start', 'end'):
-            existing = tcBorders.find(f'{{{W}}}{side}')
-            if existing is not None:
-                tcBorders.remove(existing)
-        sides = {}
-        if top is not None:
-            sides['top'] = top
-        if bottom is not None:
-            sides['bottom'] = bottom
-        if left_none:
-            el = etree.SubElement(tcBorders, f'{{{W}}}start')
-            el.set(f'{{{W}}}val', 'nil')
-        if right_none:
-            el = etree.SubElement(tcBorders, f'{{{W}}}end')
-            el.set(f'{{{W}}}val', 'nil')
-        for side, sz in sides.items():
-            el = etree.SubElement(tcBorders, f'{{{W}}}{side}')
-            el.set(f'{{{W}}}val', 'single')
-            el.set(f'{{{W}}}sz', sz)
-            el.set(f'{{{W}}}space', '0')
-            el.set(f'{{{W}}}color', '000000')
-
-    def _set_row_borders(tr, top=None, bottom=None):
-        for tc in tr.findall(f'{{{W}}}tc'):
-            _set_cell_borders(tc, top=top, bottom=bottom)
-
-    tr_list = tbl_element.findall(f'{{{W}}}tr')
-    if not tr_list:
-        return
-    _set_row_borders(tr_list[0], top=sz_top, bottom=sz_header)
-    for tr in tr_list[1:-1]:
-        _set_row_borders(tr)
-    if len(tr_list) > 1:
-        _set_row_borders(tr_list[-1], bottom=sz_bottom)
 
     tblPr = tbl_element.find(f'{{{W}}}tblPr')
-    if tblPr is not None:
-        borders = tblPr.find(f'{{{W}}}tblBorders')
-        if borders is None:
-            borders = etree.SubElement(tblPr, f'{{{W}}}tblBorders')
-        for side in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
-            existing = borders.find(f'{{{W}}}{side}')
-            if existing is None:
-                existing = etree.SubElement(borders, f'{{{W}}}{side}')
-            existing.set(f'{{{W}}}val', 'nil')
+    if tblPr is None:
+        tblPr = etree.SubElement(tbl_element, f'{{{W}}}tblPr')
+        tbl_element.insert(0, tblPr)
+
+    borders = tblPr.find(f'{{{W}}}tblBorders')
+    if borders is None:
+        borders = etree.SubElement(tblPr, f'{{{W}}}tblBorders')
+    else:
+        for child in list(borders):
+            borders.remove(child)
+
+    border_specs = [
+        ('top', 'single', '12'),
+        ('bottom', 'single', '12'),
+        ('insideH', 'single', '6'),
+    ]
+    for name, style, sz in border_specs:
+        el = etree.SubElement(borders, f'{{{W}}}{name}')
+        el.set(f'{{{W}}}val', style)
+        el.set(f'{{{W}}}sz', sz)
+        el.set(f'{{{W}}}space', '0')
+        el.set(f'{{{W}}}color', '000000')
+
+    for name in ('left', 'right', 'insideV', 'start', 'end'):
+        el = etree.SubElement(borders, f'{{{W}}}{name}')
+        el.set(f'{{{W}}}val', 'nil')
+        el.set(f'{{{W}}}space', '0')
+
+    for tr in tbl_element.findall(f'{{{W}}}tr'):
+        for tc in tr.findall(f'{{{W}}}tc'):
+            tcPr = tc.find(f'{{{W}}}tcPr')
+            if tcPr is not None:
+                tcBorders = tcPr.find(f'{{{W}}}tcBorders')
+                if tcBorders is not None:
+                    tcPr.remove(tcBorders)
 
 
 def set_table_border(doc, index, three_line=False, output=None, backup=False):

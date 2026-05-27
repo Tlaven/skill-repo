@@ -95,7 +95,8 @@ def register(subparsers):
 
     p = subparsers.add_parser('replace-table', help='替换表格内容')
     p.add_argument('file', help='输入 .docx 文件')
-    p.add_argument('--index', type=int, required=True, help='表格索引')
+    p.add_argument('--index', type=int, default=None, help='表格索引')
+    p.add_argument('--by-text', help='通过题注文本定位表格（内容定位，优先于 --index）')
     p.add_argument('--data', help='JSON二维数组（与 --data-file 二选一）')
     p.add_argument('--data-file', help='从文件读取表格数据 (JSON)')
     add_common_args(p)

@@ -47,6 +47,12 @@ python cli.py search --query "模式" --regex "论文.docx"
 python cli.py search --query "内容" --chapter 3 "论文.docx"
 python cli.py search --writing-style "论文.docx"
 
+# XML 搜索（覆盖 TOC 字段等 python-docx 盲区）
+python cli.py search-xml --query "关键词" "论文.docx"
+python cli.py search-xml --query "chapter|summary" --regex "论文.docx"
+python cli.py search-xml --query "CONTENTS" --context 120 "论文.docx"
+python cli.py search-xml --query "search term" --limit 5 "论文.docx"
+
 # 表格
 python cli.py read-tables "论文.docx"
 python cli.py read-table --index N --deep "论文.docx"
@@ -108,6 +114,7 @@ python cli.py insert-formula --after-text "锚定" --latex-file formula.txt --nu
 # 替换已有元素
 python cli.py replace-image --caption "图3-1" --image new.png "论文.docx"
 python cli.py replace-table --index 2 --data-file data.json "论文.docx"
+python cli.py replace-table --by-text "表2.3" --data-file data.json "论文.docx"
 python cli.py set-table-border --index 0 --three-line "论文.docx"
 
 # 格式修复

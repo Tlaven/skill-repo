@@ -108,6 +108,10 @@ class ThesisEditor:
         from lib.searcher import search_format
         return search_format(self.doc, target=target)
 
+    def search_xml(self, query, regex=False, context=80, limit=50):
+        from lib.searcher import search_xml
+        return search_xml(self.doc, query=query, regex=regex, context=context, limit=limit)
+
     # ==================== 编辑 ====================
 
     def _resolve_by_text(self, by_text):
@@ -274,10 +278,10 @@ class ThesisEditor:
             self.doc._build_index()
         return self._track_op(result, 'set-format')
 
-    def replace_table(self, index, data):
+    def replace_table(self, index=None, data=None, by_text=None):
         self._ensure_backup()
         from lib.editor import replace_table
-        result = replace_table(self.doc, index=index, data=data)
+        result = replace_table(self.doc, index=index, data=data, by_text=by_text)
         return self._track_op(result, 'replace-table')
 
     def insert_table(self, after=None, data=None, caption=None, three_line=False, after_text=None):

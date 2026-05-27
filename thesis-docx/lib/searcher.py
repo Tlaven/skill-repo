@@ -1,5 +1,7 @@
 """搜索模块 — 纯库函数"""
 import re
+import zipfile
+from lxml import etree
 
 
 WRITING_STYLE_RULES = [
@@ -202,3 +204,72 @@ def search_format(doc, target='all'):
                     })
                     break
     return {"total_issues": len(issues), "issues": issues[:50]}
+
+
+def search_xml(doc, query, regex=False, context=80, limit=50):
+    """搜索底层 XML 文本，覆盖 TOC 字段等 python-docx 解析盲区。
+
+    直接读取 word/document.xml 中的 <w:t> 元素文本，
+    按段落 (<w:p>) 分组后搜索，绕过 python-docx 的 DOM 解析。
+
+    Args:
+        doc: ThesisDoc 实例
+        query: 搜索字符串或正则表达式
+        regex: 启用正则模式
+        context: 匹配上下文字符数
+        limit: 最大结果数
+    """
+    W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+    try:
+        with zipfile.ZipFile(doc.filepath, 'r') as z:
+            doc_xml = z.read('word/document.xml')
+    except (KeyError, zipfile.BadZipFile) as e:
+        return {"error": f"无法读取 document.xml: {e}"}
+
+    tree = etree.fromstring(doc_xml)
+
+    paras = []
+    current = []
+    for elem in tree.iter():
+        if elem.tag == f'{{{W_NS}}}t' and elem.text:
+            current.append(elem.text)
+        elif elem.tag == f'{{{W_NS}}}p' and current:
+            paras.append(''.join(current))
+            current = []
+    if current:
+        paras.append(''.join(current))
+
+    results = []
+    for idx, text in enumerate(paras):
+        try:
+            if regex:
+                matches = list(re.finditer(query, text))
+            else:
+                matches = []
+                start = 0
+                while True:
+                    pos = text.find(query, start)
+                    if pos == -1:
+                        break
+                    matches.append(type('M', (), {'start': lambda s=pos: s, 'end': lambda s=pos, q=query: s + len(q)})())
+                    start = pos + 1
+        except re.error:
+            matches = []
+
+        for m in matches:
+            s = max(0, m.start() - context)
+            e = min(len(text), m.end() + context)
+            results.append({
+                "para_xml_index": idx,
+                "match_start": m.start(),
+                "match_end": m.end(),
+                "context": text[s:e],
+                "text_preview": text[m.start():m.end()][:200],
+            })
+            if len(results) >= limit:
+                break
+        if len(results) >= limit:
+            break
+
+    return {"total": len(results), "results": results}

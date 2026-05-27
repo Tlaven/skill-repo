@@ -74,3 +74,10 @@ def register(subparsers):
     p.add_argument('--section', help='展开指定章节的完整内容')
     p.add_argument('--range', nargs=2, type=int, metavar=('START', 'END'),
                    help='展开指定段落范围')
+
+    p = subparsers.add_parser('search-xml', help='搜索底层 XML 文本（覆盖 TOC 字段）')
+    p.add_argument('file', help='输入 .docx 文件')
+    p.add_argument('--query', '-q', required=True, help='搜索字符串或正则')
+    p.add_argument('--regex', action='store_true', help='启用正则模式')
+    p.add_argument('--context', '-c', type=int, default=80, help='匹配上下文字符数')
+    p.add_argument('--limit', '-l', type=int, default=50, help='最大结果数')
