@@ -517,7 +517,6 @@ def main():
             is_write = args.command in WRITE_COMMANDS
             guide_ctx = {
                 "command": args.command,
-                "is_first_write": is_write and not getattr(main, '_write_count', 0),
                 "is_structure_change": args.command in STRUCTURE_CHANGE_COMMANDS,
                 "has_verify_issues": _check_verify_issues(result),
             }

@@ -215,7 +215,7 @@ def insert_paragraph(doc, after, text, style='body', rules=None, output=None, ba
     ref_para = doc.raw_paragraphs[after]
     word_style = STYLE_NAME_TO_WORD.get(style, style)
     ensure_word_styles(doc.doc, {word_style}, rules)
-    new_para = _create_clean_paragraph(text, word_style, ref_para=ref_para)
+    new_para = _create_clean_paragraph(text, word_style, ref_para=ref_para, doc=doc)
     ref_para._element.addnext(new_para)
     doc.save_zip(output_path)
     doc._build_index()
@@ -239,7 +239,7 @@ def write_paragraphs(doc, after, data, output=None, backup=False):
         text = item.get("text", "")
         style = item.get("style", "body")
         word_style = STYLE_NAME_TO_WORD.get(style, style)
-        new_para = _create_clean_paragraph(text, word_style)
+        new_para = _create_clean_paragraph(text, word_style, doc=doc)
         ref_para = doc.raw_paragraphs[after]
         ref_para._element.addnext(new_para)
         inserted.insert(0, {"text": text[:50], "style": word_style})
@@ -248,7 +248,15 @@ def write_paragraphs(doc, after, data, output=None, backup=False):
     return {"after_paragraph": after, "total_inserted": len(data), "inserted": inserted, "output": output_path}
 
 
-def _create_clean_paragraph(text, word_style_name, ref_para=None):
+def _resolve_style_id(doc, name):
+    """将 Word 样式名解析为 styleId（w:pStyle w:val 只能用 ID，不能用名字）。"""
+    try:
+        return doc.doc.styles[name].style_id
+    except (KeyError, AttributeError):
+        return name
+
+
+def _create_clean_paragraph(text, word_style_name, ref_para=None, doc=None):
     from docx.oxml import parse_xml
     from copy import deepcopy
     W = NSMAP["w"]
@@ -256,7 +264,8 @@ def _create_clean_paragraph(text, word_style_name, ref_para=None):
     p_raw = etree.Element(f'{{{W}}}p')
     pPr = etree.SubElement(p_raw, f'{{{W}}}pPr')
     pStyle = etree.SubElement(pPr, f'{{{W}}}pStyle')
-    pStyle.set(f'{{{W}}}val', word_style_name)
+    style_id = _resolve_style_id(doc, word_style_name) if doc is not None else word_style_name
+    pStyle.set(f'{{{W}}}val', style_id)
     # 从锚定段落复制 alignment/spacing/ind 格式
     if ref_para is not None:
         ref_pPr = ref_para._element.find(f'{{{W}}}pPr')
@@ -389,6 +398,24 @@ def _find_table_by_text(doc, text):
     return None
 
 
+def _remove_extra_table_columns(table, keep_count):
+    """删除表格中多余的列（从每行末尾删单元格 + 删 gridCol）。"""
+    from lxml import etree as _etree
+    W = NSMAP['w']
+    # 1. 删 tblGrid 里多余的 gridCol
+    tbl_elem = table._tbl
+    tblGrid = tbl_elem.find(f'{{{W}}}tblGrid')
+    if tblGrid is not None:
+        grid_cols = tblGrid.findall(f'{{{W}}}gridCol')
+        for gc in grid_cols[keep_count:]:
+            tblGrid.remove(gc)
+    # 2. 每行删末尾多余的 tc
+    for tr in tbl_elem.findall(f'{{{W}}}tr'):
+        tc_list = tr.findall(f'{{{W}}}tc')
+        for tc in tc_list[keep_count:]:
+            tr.remove(tc)
+
+
 def replace_table(doc, index, data, by_text=None, output=None, backup=False):
     output_path = get_output_path(doc, output=output, backup=backup)
     if index is None and by_text is not None:
@@ -420,6 +447,8 @@ def replace_table(doc, index, data, by_text=None, output=None, backup=False):
             except Exception:
                 existing_width = 914400
             table.add_column(existing_width)
+    elif current_cols > num_cols:
+        _remove_extra_table_columns(table, num_cols)
     for row_idx, row_data in enumerate(data):
         for col_idx, cell_text in enumerate(row_data):
             if col_idx < num_cols:
@@ -456,7 +485,7 @@ def insert_table(doc, after, data, caption=None, three_line=False, output=None, 
     tbl_element.getparent().remove(tbl_element)
     if caption:
         cap_style = _detect_caption_style(doc)
-        cap_p = _create_clean_paragraph(caption, cap_style)
+        cap_p = _create_clean_paragraph(caption, cap_style, doc=doc)
         ref_para._element.addnext(cap_p)
         cap_p.addnext(tbl_element)
     else:
@@ -620,7 +649,7 @@ def insert_image(doc, after, image, width=None, caption=None, output=None, backu
     target_para._element.addnext(p._element)
     if caption:
         cap_style = _detect_caption_style(doc)
-        cap_p = _create_clean_paragraph(caption, cap_style)
+        cap_p = _create_clean_paragraph(caption, cap_style, doc=doc)
         p._element.addnext(cap_p)
     doc.save_zip(output_path)
     doc._build_index()

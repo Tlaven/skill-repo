@@ -630,7 +630,6 @@ class ThesisEditor:
         from commands.common import STRUCTURE_CHANGE_COMMANDS
         ctx = {
             "command": command,
-            "is_first_write": self._op_count == 0,
             "is_structure_change": command in STRUCTURE_CHANGE_COMMANDS,
         }
         hints = get_guide(ctx)
