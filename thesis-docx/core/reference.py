@@ -243,3 +243,54 @@ class ReferenceMixin:
         return {"status": "renumbered", "total": len(mapping), "changes": sum(
             1 for o, n in mapping.items() if o != n
         )}
+
+    def check_citation_density(self) -> dict:
+        """Extract citation density per chapter for LLM judgment."""
+        citations = self.list_citations()
+        ref_range = self._find_ref_section_range()
+        ref_start = ref_range[0] if ref_range else len(self.model._paragraphs)
+
+        # Count citations per top-level chapter
+        from collections import defaultdict
+        chapter_citations = defaultdict(lambda: {"count": 0, "numbers": set()})
+        for cit in citations:
+            ch = cit["chapter_path"].split(".")[0] if cit["chapter_path"] else "unknown"
+            chapter_citations[ch]["count"] += 1
+            chapter_citations[ch]["numbers"].update(cit["numbers"])
+
+        # Count body paragraphs per top-level chapter
+        chapter_paras = defaultdict(int)
+        for p in self.model._paragraphs:
+            if p.index >= ref_start:
+                break
+            if p.level is not None:
+                continue
+            ch = p.chapter_path.split(".")[0] if p.chapter_path else "unknown"
+            chapter_paras[ch] += 1
+
+        # Find uncited references
+        cited_numbers = set()
+        for cit in citations:
+            cited_numbers.update(cit["numbers"])
+        uncited = [r.index for r in self.model._references if r.index not in cited_numbers]
+
+        per_chapter = []
+        for ch in sorted(chapter_paras.keys()):
+            cit_info = chapter_citations.get(ch, {"count": 0, "numbers": set()})
+            para_count = chapter_paras[ch]
+            density = round(cit_info["count"] / para_count, 2) if para_count else 0
+            per_chapter.append({
+                "chapter": ch,
+                "body_paragraphs": para_count,
+                "citation_count": cit_info["count"],
+                "density": density,
+                "zero_citations": cit_info["count"] == 0,
+            })
+
+        return {
+            "per_chapter": per_chapter,
+            "total_citations_in_body": sum(c_["citation_count"] for c_ in per_chapter),
+            "total_references": len(self.model._references),
+            "uncited_reference_numbers": uncited,
+            "_guide": "引用密度检查。每章应有引用支撑，引用分布不应过度集中。标准见 references/citation-density.md。",
+        }

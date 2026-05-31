@@ -65,6 +65,41 @@ class FormulaMixin:
         self._rebuild()
         return True
 
+    def insert_formula_chain(self, after: Anchor,
+                             formulas: list[tuple[str, str | None]],
+                             centered: bool = True) -> int:
+        """Insert multiple formulas sequentially after the same anchor.
+
+        Each formula is inserted after the previous one, preserving order.
+        Returns the number of formulas successfully inserted.
+
+        Args:
+            after: Anchor of the paragraph to insert after.
+            formulas: List of (latex, eq_number) tuples.
+            centered: Whether to center the formulas.
+
+        Usage:
+            safe.insert_formula_chain(anchor, [
+                (r"v = W f(x)", "(3.1)"),
+                (r"u = W g(y)", "(3.2)"),
+            ])
+        """
+        if after.kind != "paragraph" or after.paragraph_index is None:
+            return 0
+
+        count = 0
+        idx = after.paragraph_index
+        for latex, eq_number in formulas:
+            anchor = Anchor(kind="paragraph", paragraph_index=idx,
+                            text_snippet=self.model._paragraphs[idx].text[:50] if idx < len(self.model._paragraphs) else "")
+            ok = self.insert_formula(anchor, latex, eq_number, centered)
+            if ok:
+                idx += 1  # new formula is at idx+1, next insert after it
+                count += 1
+            else:
+                break
+        return count
+
     def replace_formula(self, anchor: Anchor, latex: str,
                         eq_number: str | None = None) -> bool:
         """Replace an existing formula paragraph with a new LaTeX formula. Does NOT call save()."""

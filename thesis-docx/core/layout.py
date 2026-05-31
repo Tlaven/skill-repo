@@ -185,3 +185,30 @@ class LayoutMixin:
         if alignment in align_map:
             new_p.alignment = align_map[alignment]
         return True
+
+    # ------------------------------------------------------------------
+    # Page Setup Check (Phase 3+)
+    # ------------------------------------------------------------------
+
+    def check_page_setup(self) -> dict:
+        """Extract page setup data (margins, size, headers/footers) for LLM judgment."""
+        sections_data = []
+        num_sections = self.get_sections_count()
+        for i in range(num_sections):
+            margins = self.get_page_margins(i)
+            size = self.get_page_size(i)
+            header = self.get_header_text(i)
+            footer = self.get_footer_text(i)
+            sections_data.append({
+                "section_index": i,
+                "margins": margins,
+                "page_size": size,
+                "header": header,
+                "footer": footer,
+            })
+
+        return {
+            "section_count": num_sections,
+            "sections": sections_data,
+            "_guide": "页面设置检查。边距、纸张大小、页眉页脚应符合学校要求。标准见 references/page-setup.md。",
+        }

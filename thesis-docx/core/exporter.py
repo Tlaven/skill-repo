@@ -320,6 +320,250 @@ class ExporterMixin:
         }
 
     # ------------------------------------------------------------------
+    # Phase 3+ Checks (8 new data-extraction methods)
+    # ------------------------------------------------------------------
+
+    def check_formula_numbering(self) -> dict:
+        """Extract formula numbering data and cross-reference info."""
+        formulas = self.model.formulas
+        formula_list = []
+        for f in formulas:
+            formula_list.append({
+                "para_index": f.para_index,
+                "chapter": f.chapter_path,
+                "eq_number": f.equation_number,
+                "type": f.formula_type,
+                "content": f.content[:60] if f.content else "",
+            })
+
+        # Scan body text for formula references: 式(3.1), 式3.1, (3.1), 式(3-1)
+        ref_pattern = re.compile(r'式\s*[\(（]?\s*(\d+[\.\-]\d+)\s*[\)）]?')
+        ref_range = self._find_ref_section_range() if hasattr(self, '_find_ref_section_range') else None
+        ref_start = ref_range[0] if ref_range else len(self.model._paragraphs)
+
+        body_refs = []
+        for p in self.model._paragraphs:
+            if p.index >= ref_start:
+                break
+            if p.level is not None:
+                continue
+            for m in ref_pattern.finditer(p.text):
+                body_refs.append({
+                    "para_index": p.index,
+                    "chapter": p.chapter_path,
+                    "referenced_number": m.group(1),
+                    "context": p.text[max(0, m.start()-8):m.end()+8],
+                })
+
+        return {
+            "formula_count": len(formula_list),
+            "formulas": formula_list,
+            "body_references": body_refs,
+            "_guide": "公式编号连续性和交叉引用检查。编号应连续无跳号，正文引用与实际公式一一对应。标准见 references/formula-numbering.md。",
+        }
+
+    def check_figure_table_quality(self) -> dict:
+        """Extract figure/table quality data (size, format, caption)."""
+        images = self.model.images
+        tables = self.model.tables
+
+        image_list = []
+        for img in images:
+            image_list.append({
+                "para_index": img.para_index,
+                "chapter": img.chapter_path,
+                "width_cm": img.width_cm,
+                "height_cm": img.height_cm,
+                "format": img.format,
+                "caption": img.caption,
+                "filename": img.filename,
+            })
+
+        table_list = []
+        for t in tables:
+            table_list.append({
+                "para_index": t.para_index,
+                "chapter": t.chapter_path,
+                "row_count": t.row_count,
+                "col_count": t.col_count,
+                "header": t.header,
+                "caption": t.caption,
+            })
+
+        return {
+            "image_count": len(image_list),
+            "images": image_list,
+            "table_count": len(table_list),
+            "tables": table_list,
+            "_guide": "图表质量检查。图片尺寸合理性、格式、题注；表格结构、题注。标准见 references/figure-table-quality.md。",
+        }
+
+    def check_abstract_bilingual(self) -> dict:
+        """Extract Chinese and English abstracts + keywords for comparison."""
+        zh_abstract = ""
+        en_abstract = ""
+        zh_keywords = ""
+        en_keywords = ""
+
+        current_section = None
+        for p in self.model._paragraphs:
+            title = p.text.strip().lower()
+            if p.level is not None and p.level <= 2:
+                if any(k in title for k in ("摘要", "abstract")):
+                    if any(k in title for k in ("abstract", "英文")):
+                        current_section = "en_abstract"
+                    else:
+                        current_section = "zh_abstract"
+                elif any(k in title for k in ("关键词", "keyword")):
+                    current_section = None
+                elif p.level <= 2:
+                    current_section = None
+                continue
+
+            if current_section == "zh_abstract":
+                zh_abstract += p.text + "\n"
+                if "关键词" in p.text or "关键字" in p.text:
+                    zh_keywords = p.text
+            elif current_section == "en_abstract":
+                en_abstract += p.text + "\n"
+                if "keyword" in p.text.lower():
+                    en_keywords = p.text
+
+        return {
+            "zh_abstract": zh_abstract[:3000] if zh_abstract else "(未找到中文摘要)",
+            "en_abstract": en_abstract[:3000] if en_abstract else "(未找到英文摘要)",
+            "zh_keywords": zh_keywords,
+            "en_keywords": en_keywords,
+            "_guide": "中英文摘要和关键词对照。核心要素应一致，术语应对应，数量应相同。标准见 references/abstract-bilingual.md。",
+        }
+
+    def check_section_balance(self) -> dict:
+        """Extract per-chapter word counts for balance analysis."""
+        sections = self.model.sections
+        top_sections = []
+        for s in sections:
+            if s.level != 1:
+                continue
+            start, end = s.para_range
+            char_count = sum(
+                self.model._paragraphs[p].char_count
+                for p in range(start, end + 1)
+                if p < len(self.model._paragraphs)
+            )
+            top_sections.append({
+                "title": s.title,
+                "chapter": s.chapter_path,
+                "char_count": char_count,
+                "para_count": end - start + 1,
+            })
+
+        total_chars = sum(s_["char_count"] for s_ in top_sections)
+        for s_ in top_sections:
+            s_["percentage"] = round(s_["char_count"] / total_chars * 100, 1) if total_chars else 0
+
+        return {
+            "total_chars": total_chars,
+            "section_count": len(top_sections),
+            "sections": top_sections,
+            "_guide": "章节均衡性检查。正文章节字数不应悬殊，篇幅应与内容重要性匹配。标准见 references/section-balance.md。",
+        }
+
+    def check_keywords(self) -> dict:
+        """Extract and compare Chinese/English keywords."""
+        zh_kw = []
+        en_kw = []
+        in_zh_abstract = False
+        in_en_abstract = False
+
+        for p in self.model._paragraphs:
+            title = p.text.strip().lower()
+            if p.level is not None and p.level <= 2:
+                if any(k in title for k in ("摘要", "abstract")):
+                    if any(k in title for k in ("abstract", "英文")):
+                        in_en_abstract = True
+                        in_zh_abstract = False
+                    else:
+                        in_zh_abstract = True
+                        in_en_abstract = False
+                elif p.level <= 2:
+                    in_zh_abstract = False
+                    in_en_abstract = False
+                continue
+
+            text = p.text.strip()
+            if "关键词" in text or "关键字" in text:
+                import re as _re
+                kw_text = _re.split(r'关键词[：:]', text)[-1] if '关键词' in text else _re.split(r'关键字[：:]', text)[-1]
+                zh_kw = [k.strip().strip('；;，,。.') for k in _re.split(r'[；;]', kw_text) if k.strip()]
+            elif "keyword" in text.lower():
+                import re as _re
+                kw_text = _re.split(r'keywords?\s*[:：]', text, flags=_re.IGNORECASE)[-1]
+                en_kw = [k.strip().strip('；;，,。.') for k in _re.split(r'[；;,]', kw_text) if k.strip()]
+
+        return {
+            "zh_keywords": zh_kw,
+            "zh_count": len(zh_kw),
+            "en_keywords": en_kw,
+            "en_count": len(en_kw),
+            "count_match": len(zh_kw) == len(en_kw),
+            "_guide": "关键词一致性检查。中英文关键词数量应一致、术语应对应、格式应统一。标准见 references/keywords.md。",
+        }
+
+    def check_section_numbering(self) -> dict:
+        """Extract section numbering data for continuity check."""
+        sections = self.model.sections
+        numbered = []
+        for s in sections:
+            numbered.append({
+                "level": s.level,
+                "title": s.title,
+                "chapter_path": s.chapter_path,
+            })
+
+        # Check continuity: group by parent, check sequential
+        issues = []
+        from collections import defaultdict
+        by_parent = defaultdict(list)
+        for s in sections:
+            path = s.chapter_path
+            if not path:
+                continue
+            parts = path.split(".")
+            if len(parts) >= 2:
+                parent = ".".join(parts[:-1])
+            else:
+                parent = ""
+            by_parent[parent].append({
+                "path": path,
+                "title": s.title,
+                "last_part": parts[-1],
+            })
+
+        for parent, children in by_parent.items():
+            nums = []
+            for c in children:
+                try:
+                    nums.append(int(c["last_part"]))
+                except ValueError:
+                    continue
+            if nums:
+                nums.sort()
+                for i in range(1, len(nums)):
+                    if nums[i] != nums[i-1] + 1:
+                        issues.append({
+                            "parent": parent or "(root)",
+                            "gap": f"{nums[i-1]} → {nums[i]}",
+                            "missing": list(range(nums[i-1]+1, nums[i])),
+                        })
+
+        return {
+            "section_count": len(numbered),
+            "sections": numbered[:40],
+            "numbering_issues": issues,
+            "_guide": "标题编号连续性检查。同级编号应连续递增无跳号，格式应统一。标准见 references/section-numbering.md。",
+        }
+
+    # ------------------------------------------------------------------
     # Export
     # ------------------------------------------------------------------
 
