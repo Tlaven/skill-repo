@@ -1,15 +1,34 @@
-"""公式模块 — LaTeX/OMML 公式插入，无 argparse 依赖"""
+"""
+core/formula.py — LaTeX → OMML conversion and formula insertion.
+
+Pipeline: LaTeX string → latex2mathml → MathML XML → MathMLToOMML → OMML XML → insert into document.
+
+Ported from the original lib/formula.py with minimal changes.
+"""
+
+from __future__ import annotations
+import re
+
 from lxml import etree
-from latex2mathml.converter import convert as latex_to_mathml
+from latex2mathml.converter import convert as _latex_to_mathml
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 M_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
 W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
+
 def _m(tag):
     return f'{{{M_NS}}}{tag}'
 
+
 def _w(tag):
     return f'{{{W_NS}}}{tag}'
+
+
+def _ox(tag):
+    """Create an OxmlElement with the given namespace-prefixed tag (e.g. 'w:p')."""
+    return OxmlElement(tag)
 
 
 def _make_wrpr(italic=False, bold=False):
@@ -20,8 +39,7 @@ def _make_wrpr(italic=False, bold=False):
     fonts.set(_w('hAnsi'), 'Cambria Math')
     fonts.set(_w('eastAsia'), '宋体')
     fonts.set(_w('cs'), 'Times New Roman')
-    b_val = 'true' if bold else '0'
-    etree.SubElement(wrpr, _w('b')).set(_w('val'), b_val)
+    etree.SubElement(wrpr, _w('b')).set(_w('val'), 'true' if bold else '0')
     if italic:
         etree.SubElement(wrpr, _w('i'))
     else:
@@ -48,7 +66,7 @@ def _make_ctrl_pr(italic=False):
 
 
 class MathMLToOMML:
-    """将 MathML XML 转换为 OMML XML（Word 数学公式格式）"""
+    """Convert MathML XML to OMML XML (Word math formula format)."""
 
     def convert(self, mathml_str):
         root = etree.fromstring(mathml_str.encode('utf-8'))
@@ -76,34 +94,34 @@ class MathMLToOMML:
                 return result if isinstance(result, list) else [result]
         return self._convert_children(elem)
 
-    # 透传元素
+    # Pass-through elements
     def _conv_mrow(self, elem): return self._convert_children(elem)
     def _conv_mstyle(self, elem): return self._convert_children(elem)
     def _conv_mpadded(self, elem): return self._convert_children(elem)
     def _conv_mphantom(self, elem): return self._convert_children(elem)
 
+    # Basic tokens
     def _conv_mn(self, elem): return _make_math_run(elem.text or '', italic=False, normal=True)
     def _conv_mi(self, elem):
         text = elem.text or ''
         return _make_math_run(text, italic=len(text.strip()) == 1, normal=not (len(text.strip()) == 1))
-    def _conv_mo(self, elem):
-        text = elem.text or ''
-        return _make_math_run(text, italic=False, normal=True)
+    def _conv_mo(self, elem): return _make_math_run(elem.text or '', italic=False, normal=True)
     def _conv_mtext(self, elem): return _make_math_run(elem.text or '', italic=False, normal=True)
     def _conv_mspace(self, elem): return _make_math_run(' ', italic=False, normal=True)
 
+    # Fraction
     def _conv_mfrac(self, elem):
         children = list(elem)
         if len(children) < 2: return None
         frac = etree.Element(_m('f'))
-        fpr = etree.SubElement(frac, _m('fPr'))
-        fpr.append(_make_ctrl_pr())
+        etree.SubElement(frac, _m('fPr')).append(_make_ctrl_pr())
         num = etree.SubElement(frac, _m('num'))
         for c in self._convert_elem(children[0]): num.append(c)
         den = etree.SubElement(frac, _m('den'))
         for c in self._convert_elem(children[1]): den.append(c)
         return frac
 
+    # Subscript / Superscript / SubSup
     def _conv_msub(self, elem):
         children = list(elem)
         if len(children) < 2: return None
@@ -143,6 +161,7 @@ class MathMLToOMML:
         sup.append(_make_ctrl_pr())
         return sss
 
+    # Radical (sqrt / nth-root)
     def _conv_msqrt(self, elem):
         rad = etree.Element(_m('rad'))
         pr = etree.SubElement(rad, _m('radPr'))
@@ -166,6 +185,7 @@ class MathMLToOMML:
         for c in self._convert_elem(children[0]): e.append(c)
         return rad
 
+    # N-ary (sum, integral, etc.)
     def _conv_munderover(self, elem):
         children = list(elem)
         if len(children) < 3: return self._convert_children(elem)
@@ -206,6 +226,7 @@ class MathMLToOMML:
         sup.append(_make_ctrl_pr())
         return ssup
 
+    # Fenced (parentheses, brackets)
     def _conv_mfenced(self, elem):
         open_p = elem.get('open', '(')
         close_p = elem.get('close', ')')
@@ -220,29 +241,37 @@ class MathMLToOMML:
         return results
 
 
-def _create_formula_paragraph(omath_element, eq_number=None, centered=True):
-    from docx.oxml.ns import qn as docx_qn
-    from docx.oxml import OxmlElement as DocxOxml
-    new_p = DocxOxml('w:p')
-    pPr = DocxOxml('w:pPr')
+def latex_to_omml(latex_str: str) -> etree._Element:
+    """Convert a LaTeX string to an OMML XML element."""
+    try:
+        mathml = _latex_to_mathml(latex_str)
+    except Exception as e:
+        raise ValueError(f"LaTeX 解析失败: {e}")
+    return MathMLToOMML().convert(mathml)
+
+
+def create_formula_paragraph(omath_element, eq_number: str | None = None, centered: bool = True):
+    """Create a detached <w:p> element containing the OMML formula."""
+    new_p = etree.Element(_w('p'))
+    pPr = etree.SubElement(new_p, _w('pPr'))
+
     if eq_number:
-        tabs = DocxOxml('w:tabs')
-        tab = DocxOxml('w:tab')
-        tab.set(docx_qn('w:val'), 'right')
-        tab.set(docx_qn('w:pos'), '8300')
-        tabs.append(tab)
-        pPr.append(tabs)
+        tabs = etree.SubElement(pPr, _w('tabs'))
+        tab = etree.SubElement(tabs, _w('tab'))
+        tab.set(_w('val'), 'right')
+        tab.set(_w('pos'), '8300')
+
     if centered:
-        jc = DocxOxml('w:jc')
-        jc.set(docx_qn('w:val'), 'center')
-        pPr.append(jc)
-    new_p.append(pPr)
+        jc = etree.SubElement(pPr, _w('jc'))
+        jc.set(_w('val'), 'center')
+
     omp = etree.SubElement(new_p, _m('oMathPara'))
     omppr = etree.SubElement(omp, _m('oMathParaPr'))
     if centered:
         mjc = etree.SubElement(omppr, _m('jc'))
         mjc.set(_m('val'), 'center')
     omp.append(omath_element)
+
     if eq_number:
         xml_space = '{http://www.w3.org/XML/1998/namespace}space'
         tab_run = etree.SubElement(new_p, _w('r'))
@@ -251,88 +280,5 @@ def _create_formula_paragraph(omath_element, eq_number=None, centered=True):
         t = etree.SubElement(num_run, _w('t'))
         t.set(xml_space, 'preserve')
         t.text = eq_number
+
     return new_p
-
-
-def latex_to_omml(latex_str):
-    try:
-        mathml = latex_to_mathml(latex_str)
-    except Exception as e:
-        raise ValueError(f"LaTeX 解析失败: {e}")
-    converter = MathMLToOMML()
-    return converter.convert(mathml)
-
-
-def _clean_formula_placeholder(para_element):
-    """清除段落中的 FORMULA_X_X 占位符文本。"""
-    import re
-    ns = {'w': W_NS}
-    for t_elem in para_element.findall(f'.//{{{W_NS}}}t'):
-        if t_elem.text and re.search(r'FORMULA_\d+_\d+', t_elem.text):
-            t_elem.text = re.sub(r'\s*FORMULA_\d+_\d+\s*', '', t_elem.text)
-            if not t_elem.text.strip():
-                parent = t_elem.getparent()
-                if parent is not None:
-                    parent.getparent().remove(parent)
-
-
-def insert_formula(doc, after_index, latex_str, eq_number=None, centered=True):
-    omath = latex_to_omml(latex_str)
-    new_p = _create_formula_paragraph(omath, eq_number, centered)
-    target = doc.doc.paragraphs[after_index]._element
-    _clean_formula_placeholder(target)
-    target.addnext(new_p)
-    ns = {'m': M_NS}
-    mt_elems = new_p.findall('.//m:t', ns)
-    formula_text = ''.join(mt.text for mt in mt_elems if mt.text)
-    return {
-        "status": "success",
-        "inserted_after": after_index,
-        "formula_text": formula_text,
-        "equation_number": eq_number,
-        "latex": latex_str,
-        "note": "段落索引已偏移，后续操作前请先 read-structure 获取新索引"
-    }
-
-
-def insert_formulas_batch(doc, formulas):
-    results = []
-    last_inserted = None
-    for i, f in enumerate(formulas):
-        latex = f['latex']
-        number = f.get('number')
-        desc = f.get('desc_text')
-        if f.get('position') == 'last' and last_inserted is not None:
-            insert_after_elem = last_inserted
-        else:
-            after_idx = f['after']
-            insert_after_elem = doc.doc.paragraphs[after_idx]._element
-            _clean_formula_placeholder(insert_after_elem)
-        omath = latex_to_omml(latex)
-        new_p = _create_formula_paragraph(omath, number)
-        insert_after_elem.addnext(new_p)
-        last_inserted = new_p
-        ns = {'m': M_NS}
-        mt_elems = new_p.findall('.//m:t', ns)
-        formula_text = ''.join(mt.text for mt in mt_elems if mt.text)
-        results.append({
-            "index_in_batch": i, "formula_text": formula_text,
-            "number": number, "latex": latex[:60] + ('...' if len(latex) > 60 else ''),
-        })
-        if desc:
-            desc_p = etree.SubElement(new_p.getparent(), f'{{{W_NS}}}p')
-            desc_text = etree.SubElement(desc_p, f'{{{W_NS}}}r')
-            desc_t = etree.SubElement(desc_text, f'{{{W_NS}}}t')
-            desc_t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
-            desc_t.text = desc
-            new_p.addnext(desc_p)
-            last_inserted = desc_p
-    return {"status": "success", "total_inserted": len(results), "inserted": results,
-            "note": "段落索引已偏移，后续操作前请先 read-structure 获取新索引"}
-
-
-def list_formulas(doc):
-    """公式概要（精简模式）。委托给 reader.read_formulas(summary=True)。"""
-    from lib.reader import read_formulas
-    result = read_formulas(doc, summary=True)
-    return {"status": "success", "total": result["total"], "formulas": result["formulas"]}

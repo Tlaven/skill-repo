@@ -1,128 +1,108 @@
 ---
 name: thesis-docx
-description: "Use when the user mentions .docx files that are Chinese theses; also when 论文, 毕业论文, or 学位论文 is mentioned. NOT for workflows requiring Track Changes creation (revision marks). All write operations are direct (no w:ins/w:del)."
-type: skill
+description: "Read, edit, and manage Chinese academic theses in .docx format. TRIGGER: .docx, thesis, 论文, section, paragraph, format check, 格式, 章节, 降重, AIGC, caption, formula, reference, style, academic paper, 学位论文"
 ---
 
-# 论文 DocX 工具
-
-对 .docx 格式的中文学位论文进行读、写、格式检查与修复的完整工具链。
-
-## When to Use
-
-- 用户提到 .docx 文件且是中文论文（毕业论文/学位论文）
-- 需要查看/修改论文的段落、表格、图片、公式内容
-- 需要检查论文格式规范（标题样式、页面设置、引用一致性）
-- 需要插入图片/表格/公式到指定位置
-- 需要批量替换文字（如术语统一、编号修正）
-- 需要往空模板中填充论文内容
+# thesis-docx — 中文学术论文 .docx 操作
 
 ## 定位
 
-本工具是**论文文档的结构/格式领域专家**。擅长：
-- 文档结构操作（章节、段落、表格、图片、公式的增删改移）
-- 格式检查与修复（样式、页面设置、引用一致性）
-- 基于规则的多步操作（编号修正、批量替换、整节重写）
+读写中文学术论文 .docx 文件。核心是 `Locator → Anchor → Mutation` 寻址系统：用内容定位，不用索引。
 
-**不负责内容判断**。段落写得好不好、论点是否充分——这是你（Agent）的智能，不是本工具的职责。
+## 原子词表
 
-## 运行环境
+| 类别 | 原子 | 说明 |
+|------|------|------|
+| 动作 | replace, insert, delete, get, find, resolve, export, validate, count, list, set, save, move | CRUD + 领域操作 |
+| 对象 | paragraph, section, image, table, style, caption, formula, reference, header, footer, chapter, page, metadata, structure, property, revision | 对应文档实体模型 |
+| 定位 | text, chapter, title, range, after, before, first, last, all, has_revision, revision_type, revision_author | 对应 Locator.kind |
 
-- **工作目录**：CLI 命令必须在 skill 根目录（`thesis-docx/`）下运行
-- **Python 依赖**：`python-docx`, `lxml`, `latex2mathml`（pip install）
-- **Windows 限制**：不要用 `python -c "..."` 执行代码，写成 `.py` 脚本文件再 `python script.py`
-- **所有输出为 JSON**，用 `json.loads()` 解析
+对象层级：`document > section > paragraph > (text + style)`。
 
-## Critical Rules
+## 组合规则
 
-违反以下规则会导致数据丢失或损坏：
+无固定顺序。从词表选原子，`-` 连接，任何排列都合法。参数不嵌入复合词：
 
-1. **永远用内容定位，不用索引。** `by_text="旧段落"` 而非 `after=43`——insert/delete 后索引漂移。
-2. **保存必须用 save_zip()。** `python-docx` 原生的 `doc.save()` 会丢失 OMML 公式和插入的图片。eval 模式已自动处理。
-3. **不在目标文档上直接测试。** 先备份或用副本，确认效果后再改目标。
-4. **不支持 SVG 图片。** 所有插图必须为 PNG 或 JPEG。
-5. **不创建修订标记。** 所有写操作为直接写入（无 `<w:ins>`/`<w:del>`）。替代方案见 API.md。
+```
+paragraph-replace-text anchor="原始文字" content="新文字"
+section-get-chapter value="3.2"
+```
 
-## 操作方式
+### 复合词 → 库调用
 
-**读用 CLI，写用 eval。**
+复合词映射到 `SafeDocument` 方法：`-` 换 `_`，动作在前、对象在后。
 
-| 场景 | 方式 |
+```
+list-citations          → safe.list_citations()
+detect-format-issues    → safe.detect_format_issues()
+count-words             → safe.count_words()
+writing-style-check     → safe.check_writing_style()
+```
+
+带 `_guide` 返回的命令加 `with_guide=True`：`safe.list_citations(with_guide=True)`。
+
+底层库方法名与复合词命名一致，agent 不需要查映射表——拼出来就是方法名。
+
+## 自实现循环
+
+1. 用 `resolve()` / `resolve_all()` 定位目标
+2. 调用 `SafeDocument` 方法
+3. 定位失败 → 用 python-docx / lxml 直操，通过 `safe.save()` 保存
+4. 记录实现，下次复用
+
+## 底层库
+
+路径：`core/`。`SafeDocument` = persistence.py + 7 mixins：
+
+| 模块 | 提供 |
 |------|------|
-| 读文档 | `python cli.py read-* / search`（见下方读操作表） |
-| 改文档（任何修改） | `python cli.py eval "论文.docx" --script-file ops.py` |
+| persistence.py | 基础 CRUD + save_zip |
+| editor.py | 批量替换 + 段落移动 |
+| table.py | 表格替换/插入（含三线表） |
+| image.py | 图片插入/替换 |
+| formula_mixin.py | LaTeX→OMML 公式 |
+| style.py | 样式分配 + 格式 setter + 自动修复 |
+| reference.py | 参考文献增删重编号 |
+| layout.py | 页边距/页眉页脚 |
+| exporter.py | 验证/统计/Markdown导出/图片提取 |
 
-不要用 CLI 做写操作。eval 模式解决所有写场景，不存在"太简单不需要 eval"的情况。
+`create_thesis(output, outline, template)` 在 `creator.py` — 从 Markdown 大纲创建 .docx，无模板用默认样式。
 
-## eval 模式
+`DocumentModel` 在 model.py，提供 6 类索引 + resolve/resolve_all。
 
-```bash
-python cli.py eval "论文.docx" --script-file ops.py
+## 参考文档
+
+| 要做什么 | 先看 |
+|---------|------|
+| 理解格式角色 body/caption/reference 对应什么 | `references/format-roles.md` |
+| 查字号/行距/单位换算 | `references/typography.md` |
+| 判断段落是否太长、自主拆分 | `references/paragraph-length.md` |
+| 检测和改写套话/废话 | `references/cliches.md` |
+| 统一参考文献格式 | `references/reference-format.md` |
+| 检查图表编号和交叉引用 | `references/figure-table-numbering.md` |
+| 检查摘要和结论是否重复 | `references/abstract-vs-conclusion.md` |
+| 检查关键术语是否一致 | `references/terminology.md` |
+| 检查占位符/TODO/空段残留 | `references/residual-content.md` |
+| 检查中英文标点混用 | `references/punctuation.md` |
+| 检查目录/致谢/声明/附录完整性 | `references/document-structure.md` |
+
+## 边界
+
+- **复合词**：单步 CRUD（paragraph-replace, style-set, reference-add）
+- **单一词**：save, export-markdown, validate, assign-headings, renumber-references
+- **脚本**：多步编排（agent import 库写脚本）
+
+## 安全规则
+
+- **保存用 `safe.save()`**。python-docx 原生 save 丢失公式和图片。
+- **定位用内容，不用索引**。insert/delete 后索引漂移。
+- **先备份再批量修改**。`safe.save(output_path=...)`。
+- **操作失败返回 False**。检查 anchor 有效性，改用直操 XML。
+
+## 依赖
+
 ```
-
-`editor`（ThesisEditor 实例）自动注入，无需 import、无需 save：
-
-```python
-# ops.py
-editor.replace_all({"图6-": "图3-"}, scope="chapter:3")
-editor.rewrite_section("3.2 数据处理", paragraphs=[
-    {"text": "新的第一段内容", "style": "body"},
-    {"text": "新的第二段内容", "style": "body"},
-])
-editor.delete_paragraph(by_text="要删除的段落")
+python-docx
+lxml
+latex2mathml
 ```
-
-方法签名和操作提示见 **API.md**。
-
-## 任务流程
-
-### 类型 A：单一操作
-
-→ 写一个 eval 脚本，一行即可。
-
-### 类型 B：质量审查或改良
-
-→ **先读 `checklist.md`**，按清单逐项排查，列出问题清单后再用 eval 修改。
-
-### 类型 C：格式修复
-
-→ **先读 API.md 操作提示**了解避坑点，再 `editor.fix_format()` 或 `editor.assign_styles()`。
-
-### 类型 D：内容填充
-
-→ `editor.read_full()` 了解结构，再 `editor.rewrite_section()` 批量写入。
-
-## 读操作 (CLI)
-
-| 你想做什么 | 命令 |
-|-----------|------|
-| 看全文结构 | `python cli.py read-full "论文.docx"` |
-| 读某节内容 | `python cli.py read-section --title "节名" --deep "论文.docx"` |
-| 搜索关键词 | `python cli.py search --query "关键词" "论文.docx"` |
-| 格式检查 | `python cli.py read-structure --verify "论文.docx"` |
-| 页面检查 | `python cli.py read-page-setup --verify "论文.docx"` |
-| 引用检查 | `python cli.py list-references --verify "论文.docx"` |
-
-完整命令列表见 **CLI.md**。
-
-## 文档地图
-
-| 你要做什么 | 先看 | 在哪 |
-|-----------|------|------|
-| 写 eval 脚本 | 方法签名 + 操作提示 | `API.md` |
-| 质量检查 | 逐项排查 | `checklist.md` |
-| 查 CLI 命令 | 读操作参考 | `CLI.md` |
-
-## 已知限制
-
-### 1. 修订标记影响读准确性
-
-文档含 `<w:ins>`/`<w:del>` 时，`paragraph.text` 可能不准确。始终以 Word「审阅 → 所有标记」视图为最终依据。使用 `detect-revisions` 确认修订内容。
-
-### 2. TOC 字段文本在搜索盲区
-
-自动目录（TOC 字段）中的文字可能以单段落多 run 形式存在，`search` 命令无法覆盖。用 `search-xml` 直接搜索底层 XML。
-
-### 3. Windows PowerShell 中 `|` 需转义
-
-`search --query "A|B"` 中的 `|` 被 PowerShell 解释为管道。替代方案：多次搜索，或用 `--query-file queries.txt`（每行一个关键词）。
