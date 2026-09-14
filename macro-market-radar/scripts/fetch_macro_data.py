@@ -395,6 +395,11 @@ def _confidence_note(payload):
     if ok_core:
         dates = sorted({v.get("date", "?") for v in ok_core.values()})
         notes.append(f"核心指数历史: 缓存数据, 最新日期 {dates[-1] if dates else '?'} ({len(ok_core)}/{len(core)} 只有 {', '.join(ok_core.keys())})")
+        # 日期一致性校验: 各指数最新值来自不同交易日, 跨指数比较前必须确认
+        # (缓存按指数独立刷新, 可能出现上证停在周五而深证已在今天——把旧值当今日会误判)
+        if len(dates) > 1:
+            date_map = ", ".join(f"{k}={v.get('date','?')}" for k, v in ok_core.items() if v)
+            notes.append(f"⚠ **数据日期不一致**: 各指数最新收盘日不同 ({date_map})。跨指数比较 20/60 日强弱前, 请逐一确认数据时点, 勿把旧交易日的值当今日。")
     else:
         notes.append("核心指数历史: **缺失, 需搜索**")
 

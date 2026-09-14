@@ -107,3 +107,5 @@
 - 乐咕源 (`stock_market_activity_legu`) 独立于东财, 封禁期间仍稳定可用
 - 脚本输出**数据健康度摘要** (`data_health`), 明确标记每块数据 ok/failed
 - **任何 failed 的数据块都不要重试硬拉, 改用 web_search 补** — 这是本 skill 的既定策略
+
+**Windows (PowerShell) 运行**: 前台直接跑 `uv run --with akshare --with pandas python scripts/fetch_macro_data.py --format md`, 长耗时命令需设较长 timeout (首跑含 uv 冷启动, 可达 1-2 分钟)。**不要**用后台模式跑再读 stdout — 实测可能拿到空输出且拖成双跑 (见 SKILL.md Step 1 反模式)。
