@@ -89,8 +89,37 @@ def download_subs(url, workdir, kind, lang, base_opts):
     return cands[0] if cands else None
 
 
+_W = re.compile(r"[A-Za-z0-9\u00C0-\u024F]")
+_CJK = re.compile(r"[\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF]")
+_EN_NOSPACE_AFTER = set("-—–&/([{")
+_CJK_END_PUNCT = set("、。，；：！？）】》…\"'")
+_CJK_START_PUNCT = set("、。，；：！？）】》……「『\"'")
+
+
+def _boundary_space(prev_char, next_char):
+    """行级拼接时是否补空格: 西文↔西文补; CJK 边界不补。"""
+    if _CJK.search(prev_char) or _CJK.search(next_char):
+        return False
+    if prev_char in _CJK_END_PUNCT and next_char not in _W.pattern:
+        return False
+    if prev_char in _EN_NOSPACE_AFTER:
+        return False
+    if _W.search(prev_char) and _W.search(next_char):
+        return True
+    # 英文句子标点后接西文 → 新句, 也要补空格
+    if prev_char in ".,;:!?)]}\"'" and _W.search(next_char):
+        return True
+    if next_char in {",", ".", ";", ":", "!", "?", ")", "]", "}", "…"}:
+        return False
+    if next_char in _EN_NOSPACE_AFTER:
+        return False
+    if prev_char.isspace() or next_char.isspace():
+        return False
+    return _W.search(prev_char) is not None and _W.search(next_char)
+
+
 def clean_vtt(path):
-    """VTT -> 纯文本。去时间戳/标签/滚动重复行; 返回 (全文, 换行版)。"""
+    """VTT -> 纯文本。去时间戳/标签/滚动重复行; 西文行间断行处补空格。返回 (全文, 换行版)。"""
     with open(path, encoding="utf-8-sig") as f:
         raw = f.read()
     out = []
@@ -105,6 +134,8 @@ def clean_vtt(path):
             continue
         if out and out[-1] == s:
             continue
+        if out and _boundary_space(out[-1][-1], s[0]):
+            out.append(" ")
         out.append(s)
     text = "".join(out)
     wrapped = "\n".join(text[i : i + 500] for i in range(0, len(text), 500))

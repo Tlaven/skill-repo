@@ -110,6 +110,7 @@ python scripts/asr_transcribe.py --url "URL" --model medium --workdir "DIR"
 ## 已知边界 / 后续可演化
 
 - **滚动重复行**: 当前清洗只做"连续完全相同行去重"; 若遇到字幕呈 `abc / bc def` 递增滚动模式, 需扩展清洗逻辑 (实际使用中遇到再固化)
+- **行级拼接吃空格** (2026-10-04 发现并已修): `clean_vtt` 原 `"".join` 逐行拼接, VTT 断行处词间空格丢失 (实测 "You know the rules / and so do I" → "therulesand")。已改为 `_boundary_space` 判定: 西文↔西文 (含数字、英文句标点后接新句) 补空格; CJK↔任意、前联标点 (如引号开) 不补。离线测试 + dQw4w9WgXcQ 实测通过
 - **bilibili** (2026-10-03 实测): 多数视频无字幕 (只有弹幕), 直接走 ASR 阶梯; `pick_sub` 行为正确
 - **繁体输出**: medium 模型中文可能输出繁体, 可考虑加 zhconv/opencc 转换 (等再次遇到再固化)
 - **直播/无自动字幕**: 走同一 ASR 阶梯
