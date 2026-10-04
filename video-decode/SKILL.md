@@ -40,7 +40,7 @@ python scripts/yt_transcript.py --url "URL"
 
 **Step 2 健康度检查** (读脚本 stdout):
 - `TRANSCRIPT:` / `META:` 路径拿到手
-- `NO_SUBTITLES` (退出码 2) → 走 ASR 降级: `python scripts/asr_transcribe.py --url "URL" --model small|medium`。**先告知成本再动手** (模型 0.5~1.5GB, CPU 约 0.5~1x 实时), 让用户选模型: 试跑 small, 要准 medium
+- `NO_SUBTITLES` (退出码 2) → **先看 `[meta] duration=` 是否 None**: 是 ⇒ 提取被风控降级 (字幕可能其实存在), 先用持久方案重跑 (`--cookies "%LOCALAPPDATA%\yt-cookies.txt" --player-client mweb`), 别急着 ASR; duration 正常且仍 exit 2 才是真无字幕 → 走 ASR 降级: `python scripts/asr_transcribe.py --url "URL" --model small|medium`。**先告知成本再动手** (模型 0.5~1.5GB, CPU 约 0.5~1x 实时), 让用户选模型: 试跑 small, 要准 medium
 - `BOT_CHECK` (退出码 3) → YouTube 临时风控, **不是脚本问题**; **本机已装持久方案**: `--cookies "%LOCALAPPDATA%\yt-cookies.txt" --player-client mweb` (POT provider + 专用登录 profile; 详见 toolchain-notes.md, cookies 过期跑 `scripts/yt_cookies.py` 刷新), 不要反复硬试
 - `chars_per_min` 异常 (不在 80~450) 或 chars 过短 → 字幕可能残缺, 在解读中如实标注
 
@@ -129,3 +129,4 @@ python scripts/yt_transcript.py --url "URL" --cookies "%LOCALAPPDATA%\yt-cookies
 - v0.1.10 (2026-10-03): 收尾优化。SKILL 主流程直接给出 BOT_CHECK 持久命令 (不再只指向 notes); 新脚本 (`yt_cookies.py` / `yt_login_watch.py`) 注册到入口; 验证媒体格式路径 (cookies + mweb + `--js-runtimes node --remote-components ejs:github`, 格式全出, ASR 降级可用); toolchain-notes 补字幕默认输出路径与 cookies 安全提示; factcheck-guide §1 补多人谈话抽 claim 要点与"字幕错字 vs 发言"区分。
 - v0.1.11 (2026-10-04): 健康检查修复 (纯审计发现, 3 处)。① yt_transcript.py 的 BOT_CHECK 兜底提示仍在推荐 cookies-from-browser, 与 notes "该路已死 (ABE)" 结论矛盾 → 改为持久方案优先; ② `yt_cookies.py` 默认输出原为 CWD 下 cookies.txt, 在仓库目录运行会把 Google 登录态写进 repo 且 gitignore 未覆盖 → 改默认输出 `%LOCALAPPDATA%\yt-cookies.txt` + 输出到非常规位置时打印安全提示 + gitignore 加 `cookies.txt`; ③ yt_cookies / yt_login_watch 裸 `sys.argv` 改 argparse (顺带修掉 `--help` 被当成文件名误写 cookies 的事故), 缺 `websocket-client` 时给出 pip 安装提示; ④ 首次入库 (此前一直 untracked)。
 - v0.1.12 (2026-10-04): 测试驱动演化。**clean_vtt 行级拼接吃空格** (英文断行词粘连 "rulesand") → 新增 `_boundary_space` 判定补空格: 西文↔西文/数字补, CJK 边界不补, 英文句标点后接新句补, 前联标点不补。测试时踩坑: 测试断言先写反 (句点后以为不补, 实为英文新句要补), 用逐条件复盘纠出; `--help` 实测误触发了 cookies 导出, 印证 ③ argparse 修复的必要性。全流程回归: 离线测试 + bilibili 退出码 2 + YouTube 快路径 + cookies 刷新 (无头, logged_in=True) 通过。
+- v0.1.13 (2026-10-04): 首次完整 Phase 1+2 实机测试 (小Lin说 8BN8p5xDkzw 日元干预, 15.7 分钟, 官方 zh 字幕 5205 字)。发现新陷阱: **假 NO_SUBTITLES** — 无 cookies 首跑 exit 2 + `duration=None` (提取被风控降级, 字幕其实存在), 持久方案重跑即成功; 判定规则固化进 SKILL Step 2 与 notes (exit 2 先查 duration)。Phase 2 核查 19 项: 17✅ / 2⚠️ (单周涨幅最高级未证实、"收入1/3"口径待核) / 0❌; "今年超25万亿干预"估算被 MOF 官方数据 (11.73+15.40=27.1兆) 证实。经验: 官方手工字幕的引语可逐字对上报✅ (三村"超过心理层面"原话吻合)。

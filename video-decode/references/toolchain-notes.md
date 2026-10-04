@@ -86,6 +86,8 @@ python -m yt_dlp --no-warnings --skip-download --write-subs --write-auto-subs --
 
 ## ASR 降级阶梯 (仅当 yt_transcript.py 退出码 2 = NO_SUBTITLES)
 
+**先排除"假 NO_SUBTITLES" (2026-10-04 实测, 8BN8p5xDkzw)**: 无 cookies 首跑输出 exit 2 + `[meta] duration=None`, 但视频实际有官方手工中文字幕; 用 `--cookies ... --player-client mweb` 重跑即成功 (5205 字, cpm 331)。根因: 风控/降级路径返回的 info 缺 duration 与字幕列表, `ignore_no_formats_error` 静默放行。**规则: exit 2 且 duration=None ⇒ 先持久方案重跑; duration 正常且仍 exit 2 才走 ASR**。
+
 **先向用户说明成本再动手**。实测数据 (2026-10-03, bilibili 18.5 分钟视频):
 - 模型下载: small≈460MB / medium≈1.5GB (首次; HF 缓存后复用)
 - CPU 转写: medium int8 ≈ **0.75x 实时** (18.5 分钟音频 → 14 分钟); small 约快 2~3 倍
