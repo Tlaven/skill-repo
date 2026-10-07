@@ -100,9 +100,10 @@ python scripts/asr_transcribe.py --url "URL" --model medium --workdir "DIR"
 # 已有音频: --audio "path.m4a"
 ```
 
-**脚本内置的两个实测坑修补 (不要绕过脚本手写)**:
+**脚本内置的三个实测坑修补 (不要绕过脚本手写)**:
 1. `faster-whisper 1.2.1` 与 `av 19` 不兼容: av 19 移除了 `metadata_errors` 参数, faster-whisper 仍在传 → 脚本用 shim 剥掉该参数
 2. 本环境命令行含 `%` 模板 (`audio.%(ext)s`) 会被吞导致 URL 参数丢失 → 音频下载必须走 Python API, 脚本已处理
+3. **陈旧音频误转** (2026-10-05 实测, BV1P8eK62EQt): 原实现 `audio.%(ext)s` + 共享 asr 目录, 目录里已有上一个视频的 `audio.m4a` 时 yt-dlp 不会真正重下 (bilibili 格式无 filesize, 校验不了), ASR 静默把 55 分钟旧音频整段转完 (raw 内容与目标视频完全无关)。已修: `--url` 默认 workdir → `<临时目录>/video-decode/<id>` (与 yt_transcript 一致), 音频命名 `audio.<id>.<ext>`, 下载前打印 `[meta] id/duration/title`。**规则: ASR 开始前核对 `[meta] duration` 与 meta.json 一致、raw 开头与标题语义相符, 不一致立刻停**
 
 **其他注意**:
 - HF 符号链接警告 (Windows 无 Developer Mode) 无害可忽略
