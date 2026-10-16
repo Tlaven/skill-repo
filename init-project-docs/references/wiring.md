@@ -17,6 +17,8 @@ DOC_GLOB='^docs/'
 L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md'
 ```
 
+> `check-doc-refs.sh` 顶部另有两项:`DOC_EXT`(文档扩展名,默认 `.md` + `.markdown`)与 `DOC_EXCLUDE`(对账要**排除**的路径,默认排除 `docs/legacy/`、`docs/archive/` 等**考古 / 存档层**——它们不是活契约,扫进来只会制造噪音)。
+
 > **Windows 必读——先把换行符定死（否则脚本根本跑不起来）。**
 > Windows 默认 `core.autocrlf=true`，拷进项目的 `.sh` 会被检出成 CRLF，bash 会以 `$'\r': command not found` 语法错直接拒绝执行；若已接 pre-commit，会挡住**每一次**提交，报错还像"hook 坏了"——很容易被整个删掉。落地一行防住（`.gitattributes` 不存在就新建，存在就追加）：
 >

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # check-doc-refs.sh — 结构性对账:docs/ 里的死链、未填占位符、标了 N2 却缺「验收」。
+# Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 会让 bash 拒绝执行。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
 # 用法:
@@ -14,6 +15,10 @@ for a in "$@"; do [ "$a" = "--strict" ] && STRICT=1; done
 
 # 按项目改:文档扩展名(不含点,空格分隔)。默认同时认 .md 与 .markdown。
 DOC_EXT="md markdown"
+
+# 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除常见"考古 / 存档层"——
+# 它们不是活契约,扫进来只会制造噪音(如 docs/legacy/ 里对已废文件的链接)。置空则不过滤。
+DOC_EXCLUDE='^(docs/legacy/|docs/archive/)'
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$ROOT" || exit 0
@@ -41,6 +46,7 @@ found=0
 while IFS= read -r hit; do
   [ -z "$hit" ] && continue
   file=${hit%%:*}
+  if [ -n "$DOC_EXCLUDE" ] && printf '%s' "$file" | grep -Eq "$DOC_EXCLUDE"; then continue; fi
   target=$(printf '%s' "$hit" | grep -oE '\]\([^)]+\)' | head -n1 | sed -E 's/^\]\(//; s/\)$//')
   case "$target" in http*|\#*|mailto:*|"") continue ;; esac
   target=${target%%#*}
@@ -57,6 +63,7 @@ EOF
 
 # 2) 未填占位符 / TODO
 PH=$(grep -rn "${INC[@]}" -E 'TODO|TBD|与用户对话后填|novelty=N[?]|未填写|待补充' docs 2>/dev/null)
+[ -n "$DOC_EXCLUDE" ] && PH=$(printf '%s\n' "$PH" | grep -Ev "$DOC_EXCLUDE")
 if [ -n "$PH" ]; then
   echo "[placeholder] docs/ 仍有未填占位符 / TODO:"
   printf '%s\n' "$PH"

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # check-docs-sync.sh — 最小检查器:代码变了,但 docs/ 和 L1 记忆文件都没动 → 提醒。
+# Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 会让 bash 拒绝执行,pre-commit 反过来挡住每次提交。
 # 它只查"有没有动过",不判对错(判对错交给 teach-back 验证者)。
 #
 # 用法:

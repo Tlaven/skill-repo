@@ -8,6 +8,10 @@ $ErrorActionPreference = 'SilentlyContinue'
 # 按项目改:文档扩展名(含点)。默认同时认 .md 与 .markdown。
 $DocExt = @('.md', '.markdown')
 
+# 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除考古 / 存档层(非活契约)。
+# 置空字符串则不过滤。
+$DocExclude = '^(docs/legacy/|docs/archive/)'
+
 $root = (git rev-parse --show-toplevel 2>$null)
 if (-not $root) { $root = (Get-Location).Path }
 Set-Location $root
@@ -18,6 +22,14 @@ if (($docsMd | Measure-Object).Count -eq 0) {
   Write-Host "[check-doc-refs] 警告:docs/ 下没有匹配 DocExt=$($DocExt -join ',') 的文件。"
   Write-Host '                 若你的文档用别的扩展名,改脚本顶部的 $DocExt。'
   exit 0
+}
+
+# 排除考古 / 存档层(非活契约;见顶部 $DocExclude)
+if ($DocExclude) {
+  $docsMd = @($docsMd | Where-Object {
+    $rel = $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/')
+    $rel -notmatch $DocExclude
+  })
 }
 
 $found = $false

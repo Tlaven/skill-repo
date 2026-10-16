@@ -119,6 +119,7 @@
 
 ---
 
+<!-- 示例(仅示意形状,不要复制)——包在注释里,照抄模板不会留下假的 N2 条目;真实项目请整段删掉
 ## 示例(仅示意形状,不要复制)
 
 > 下面是"填好一条 N2 核心函数"长什么样。真实项目请删掉本节。
@@ -145,6 +146,7 @@
 **验收**
 - 命令:`pytest tests/test_slot_matcher.py` · 预期:通过
 - property:对随机 order/slots,若返回非 None,则 `slot.used + order.weight <= slot.capacity` 恒成立
+-->
 
 ---
 
