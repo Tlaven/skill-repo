@@ -16,9 +16,10 @@ for a in "$@"; do [ "$a" = "--strict" ] && STRICT=1; done
 # 按项目改:文档扩展名(不含点,空格分隔)。默认同时认 .md 与 .markdown。
 DOC_EXT="md markdown"
 
-# 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除常见"考古 / 存档层"——
-# 它们不是活契约,扫进来只会制造噪音(如 docs/legacy/ 里对已废文件的链接)。置空则不过滤。
-DOC_EXCLUDE='^(docs/legacy/|docs/archive/)'
+# 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除常见"非活契约":
+# 考古 / 存档层(如 docs/legacy/ 里对已废文件的链接)与**模板 stub 目录**(docs/templates/——
+# 有些项目把模板放在 docs/ 内,stub 里的占位符不是契约内容)。置空则不过滤。
+DOC_EXCLUDE='^(docs/legacy/|docs/archive/|docs/templates/)'
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$ROOT" || exit 0

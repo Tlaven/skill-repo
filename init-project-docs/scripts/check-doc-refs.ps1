@@ -8,9 +8,10 @@ $ErrorActionPreference = 'SilentlyContinue'
 # 按项目改:文档扩展名(含点)。默认同时认 .md 与 .markdown。
 $DocExt = @('.md', '.markdown')
 
-# 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除考古 / 存档层(非活契约)。
+# 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"非活契约":考古 / 存档层
+# (如 docs/legacy/)与模板 stub 目录(docs/templates/——有些项目把模板放在 docs/ 内)。
 # 置空字符串则不过滤。
-$DocExclude = '^(docs/legacy/|docs/archive/)'
+$DocExclude = '^(docs/legacy/|docs/archive/|docs/templates/)'
 
 $root = (git rev-parse --show-toplevel 2>$null)
 if (-not $root) { $root = (Get-Location).Path }
