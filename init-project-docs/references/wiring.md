@@ -39,7 +39,7 @@ bash scripts/check-doc-refs.sh
 
 或写进 [pre-commit 框架] 的 `.pre-commit-config.yaml`，便于团队分发。
 
-> 建议 `check-docs-sync` 用 `--strict`（它是零误报的"动不动"检查）；`check-doc-refs` 初期先不加 `--strict`，当提醒用，等基线干净了再收紧。
+> 建议 `check-docs-sync` 用 `--strict`（它是"动不动"检查，误报极低——纯重构提交只改代码、不碰文档时会命中，属已知例外，用 `git commit --no-verify` 放行）；`check-doc-refs` 初期先不加 `--strict`，当提醒用，等基线干净了再收紧。
 
 ## 方式 B：CI（GitHub Actions）
 
@@ -68,7 +68,7 @@ jobs:
 
 | 脚本 | 查什么 | 误报 | 建议 |
 |---|---|---|---|
-| `check-docs-sync` | 代码动了但 `docs/` 与 L1 没动 | 极低 | pre-commit / CI 加 `--strict` |
+| `check-docs-sync` | 代码动了但 `docs/` 与 L1 没动 | 极低（纯重构会命中，属例外） | pre-commit / CI 加 `--strict` |
 | `check-doc-refs` | 死链 / 未填占位符 / N2 缺验收 | 低-中 | 先当提醒，基线干净后加 `--strict` |
 
 ## 记住边界

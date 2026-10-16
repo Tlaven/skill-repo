@@ -22,16 +22,10 @@ skill 提供四样东西:
 
 ## 宿主适配(先定:L1 文件叫什么?)
 
-| 宿主 | L1 文件名 |
-|---|---|
-| **OpenCode / Codex / 通用** | `AGENTS.md` ← OpenCode 默认 |
-| Claude Code | `CLAUDE.md` |
-| Cursor | `.cursor/rules/project.mdc`(或旧版 `.cursorrules`) |
-| Windsurf | `.windsurfrules` |
-| GitHub Copilot | `.github/copilot-instructions.md` |
+**宿主 ↔ L1 文件名的映射,唯一归属在 `templates/l1-memory.md` 顶部那张表**(本 skill 不重述,避免两处漂移)——决定文件名前读那里。
 
 - **不确定就问用户"你用哪个 agent 宿主?"**;检测到 `.claude/` 用 `CLAUDE.md`,否则默认 `AGENTS.md`。
-- **多宿主并存:** 选一个当主文件,其余放一行指针(`见 AGENTS.md`)——不要各写一份,**两份规则必然漂移**。
+- **多宿主并存:** 选一个当主文件,其余放一行指针(`见 AGENTS.md`)——不要各写一份,**两份规则必然漂移**(细则同见 `l1-memory.md` 顶部)。
 
 ---
 
