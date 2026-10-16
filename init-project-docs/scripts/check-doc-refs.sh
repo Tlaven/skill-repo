@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # check-doc-refs.sh — 结构性对账:docs/ 里的死链、未填占位符、标了 N2 却缺「验收」。
-# 只做能机器判定的部分;语义一致性交给 teach-back 验证者(references/teach-back-verifier-prompt.md)。
+# 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
 # 用法:
 #   bash check-doc-refs.sh            # 全量扫 docs/,只提醒(退 0)
@@ -56,7 +56,7 @@ $(grep -rno "${INC[@]}" -E '\]\([^)]+\)' docs 2>/dev/null)
 EOF
 
 # 2) 未填占位符 / TODO
-PH=$(grep -rn "${INC[@]}" -E 'TODO|TBD|与用户对话后填' docs 2>/dev/null)
+PH=$(grep -rn "${INC[@]}" -E 'TODO|TBD|与用户对话后填|novelty=N[?]|未填写|待补充' docs 2>/dev/null)
 if [ -n "$PH" ]; then
   echo "[placeholder] docs/ 仍有未填占位符 / TODO:"
   printf '%s\n' "$PH"
@@ -64,13 +64,15 @@ if [ -n "$PH" ]; then
 fi
 
 # 3) 标了 N2 却缺「验收」(兼容 .md / .markdown)
+#    先剥掉 HTML 注释——模板里的引导文字本身含这些词,不剥会把计数算花(假阴性)。
 for f in docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
-  n2=$(grep -c 'novelty=N2' "$f" 2>/dev/null || true)
-  acc=$(grep -c '验收' "$f" 2>/dev/null || true)
+  body=$(sed '/<!--/,/-->/d' "$f")
+  n2=$(printf '%s\n' "$body" | grep -c 'novelty=N2' 2>/dev/null || true)
+  acc=$(printf '%s\n' "$body" | grep -c '\*\*验收\*\*' 2>/dev/null || true)
   : "${n2:=0}"; : "${acc:=0}"
   if [ "$n2" -gt "$acc" ]; then
-    echo "[n2-missing-verification] $f: N2 条目 $n2 个,「验收」仅 $acc 处"
+    echo "[n2-missing-verification] $f: N2 条目 $n2 个,「**验收**」仅 $acc 处"
     found=1
   fi
 done

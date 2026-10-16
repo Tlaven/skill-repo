@@ -119,11 +119,11 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 - 是否 git 仓库?是否基本空目录?
 - 用哪个宿主?→ 决定 L1 文件名(见「宿主适配」)
 
-### Step 2A: 全新模式——只创建 L1 记忆文件
+### Step 2A: 全新模式——创建 L1 记忆文件 + 两份运行核心文档
 
 **关键:不要一次性把所有模板复制过去。** agent 的自然工作流是"对话→产出→写入",被强制"先建空骨架"会被绕过,文件最终空着。
 
-只复制 `templates/l1-memory.md` → 项目根的 L1 文件名,然后立即进入 Step 3 对话。**其他模板按需在对应阶段创建:**
+只复制 `templates/l1-memory.md` → 项目根的 L1 文件名,**并立即把两份"运行核心文档"落地**:`references/verifying-n2.md` → `docs-templates/verifying-n2.md`、`references/teach-back-verifier-prompt.md` → `docs-templates/teach-back-verifier-prompt.md`(它们不是待填模板,而是项目运行期要用的手册;项目内有副本,项目文档才不必引用 skill 内部文件)。然后立即进入 Step 3 对话。**其他模板按需在对应阶段创建:**
 
 - 出现领域名词 / 易混词 → 复制 `templates/glossary.md` → `docs/glossary.md`
 - 进入 L2 讨论 → 复制 `templates/architecture.md` → `docs/architecture.md`
@@ -177,7 +177,7 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 - L4 默认不要——只有 core 代码"牵一发动全身"时才补
 - 出现新领域名词 → 登记 docs/glossary.md;N2 逻辑 → 补"步骤级 + 例子 + 验收"
 - 任何实现前先跑 teach-back(独立 subagent,见 references/teach-back-verifier-prompt.md)
-- (可选)把 scripts/ 拷进项目,按 references/wiring.md 接到 pre-commit / CI——挡"改代码忘文档"、查死链 / N2 缺验收
+- (可选)把 scripts/ 拷进项目,按 references/wiring.md 接到 pre-commit / CI——挡"改代码忘文档"、查死链 / N2 缺验收(Windows:先按 wiring.md 加一行 `.gitattributes`,否则 `.sh` 会被检出成 CRLF、根本跑不起来)
 
 本文件已含方法论精要,后续 agent 启动会自动加载,不需要再调用这个 skill。
 ```
@@ -257,12 +257,14 @@ skill 自身要避免的:
   └── decisions/
       ├── README.md         # ADR 索引 —— 首次记 ADR 时创建
       └── adr-XXX-*.md      # 真实 ADR
-./docs-templates/           # skill 提供的空白模板(非契约:对账忽略)
+./docs-templates/           # skill 提供、随项目落地的文件(非契约:对账忽略)
   ├── module-doc.md
-  └── adr-template.md
+  ├── adr-template.md
+  ├── verifying-n2.md                 # 运行核心:怎么给 N2 造验收(Step 2A 落地)
+  └── teach-back-verifier-prompt.md   # 运行核心:teach-back 验证者 prompt(Step 2A 落地)
 ```
 
-除 L1 外,**全部按需创建**(理由见 Step 2A)。
+除 L1 与两份运行核心文档外,**全部按需创建**(理由见 Step 2A)。
 
 ---
 
@@ -277,6 +279,8 @@ skill 自身要避免的:
 | `templates/core-code.md` | L4 核心代码(含 novelty 分档 / N2 附加栏) | 按需 | `docs/core-code.md` |
 | `templates/decisions-readme.md` | ADR 索引 + 格式约定 | 按需 | `docs/decisions/README.md` |
 | `templates/adr-template.md` | 单条 ADR 模板(状态/背景/方案/选择/后果) | 按需 | `docs-templates/adr-template.md` |
+| `references/verifying-n2.md` | 运行核心:N2 验收手段 / 反模式 / 闸门 | **立即**(Step 2A) | `docs-templates/verifying-n2.md` |
+| `references/teach-back-verifier-prompt.md` | 运行核心:teach-back 独立验证者 prompt | **立即**(Step 2A) | `docs-templates/teach-back-verifier-prompt.md` |
 
 ---
 

@@ -85,9 +85,9 @@
 ### 日常入口(立项之后怎么用)
 
 - **建新模块**:复制 `docs-templates/module-doc.md` → `docs/modules/<name>.md`,先填三段式(标 novelty 档),再写代码 `[机器]`
-- **改代码前(每次改动)**:载入相关 L2/L3;若该模块含 **N2** → 先跑 teach-back(派独立 agent,见 `references/teach-back-verifier-prompt.md`),通过才动 `[验证者]`
+- **改代码前(每次改动)**:载入相关 L2/L3;若该模块含 **N2** → 先跑 teach-back(派独立 agent,见 `docs-templates/teach-back-verifier-prompt.md`),通过才动 `[验证者]`
 - **做决策**:按 E4 判要不要记 ADR;要记就当场写 `[验证者]`
-- **收尾**:跑 `scripts/check-docs-sync`(代码动过但文档没动)与 `scripts/check-doc-refs`(死链 / 占位符 / N2 缺验收),可选接入 pre-commit / CI(见 skill 的 `references/wiring.md`) `[机器]`
+- **收尾**:跑 `scripts/check-docs-sync`(代码动过但文档没动)与 `scripts/check-doc-refs`(死链 / 占位符 / N2 缺验收),可选接入 pre-commit / CI(用项目内 `scripts/` 的两个检查器) `[机器]`
 
 ### 铁律
 
@@ -100,7 +100,7 @@
 5. **不变量优先级最高**——三段里"不变量"最不能省,它是 AI 改代码时的护栏 `[验证者]`
 6. **推翻陈述必须先修文档**——[是什么] 不留尸体、[为什么] 被推翻要标状态、不变量被违反要三选一(修订/例外/放弃)。共享内存失真比没有内存更危险 `[验证者]`
 7. **术语先定义再使用**——出现新领域名词先登记 `docs/glossary.md`;文档里出现未登记名词 = 漂移信号 `[验证者]`
-8. **N2 逻辑必须写到可实现**——AI 未见的领域 / 创新核心,必须给"步骤级说明 + 精确例子 + 可跑验收"(怎么造验收见 skill 的 `references/verifying-n2.md`),否则 AI 只能猜 `[验证者]`
+8. **N2 逻辑必须写到可实现**——AI 未见的领域 / 创新核心,必须给"步骤级说明 + 精确例子 + 可跑验收"(怎么造验收见 `docs-templates/verifying-n2.md`),否则 AI 只能猜 `[验证者]`
 9. **进实现前先 teach-back**——派一个全新、看不到本会话的 agent,只喂文档,让它独立复述并列出缺口;有缺口就改文档 `[验证者]`
 10. **长期事实只留在 `docs/` 一处**——本次调研 / 试错 / 草稿写进任务笔记(如 `task_plan.md`);一旦确认要长期保留,就登记进 `docs/` 对应文件并从任务笔记里删掉 `[约定]`
 11. **压缩时保护关键上下文**——压缩 / 清理上下文时务必保留:术语表路径、当前不变量、验收命令、未决问题(open questions) `[约定]`

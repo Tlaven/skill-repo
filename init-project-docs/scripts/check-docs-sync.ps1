@@ -18,7 +18,7 @@ param(
 # 若代码集中在某几个目录,改成目录式更准,如: '^(src|lib|app|packages)/'
 $codeGlob = '\.(js|jsx|mjs|cjs|ts|tsx|py|rs|go|java|kt|rb|php|cs|c|cc|cpp|h|hpp|swift|scala|lua|sh|html|css|vue|svelte)$'
 $docGlob  = '^docs/'
-$l1Files  = @('AGENTS.md','CLAUDE.md','.cursorrules','.windsurfrules','.github/copilot-instructions.md')
+$l1Files  = @('AGENTS.md','CLAUDE.md','.cursorrules','.cursor/rules/project.mdc','.windsurfrules','.github/copilot-instructions.md')
 
 if (-not (git rev-parse --is-inside-work-tree 2>$null)) { exit 0 }
 
@@ -27,7 +27,10 @@ if ($Staged) {
 } elseif ($Base) {
   $changed = git diff --name-only "$Base...HEAD"
 } else {
-  $changed = git diff --name-only HEAD
+  # 默认(工作区)模式:对比 HEAD 并纳入"未跟踪"文件(新项目常未 git add;unborn HEAD 时 git diff 还会报错)。
+  $changed = @()
+  $changed += @(git diff --name-only HEAD 2>$null)
+  $changed += @(git ls-files --others --exclude-standard 2>$null)
 }
 
 if (-not $changed) { exit 0 }

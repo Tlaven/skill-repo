@@ -40,7 +40,7 @@ foreach ($f in $docsMd) {
 }
 
 # 2) 未填占位符 / TODO
-$ph = $docsMd | Select-String -Pattern 'TODO|TBD|与用户对话后填' -Encoding UTF8
+$ph = $docsMd | Select-String -Pattern 'TODO|TBD|与用户对话后填|novelty=N[?]|未填写|待补充' -Encoding UTF8
 if ($ph) {
   Write-Host '[placeholder] docs/ 仍有未填占位符 / TODO:'
   $ph | ForEach-Object { Write-Host "  $($_.Path):$($_.LineNumber)" }
@@ -48,16 +48,20 @@ if ($ph) {
 }
 
 # 3) 标了 N2 却缺「验收」
+#    先剥掉 HTML 注释——模板引导文字本身含这些词,不剥会把计数算花(假阴性)。
 $targets = @()
 foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
   $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName })
 }
 foreach ($f in $targets) {
-  $n2  = (Select-String -LiteralPath $f -Pattern 'novelty=N2' -Encoding UTF8).Count
-  $acc = (Select-String -LiteralPath $f -Pattern '验收' -Encoding UTF8).Count
+  $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
+  if ($null -eq $raw) { continue }
+  $body = [regex]::Replace($raw, '(?s)<!--.*?-->', '')
+  $n2  = ([regex]::Matches($body, 'novelty=N2')).Count
+  $acc = ([regex]::Matches($body, '\*\*验收\*\*')).Count
   if ($n2 -gt $acc) {
-    Write-Host "[n2-missing-verification] $($f): N2 条目 $n2 个,「验收」仅 $acc 处"
+    Write-Host "[n2-missing-verification] $($f): N2 条目 $n2 个,「**验收**」仅 $acc 处"
     $found = $true
   }
 }

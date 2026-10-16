@@ -13,7 +13,7 @@
 # 若你的代码集中在某几个目录,改成目录式更准,如: '^(src|lib|app|packages)/'
 CODE_GLOB='\.(js|jsx|mjs|cjs|ts|tsx|py|rs|go|java|kt|rb|php|cs|c|cc|cpp|h|hpp|swift|scala|lua|sh|html|css|vue|svelte)$'
 DOC_GLOB='^docs/'
-L1_FILES='AGENTS.md CLAUDE.md .cursorrules .windsurfrules .github/copilot-instructions.md'
+L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md'
 
 set -u
 STRICT=0; STAGED=0; BASE=""
@@ -32,7 +32,13 @@ if [ "$STAGED" = 1 ]; then
 elif [ -n "$BASE" ]; then
   CHANGED=$(git diff --name-only "$BASE"...HEAD)
 else
-  CHANGED=$(git diff --name-only HEAD)
+  # 默认(工作区)模式:对比 HEAD,并顺带纳入"未跟踪"文件——
+  # 新项目里代码/文档常还没 git add,git diff 看不到它们;且 unborn HEAD(还没首次提交)时 git diff HEAD 会报错。
+  CHANGED=$(
+    { git diff --name-only HEAD 2>/dev/null || true
+      git ls-files --others --exclude-standard 2>/dev/null || true
+    }
+  )
 fi
 
 [ -z "$CHANGED" ] && exit 0

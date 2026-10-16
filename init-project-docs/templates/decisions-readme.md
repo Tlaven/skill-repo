@@ -33,7 +33,7 @@ proposed / accepted / deprecated / superseded by ADR-YYY
 正面 / 负面后果;需要跟进的
 ```
 
-模板见 `adr-000-template.md`。
+模板见 `docs-templates/adr-template.md`(由 skill 提供,按需复制为 `adr-XXX-[短描述].md`;模板本身不是真实决策,不要列进下方索引)。
 
 ## 命名规则
 
@@ -47,11 +47,8 @@ adr-XXX-[短描述].md
 ## ADR 索引
 
 <!-- 列出所有 ADR,按编号倒序(最新在上) -->
-<!-- 示例:
-- [ADR-003: 用事件溯源替代直接 CRUD](adr-003-use-event-sourcing.md) — accepted
-- [ADR-002: 模块间用消息队列通信](adr-002-message-queue.md) — superseded by ADR-003
-- [ADR-001: 选 PostgreSQL 作为主数据库](adr-001-postgres.md) — accepted
-- [ADR-000: 模板文件](adr-000-template.md) — template, not a real decision
+<!-- 示例(刻意不写成 markdown 链接——否则空索引会触发 check-doc-refs 的「死链」告警):
+- ADR-003: 用事件溯源替代直接 CRUD — accepted
+- ADR-002: 模块间用消息队列通信 — superseded by ADR-003
+- ADR-001: 选 PostgreSQL 作为主数据库 — accepted
 -->
-
-- [ADR-000: 模板文件](adr-000-template.md) — template

@@ -9,11 +9,22 @@
 
 把 `scripts/` 拷进项目（如 `<repo>/scripts/`），并按项目改 `check-docs-sync.sh` 顶部的三行路径：
 
+> 脚本里 `CODE_GLOB` 默认是**扩展名式**（形如 `\.(js|ts|py|...)$`，适配代码散落或在根目录的项目）；若代码集中在少数目录，改成下面的**目录式**更准。
+
 ```bash
 CODE_GLOB='^(src|lib|app|packages)/'
 DOC_GLOB='^docs/'
-L1_FILES='AGENTS.md CLAUDE.md .cursorrules .windsurfrules .github/copilot-instructions.md'
+L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md'
 ```
+
+> **Windows 必读——先把换行符定死（否则脚本根本跑不起来）。**
+> Windows 默认 `core.autocrlf=true`，拷进项目的 `.sh` 会被检出成 CRLF，bash 会以 `$'\r': command not found` 语法错直接拒绝执行；若已接 pre-commit，会挡住**每一次**提交，报错还像"hook 坏了"——很容易被整个删掉。落地一行防住（`.gitattributes` 不存在就新建，存在就追加）：
+>
+> ```bash
+> printf '*.sh text eol=lf\n' >> .gitattributes
+> ```
+>
+> `.ps1` 用 Windows 换行、不受影响，无需处理。
 
 ## 方式 A：pre-commit（最省事）
 

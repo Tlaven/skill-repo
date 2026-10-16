@@ -33,7 +33,7 @@ N0 / N1 的代码，模型见过大量同类测试；**N2 没有**——而且**
 
 4. **盲测验证者**（独立找反例）
    - 一个**看不到实现**、只按文档用系统的人 / agent，专门找反例。
-   - 复用 `references/teach-back-verifier-prompt.md`（同一套独立验证思路）。
+   - 复用同目录的 `teach-back-verifier-prompt.md`（同一套独立验证思路）。
 
 5. **differential**（对照）
    - 有旧实现 / 参考实现时，做输出对照。
