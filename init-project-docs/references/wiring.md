@@ -28,6 +28,25 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 >
 > `.ps1` 用 Windows 换行、不受影响，无需处理。
 
+## 接入前先对齐约定（否则别接）
+
+`check-doc-refs` 认的是**当前 skill 的两条约定**:
+
+- N2 条目用**字面量** `novelty=N2` 标记;
+- 每个 N2 配一个独立一行 `**验收**:…`。
+
+(写法见 `docs-templates/module-doc.md` / `core-code.md`。)
+
+若项目用的是**别的写法**——典型是**早期版本**的 L1(只有"N2 必须给步骤 / 例子 / 验收"这样的**文字规则**,文档里没有 `novelty=N2` 标记)——直接接上会:
+
+- **漏报**:没有 `novelty=N2` 字面量 → 对账永远看不到 N2 条目,这道门禁形同虚设;
+- **噪音**:`DOC_EXT` / `DOC_EXCLUDE` 没调好时,非契约文件(模板 stub / 考古层)被当契约扫。
+
+**对策(二选一):**
+
+1. 先把项目对齐到当前约定(用 `docs-templates/` 里的模板);或
+2. **只接 `check-docs-sync`**——它只查"代码动没动、文档动没动",**与约定无关**,任何项目都能接;`check-doc-refs` 等约定对齐了再上。
+
 ## 方式 A：pre-commit（最省事）
 
 `.git/hooks/pre-commit`（记得 `chmod +x`）：
