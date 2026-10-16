@@ -8,6 +8,8 @@
 | `py` launcher | **损坏**: 指向不存在的 `C:\Apps\Python3.12\python.exe`, 不要用 `py -3.12` |
 | yt-dlp | 默认未装; `python -m pip install -q yt-dlp` 即装 (脚本自动做) |
 | ffmpeg | 默认未装; ASR 路径不需要系统 ffmpeg (faster-whisper 用 PyAV 内置解码) |
+| GPU | AMD Radeon RX 6650 XT (8GB), **无 NVIDIA** → CTranslate2 CUDA 不可用 (实测 `get_cuda_device_count()==0`); GPU ASR 走 DirectCompute (见"GPU ASR 快路径") |
+| CPU | i5-12400F (6C12T); faster-whisper medium int8 ≈ 0.5~0.75x 实时 (备用路径) |
 | 临时目录 | `C:\Users\TL\AppData\Local\Temp\opencode` (已预授权) |
 | 字幕输出 | `%TEMP%\video-decode\<videoId>\` (脚本默认; 注意**不在** Temp\opencode 下, 实测找错过) |
 | yt-cookies | `%LOCALAPPDATA%\yt-cookies.txt` (含 Google 登录态 — **勿外传/勿入库**; `yt_cookies.py` / `yt_login_watch.py` 默认输出即此路径, 不要改到仓库目录) |
@@ -88,6 +90,8 @@ python -m yt_dlp --no-warnings --skip-download --write-subs --write-auto-subs --
 
 **先排除"假 NO_SUBTITLES" (2026-10-04 实测, 8BN8p5xDkzw)**: 无 cookies 首跑输出 exit 2 + `[meta] duration=None`, 但视频实际有官方手工中文字幕; 用 `--cookies ... --player-client mweb` 重跑即成功 (5205 字, cpm 331)。根因: 风控/降级路径返回的 info 缺 duration 与字幕列表, `ignore_no_formats_error` 静默放行。**规则: exit 2 且 duration=None ⇒ 先持久方案重跑; duration 正常且仍 exit 2 才走 ASR**。
 
+**本机 (无 NVIDIA) 首选 GPU 快路径**: `python scripts/gpu_asr_constme.py --url "URL"` — AMD DirectCompute, 实测 4~7x 实时 (见下节)。CPU 阶梯 (`asr_transcribe.py`) 仅在 GPU 不可用时使用。
+
 **先向用户说明成本再动手**。实测数据 (2026-10-03, bilibili 18.5 分钟视频):
 - 模型下载: small≈460MB / medium≈1.5GB (首次; HF 缓存后复用)
 - CPU 转写: medium int8 ≈ **0.75x 实时** (18.5 分钟音频 → 14 分钟); small 约快 2~3 倍
@@ -109,6 +113,23 @@ python scripts/asr_transcribe.py --url "URL" --model medium --workdir "DIR"
 - HF 符号链接警告 (Windows 无 Developer Mode) 无害可忽略
 - medium 模型中文输出可能是**繁体** (实测); 转简体是后续演化项 (opencc/zhconv)
 - bilibili 的"字幕"只有 danmaku (弹幕 XML), 不是转写文本; `pick_sub` 会正确忽略并报 NO_SUBTITLES (已实测)
+
+## GPU ASR 快路径 (AMD DirectCompute, 2026-10-09 落地)
+
+本机无 NVIDIA, CTranslate2/faster-whisper 无法用 GPU; 改用 **Const-me/Whisper** (D3D11 compute shaders, 任何硬件 GPU 可用, 免安装绿色包)。
+
+- 工具缓存 (已装, 勿删): `%LOCALAPPDATA%\video-decode\const-whisper\` — `cli\main.exe` + `Whisper.dll` (release 1.12.0 cli.zip) + `ggml-medium.bin` (1.43GB)
+- 一条命令: `python scripts/gpu_asr_constme.py --url "URL"` (或 `--audio "path"`; 缺工具/模型自动下载并打印体量, `--no-download` 禁用; 默认 zh, 可 `--model small|medium|large-v3`)
+- 实测: 610s 音频 → 83.5s (≈7.3x 实时); 631s → 147s (≈4.3x); 1957s → 273s (≈7.2x) — GPU 占用/热状态会波动, 均远快于实时; VRAM 占用 medium ≈2.2GB
+- **坑 (脚本已内置修补)**:
+  1. 音频下载: BOT_CHECK 组合 (cookies+mweb) 遇 **SABR-only 流媒体实验** 时 `bestaudio` 全无 URL ("Requested format is not available", yt-dlp issue #12482), 仅 format 18 (360p mp4 含 AAC 音轨) 可用 → 脚本用 `bestaudio/best[ext=mp4]/18` 兜底, 对 ASR 够用 (2026-10-09 复测: 该兜底在 mweb 下确能选中 format 18; 但手动换用更窄的 `bestaudio[ext=m4a]/bestaudio` 会误报不可用 — 复现脚本行为时用脚本原样选择器)
+  2. main.exe 的 stdout 在 GBK 终端下**中文乱码**, 但 `-otxt` 落盘的 txt 完好 (UTF-8 BOM, 读取用 `utf-8-sig`)
+  3. 模型**无自动语言检测** → 必须显式 `-l` (脚本默认 zh); 其余常用参数: `-nt` (无时间戳), `-otxt`
+  4. 输出文件 = 输入音频同目录同名 `.txt` (如 `audio.<id>.txt`); 脚本负责搬运成 `transcript.txt` + `transcript.raw.txt`
+  5. 手动兜底 (脚本不可用时):
+     ```bash
+     & "$env:LOCALAPPDATA\video-decode\const-whisper\cli\main.exe" -m "$env:LOCALAPPDATA\video-decode\const-whisper\ggml-medium.bin" -gpu "AMD Radeon RX 6650 XT" -f "audio.mp4" -l zh -nt -otxt
+     ```
 
 ## 已知边界 / 后续可演化
 

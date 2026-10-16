@@ -49,7 +49,7 @@ python scripts/yt_transcript.py --url "URL"
 
 **Step 2 健康度检查** (读脚本 stdout):
 - `TRANSCRIPT:` / `META:` 路径拿到手
-- `NO_SUBTITLES` (退出码 2) → **先看 `[meta] duration=` 是否 None**: 是 ⇒ 提取被风控降级 (字幕可能其实存在), 先用持久方案重跑 (`--cookies "%LOCALAPPDATA%\yt-cookies.txt" --player-client mweb`), 别急着 ASR; duration 正常且仍 exit 2 才是真无字幕 → 走 ASR 降级: `python scripts/asr_transcribe.py --url "URL" --model small|medium`。**先告知成本再动手** (模型 0.5~1.5GB, CPU 约 0.5~1x 实时), 让用户选模型: 试跑 small, 要准 medium
+- `NO_SUBTITLES` (退出码 2) → **先看 `[meta] duration=` 是否 None**: 是 ⇒ 提取被风控降级 (字幕可能其实存在), 先用持久方案重跑 (`--cookies "%LOCALAPPDATA%\yt-cookies.txt" --player-client mweb`), 别急着 ASR; duration 正常且仍 exit 2 才是真无字幕 → 走 ASR 降级。**本机 (无 NVIDIA) 首选 GPU 快路径**: `python scripts/gpu_asr_constme.py --url "URL"` (AMD DirectCompute, 实测 4~7x 实时, medium 模型已缓存, 缺时自动下载并打印体量)。GPU 不可用时再用 CPU 方案: `python scripts/asr_transcribe.py --url "URL" --model small|medium`, **先告知成本再动手** (模型 0.5~1.5GB, CPU 约 0.5~1x 实时; 试跑 small, 要准 medium)
 - `BOT_CHECK` (退出码 3) → YouTube 临时风控, **不是脚本问题**; **本机已装持久方案**: `--cookies "%LOCALAPPDATA%\yt-cookies.txt" --player-client mweb` (POT provider + 专用登录 profile; 详见 toolchain-notes.md, cookies 过期跑 `scripts/yt_cookies.py` 刷新), 不要反复硬试
 - `chars_per_min` 异常 (不在 80~450) 或 chars 过短 → 字幕可能残缺, 在解读中如实标注
 
@@ -95,7 +95,8 @@ ASR 失真点 / 明显口误 / 视频中的特殊事件
 
 入口: 平时只用第一个
 - `scripts/yt_transcript.py` — 字幕快路径 (主力)
-- `scripts/asr_transcribe.py` — 无字幕时的 ASR 降级 (退出码 2 时用)
+- `scripts/gpu_asr_constme.py` — 无字幕时的 GPU 快路径 (AMD DirectCompute; 本机首选, 退出码 2 时用)
+- `scripts/asr_transcribe.py` — 无字幕时的 CPU ASR 降级 (GPU 不可用时用)
 - `scripts/yt_cookies.py` — 刷新 YouTube cookies (BOT_CHECK 持久方案, 无头; 默认输出 `%LOCALAPPDATA%\yt-cookies.txt`)
 - `scripts/yt_login_watch.py` — 专用 profile 首次登录监视 + 导出 cookies (默认输出同上)
 
@@ -106,7 +107,10 @@ python scripts/yt_transcript.py --url "https://www.youtube.com/watch?v=XXXX"
 # 例 2: 英文视频 / 指定输出目录 (默认输出到 %TEMP%/video-decode/<id>)
 python scripts/yt_transcript.py --url "https://youtu.be/XXXX" --langs en,zh --workdir "C:/path/out"
 
-# 例 3: 无字幕 (退出码 2) -> ASR 降级 (先告知成本, 让用户选模型)
+# 例 3: 无字幕 (退出码 2) -> GPU 快路径 (本机首选)
+python scripts/gpu_asr_constme.py --url "URL"
+
+# 例 3b: GPU 不可用 -> CPU 降级 (先告知成本, 让用户选模型)
 python scripts/asr_transcribe.py --url "URL" --model medium --workdir "C:/path/out"
 
 # 例 4: BOT_CHECK 持久方案 (本机已装): 登录态 cookies + mweb 客户端
@@ -127,7 +131,7 @@ python scripts/yt_transcript.py --url "URL" --cookies "%LOCALAPPDATA%\yt-cookies
 
 ## 参考 (一层深度)
 
-- `references/toolchain-notes.md` — 本机环境事实 + PowerShell 坑 + **ASR 降级阶梯** (踩坑/降级时读)
+- `references/toolchain-notes.md` — 本机环境事实 + PowerShell 坑 + **ASR 降级阶梯 / GPU 快路径** (踩坑/降级时读)
 - `references/factcheck-guide.md` — claim 抽取、信源分级、四类结论定义与模板 (Phase 2 时读)
 
 ## 演化记录
@@ -150,3 +154,5 @@ python scripts/yt_transcript.py --url "URL" --cookies "%LOCALAPPDATA%\yt-cookies
 - v0.1.15 (2026-10-05): 实战 (bilibili BV1P8eK62EQt 人口贩卖, 7.3 分钟无字幕) 暴露**陈旧音频误转**: asr_transcribe.py 原用固定 `audio.%(ext)s` + 共享 asr 目录, 目录里残留昨日 55 分钟视频的 `audio.m4a`, yt-dlp 未真正重下, medium 把旧音频整段转完 (15 分钟 timeout 截断后查 raw 内容才发现与目标视频无关)。修复: `--url` 默认 workdir → `<tmp>/video-decode/<id>` (与 yt_transcript 对齐), 音频命名 `audio.<id>.<ext>`, 下载前打印 `[meta] id/duration/title`; notes 增补"ASR 前核对 duration/开头内容"检查。修复后重跑: 436s 音频 454s 转完 (≈1.04x 实时, 比旧实测 0.75x 快), 2790 字 cpm=384。另: URL 带 `&trackid=...` 跟踪参数会被本环境 shell 拆命令, 用干净 URL。
 - v0.1.16 (2026-10-05): 同一视频首次完整 Phase 1+2 (bilibili 科普频道"赛雷三分钟", 数据密集型)。Phase 2 抽 20 项: **0 ❌** / 6 ⚠️ (ILO 150亿与2360亿口径拼接、IOM 80%绝对化、农场案"上千名"夸大、芬兰"一分钱不给"简化、王星"遭虐待"系推断、巴勒莫定义说成近年改动) / 2 ⚖️ 检索无果 ("黑奴最猖獗800万同时被奴役"、"鱼奴月薪3000美元"幌子)。经验: 此类中文科普频道**数字大体精确** (4960万/缅12万柬10万/78人/20美分/22年等均可对上官方来源), 失分集中在转述加工的三种模式 → 已沉淀 factcheck-guide §6 两条反模式 (同机构多期数字拼接、估计值绝对化)。专名 ASR 修正清单: 电炸→电诈、王兴→王星、福社→辐射、赛列→赛雷。
 - v0.1.17 (2026-10-07): E265 (FearNation "救市三箭", 官方 zh 字幕, 40 分钟) 完整 Phase 1+2。核查 30+ 项 (22✅/6⚠️/3❌/其余⚖️): 政策参数与工具细节全对; 3 处次要错误 (六张网出处归属、两新分担 "6:4/5:5" 应为 85/90/95、"2024 科技再贷款初始 4000 亿" 应为 5000 亿); 1 处高估 (PSL 余额 "约 2 万亿" 实际 6308 亿 — 方向强化其结论, 已入 factcheck-guide §7 错误方向示例)。两轮方法论沉淀 (用户提问触发): ① **术语失真纪律** — 只标注不静默改写原稿; 高价值术语按需联网仲裁, 三条件 (候选词 T1/T2 存在 / 原词语境不成立 / 替换后语义自洽) 满足才升级 "实为 X (附来源)"; 检索无果≠错误; 宁可漏纠不可错纠 → 写入 SKILL Step 3.5 + factcheck-guide §1。② **明确不做 ASR 后处理三件套** (ITN/标点/去噪), 决策与边界写入反模式段 (防未来范围蔓延)。
+- v0.1.18 (2026-10-09): 首次 AMD GPU ASR 落地 + "存档号旧稿"实战 (YouTube 老蛮频道 vMN8e_eX1f8, 10 分钟无字幕, Phase 1+2 完整)。沉淀: ① 本机无 NVIDIA (CTranslate2 `get_cuda_device_count()==0`), faster-whisper 用不了 GPU → 新增 `scripts/gpu_asr_constme.py` (Const-me/Whisper 1.12.0 DirectCompute: 自动定位/下载工具与模型、自动选适配器、产物转 transcript.txt/raw; medium 实测 4~7x 实时, 工具/模型缓存于 `%LOCALAPPDATA%\video-decode\const-whisper\`); ② 新坑两项: cookies+mweb 遇 **SABR-only 实验** 时 `bestaudio` 无 URL, 仅 format 18 可用 → 下载格式兜底 `bestaudio/best[ext=mp4]/18`; main.exe stdout 中文乱码但 `-otxt` 产物为 UTF-8 BOM, 模型无语言自动检测必须显式 `-l`; ③ Step 2 降级决策改为 "GPU 快路径优先, CPU 阶梯备胎"; ④ 实战副产品 (未入正文): **"旧稿重发号"识别法** — 上传日期≠成稿日期 (抽样导出日期 + 镜像节目表 + 评论线索), 对解读"当下数据"类内容有直接价值 (此例中视频时间是 2026, 内容锚点却全部指向更早年份)。
+- v0.1.19 (2026-10-09): 真无字幕全链路 + 数据扩展分析实战 (YouTube Geo社会观察 zsa4rIXAEg4, 32.6 分钟教育时政, Phase 1+2 完整)。沉淀: ① **真无字幕判定链完整走通**: 无 cookies exit 2 + duration=None → 持久方案重跑 duration=1957 仍 exit 2 → `gpu_asr_constme.py` 一条命令端到端 (下载 86MB/8s + 转写 273s/1957s ≈ **7.2x 实时**, 与用户"约7倍"口径吻合); 手动路径与脚本路径产出经空白归一化比对**完全一致** (8375 字, similarity 1.0) — 脚本可信; ② 手动路径踩坑: 自拼 `bestaudio[ext=m4a]/bestaudio` 在 SABR-only 下误报 "Requested format is not available", 而脚本兜底 `bestaudio/best[ext=mp4]/18` 在 mweb 下实测可选中 format 18 → **验证脚本行为必须用脚本原样参数, 勿用更窄的手动选择器下结论** (曾据此差点误判脚本有 bug); ③ Phase 2 抽 20+ 项: **0❌** / 4⚠️ (非升即走"淘汰率90%以上"个案普遍化、高校"取消事业编制"绝对化、硕博"只能拿三五百"忽略国家助学金、鲁迅引语转述措辞出入), 新反模式两条入 factcheck-guide §6; ④ 用户追加两轮数据扩展 (学生缩减幅度队列外推 + 教师岗位变化), 队列法自校准: 幼儿园 2025 预测 3220 vs 实际 3225.52 万 (误差 0.2%); ⑤ 元观察: 本会话 skill 工具加载的 SKILL.md 滞后于磁盘工作区 (缺 v0.1.18 与 GPU 入口, 疑似进程启动时缓存) — 疑似缺内容时以 Read 磁盘为准。
