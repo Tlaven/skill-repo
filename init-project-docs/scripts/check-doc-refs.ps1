@@ -1,4 +1,4 @@
-﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`。
+﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、活文档引记录。
 # 用法:
 #   powershell -File check-doc-refs.ps1
 #   powershell -File check-doc-refs.ps1 -Strict
@@ -96,6 +96,30 @@ foreach ($f in $targets) {
   if ($n2 -gt $acc) {
     Write-Host "[n2-missing-verification] $($f): N2 条目 $n2 个,「**验收**」仅 $acc 处"
     $found = $true
+  }
+}
+
+# 4) 活文档里出现指向"记录类文档"的引用
+#    规则(E1):现状 / 规则陈述必须**自足**,不许挂到记录类文档上当依据;
+#    "要理由 / 被拒方案 / 来由时去哪读"的引用只许写在**入口类文档的导航位**(那类不扫)。
+#    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
+$liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/glossary.md','docs/glossary.markdown')
+foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
+if (Test-Path 'docs/modules') {
+  $liveDocs += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName })
+}
+$refPat = 'docs/decisions/|docs/reviews/|ADR-\d{3}|adr-\d{3}-'
+foreach ($f in $liveDocs) {
+  if (-not (Test-Path -LiteralPath $f)) { continue }
+  $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
+  if ($null -eq $raw) { continue }
+  $ln = 0
+  foreach ($line in ($raw -split "`n")) {
+    $ln++
+    if ($line -match $refPat) {
+      Write-Host "[live-doc-refs] ${f}:${ln}: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
+      $found = $true
+    }
   }
 }
 

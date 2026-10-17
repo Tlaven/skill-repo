@@ -121,7 +121,7 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 **自带两个检查器**(均 `.sh` + `.ps1`);两者都是**对账**工具——**对账**指把文档与代码 / 现状逐条核对、找出不一致(完整定义见 E5):
 
 1. `scripts/check-docs-sync.sh` —— 只查一件事:`git diff` 里代码变了、但本项目当前维护的文档(`docs/` 除 `docs/reviews/` 对账留档——历史快照不算同步)与 L1 记忆文件都没变 → 提醒。**只查"有没有动过",不判对错**。
-2. `scripts/check-doc-refs.sh` —— 结构性对账:`docs/` 里的死链(含大小写错链)、未填占位符、标了 N2 却缺 `**验收**`。
+2. `scripts/check-doc-refs.sh` —— 结构性对账:`docs/` 里的死链(含大小写错链)、未填占位符、标了 N2 却缺 `**验收**`、活文档引记录。
 
 接线方式(pre-commit / CI / 宿主钩子)与示例见 `references/wiring.md`;skill 不硬绑宿主。
 
@@ -286,7 +286,7 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 - 填好任一文档后,删掉其中的引导注释(`<!-- … -->`)——它们含占位符,留着会被 `check-doc-refs` 报为"未填"
 - 出现新领域名词 → 登记 docs/glossary.md;N2 逻辑 → 补"步骤级 + 例子 + 验收"
 - 进实现前先跑 teach-back——命中 N2 / 触及不变量 / 术语未定义或歧义 / 跨层大改动 任一条(**纯 N1 与 N0 跳过**;独立 subagent,见 references/teach-back-verifier-prompt.md)
-- (可选)把 scripts/ 拷进项目,按 references/wiring.md 接到 pre-commit / CI——挡"改代码忘文档"、查死链 / N2 缺 `**验收**`(Windows:先按 wiring.md 加一行 `.gitattributes`,否则 `.sh` 会被检出成 CRLF、根本跑不起来)
+- (可选)把 scripts/ 拷进项目,按 references/wiring.md 接到 pre-commit / CI——挡"改代码忘文档"、查死链 / N2 缺 `**验收**` / 活文档引记录(Windows:先按 wiring.md 加一行 `.gitattributes`,否则 `.sh` 会被检出成 CRLF、根本跑不起来)
 
 本文件已含方法论精要,后续 agent 启动会自动加载,不需要再调用这个 skill。
 ```

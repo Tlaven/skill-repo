@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`。
+# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、活文档引记录。
 # Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 会让 bash 拒绝执行。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
@@ -107,6 +107,23 @@ for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/arc
   : "${n2:=0}"; : "${acc:=0}"
   if [ "$n2" -gt "$acc" ]; then
     echo "[n2-missing-verification] $f: N2 条目 $n2 个,「**验收**」仅 $acc 处"
+    found=1
+  fi
+done
+
+# 4) 活文档里出现指向"记录类文档"的引用
+#    规则(E1):现状 / 规则陈述必须**自足**,不许挂到记录类文档上当依据;
+#    "要理由 / 被拒方案 / 来由时去哪读"的引用只许写在**入口类文档的导航位**(那类不扫)。
+#    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
+LIVE_DOCS="docs/architecture.md docs/architecture.markdown docs/glossary.md docs/glossary.markdown"
+REF_PAT='docs/decisions/|docs/reviews/|ADR-[0-9]{3}|adr-[0-9]{3}-'
+for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
+  [ -f "$f" ] || continue
+  LREF=$(grep -nE "$REF_PAT" "$f" 2>/dev/null)
+  if [ -n "$LREF" ]; then
+    printf '%s\n' "$LREF" | while IFS= read -r l; do
+      echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
+    done
     found=1
   fi
 done

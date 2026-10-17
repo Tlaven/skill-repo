@@ -131,7 +131,7 @@
 - **建新模块**:从 `docs-templates/module-doc.md` 生成 `docs/modules/<name>.md`,先填三段式(标 novelty 档),再写代码 `[机器]`
 - **改代码前(每次改动)**:载入相关 L2/L3;若命中 **N2 / 触及不变量 / 术语未定义或歧义 / 跨层大改动** 任一条 → 先跑 teach-back(派独立 agent,见 `docs-templates/teach-back-verifier-prompt.md`),通过才动 `[验证者]`;纯 N1 且验收写得出来则跳过
 - **做决策**:按 E4 判要不要记 ADR;要记就当场写 `[验证者]`
-- **收尾(可选)**:若已把 `scripts/` 拷进项目,跑 `scripts/check-docs-sync`(代码动过但文档没动)与 `scripts/check-doc-refs`(死链 / 占位符 / N2 缺 `**验收**`),可再接 pre-commit / CI `[机器]`;未接入则跳过
+- **收尾(可选)**:若已把 `scripts/` 拷进项目,跑 `scripts/check-docs-sync`(代码动过但文档没动)与 `scripts/check-doc-refs`(死链 / 占位符 / N2 缺 `**验收**` / 活文档引记录),可再接 pre-commit / CI `[机器]`;未接入则跳过
 
 ### 铁律
 
