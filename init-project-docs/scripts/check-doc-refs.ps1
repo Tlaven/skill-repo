@@ -1,4 +1,4 @@
-﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链、未填占位符、标了 N2 却缺「验收」。
+﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`。
 # 用法:
 #   powershell -File check-doc-refs.ps1
 #   powershell -File check-doc-refs.ps1 -Strict
@@ -8,10 +8,11 @@ $ErrorActionPreference = 'SilentlyContinue'
 # 按项目改:文档扩展名(含点)。默认同时认 .md 与 .markdown。
 $DocExt = @('.md', '.markdown')
 
-# 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"非活契约":考古 / 存档层
-# (如 docs/legacy/)与模板 stub 目录(docs/templates/——有些项目把模板放在 docs/ 内)。
+# 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:考古 / 存档层
+# (如 docs/legacy/)、对账留档(docs/reviews/——历史快照,引用退役术语/旧链接是常态,
+# 不是错误)与模板 stub 目录(docs/templates/——有些项目把模板放在 docs/ 内)。
 # 置空字符串则不过滤。
-$DocExclude = '^(docs/legacy/|docs/archive/|docs/templates/)'
+$DocExclude = '^(docs/legacy/|docs/archive/|docs/templates/|docs/reviews/)'
 
 $root = (git rev-parse --show-toplevel 2>$null)
 if (-not $root) { $root = (Get-Location).Path }
@@ -25,7 +26,7 @@ if (($docsMd | Measure-Object).Count -eq 0) {
   exit 0
 }
 
-# 排除考古 / 存档层(非活契约;见顶部 $DocExclude)
+# 排除考古 / 存档层(不是本项目当前维护的文档;见顶部 $DocExclude)
 if ($DocExclude) {
   $docsMd = @($docsMd | Where-Object {
     $rel = $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/')
@@ -46,8 +47,25 @@ foreach ($f in $docsMd) {
     if ($t -notmatch '[/.]') { continue }   # 只看"像路径"的目标,跳过 `](被拒)` 这类标注
     $cand1 = Join-Path $f.DirectoryName $t
     $cand2 = Join-Path $root $t
-    if (-not (Test-Path $cand1) -and -not (Test-Path $cand2)) {
-      Write-Host "[dead-link] $($f.Name) -> $t"; $found = $true
+    # 存在性之后再做字面大小写比对:大小写不敏感文件系统(Windows/默认 macOS)会放过
+    # 错大小写链接,在大小写敏感系统(Linux CI)上会断。-ceq = 大小写敏感比较。
+    $exact = $false; $caseHit = $false
+    foreach ($p in @($cand1, $cand2)) {
+      if (Test-Path -LiteralPath $p) {
+        $base = [IO.Path]::GetFileName($p)
+        $dir  = [IO.Path]::GetDirectoryName($p)
+        if (Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -ceq $base }) { $exact = $true }
+        else { $caseHit = $true }
+      }
+    }
+    if (-not $exact) {
+      if ($caseHit) {
+        Write-Host "[case-mismatch] $($f.Name) -> $t(目标存在但大小写不一致,大小写敏感系统上会断)"
+      } else {
+        Write-Host "[dead-link] $($f.Name) -> $t"
+      }
+      $found = $true
     }
   }
 }
@@ -60,10 +78,12 @@ if ($ph) {
   $found = $true
 }
 
-# 3) 标了 N2 却缺「验收」
+# 3) 标了 N2 却缺 `**验收**`
 #    先剥掉 HTML 注释——模板引导文字本身含这些词,不剥会把计数算花(假阴性)。
 $targets = @()
-foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $targets += $n } }
+# 按项目改:下面是"可能含 N2 条目"的文档(L4 / L2 公共节 / L3)。
+# L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这张表。
+foreach ($n in @('docs/core-code.md','docs/core-code.markdown','docs/architecture.md','docs/architecture.markdown')) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
   $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName })
 }

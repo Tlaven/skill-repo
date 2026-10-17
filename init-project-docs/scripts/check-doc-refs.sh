@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-doc-refs.sh — 结构性对账:docs/ 里的死链、未填占位符、标了 N2 却缺「验收」。
+# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`。
 # Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 会让 bash 拒绝执行。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
@@ -16,10 +16,11 @@ for a in "$@"; do [ "$a" = "--strict" ] && STRICT=1; done
 # 按项目改:文档扩展名(不含点,空格分隔)。默认同时认 .md 与 .markdown。
 DOC_EXT="md markdown"
 
-# 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除常见"非活契约":
-# 考古 / 存档层(如 docs/legacy/ 里对已废文件的链接)与**模板 stub 目录**(docs/templates/——
-# 有些项目把模板放在 docs/ 内,stub 里的占位符不是契约内容)。置空则不过滤。
-DOC_EXCLUDE='^(docs/legacy/|docs/archive/|docs/templates/)'
+# 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:
+# 考古 / 存档层(如 docs/legacy/ 里对已废文件的链接)、**对账留档**(docs/reviews/——历史快照,
+# 引用退役术语 / 旧链接是常态,不是错误)、与**模板 stub 目录**(docs/templates/——
+# 有些项目把模板放在 docs/ 内,stub 里的占位符不算本项目当前维护的文档内容)。置空则不过滤。
+DOC_EXCLUDE='^(docs/legacy/|docs/archive/|docs/templates/|docs/reviews/)'
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$ROOT" || exit 0
@@ -54,8 +55,23 @@ while IFS= read -r hit; do
   [ -z "$target" ] && continue
   # 只看"像路径"的目标(含 / 或 .);形如 `](被拒)` 的标注不是链接,跳过
   case "$target" in */*|*.*) ;; *) continue ;; esac
+  # 存在性之后再做字面大小写比对:大小写不敏感文件系统(Windows/默认 macOS)会放过
+  # 错大小写链接,在大小写敏感系统(Linux CI)上会断。find|sed|grep -qFx = 字面精确匹配
+  # (GNU/BSD find 都不吃 quoting 坑;ls 在 GNU 管道输出会给含空格名加引号,故不用)。
   d=$(dirname "$file")
-  if [ ! -e "$d/$target" ] && [ ! -e "$target" ]; then
+  exact=0; casehit=0
+  for p in "$d/$target" "$target"; do
+    if [ -e "$p" ]; then
+      if find "$(dirname "$p")" -maxdepth 1 2>/dev/null | sed -e 's|.*/||' | grep -qFx -- "$(basename "$p")"; then
+        exact=1
+      else
+        casehit=1
+      fi
+    fi
+  done
+  if [ "$exact" = 0 ] && [ "$casehit" = 1 ]; then
+    echo "[case-mismatch] $file -> $target(目标存在但大小写不一致,大小写敏感系统上会断)"; found=1
+  elif [ "$exact" = 0 ]; then
     echo "[dead-link] $file -> $target"; found=1
   fi
 done <<EOF
@@ -71,13 +87,23 @@ if [ -n "$PH" ]; then
   found=1
 fi
 
-# 3) 标了 N2 却缺「验收」(兼容 .md / .markdown)
+# 3) 标了 N2 却缺 `**验收**`(兼容 .md / .markdown)
 #    先剥掉 HTML 注释——模板里的引导文字本身含这些词,不剥会把计数算花(假阴性)。
-for f in docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
+# 按项目改:L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这一行
+for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
-  body=$(sed '/<!--/,/-->/d' "$f")
-  n2=$(printf '%s\n' "$body" | grep -c 'novelty=N2' 2>/dev/null || true)
-  acc=$(printf '%s\n' "$body" | grep -c '\*\*验收\*\*' 2>/dev/null || true)
+  body=$(awk '
+    { buf=$0; line=""
+      while (buf != "") {
+        if (inc) { i=index(buf,"-->");  if (i==0) { buf=""; break } buf=substr(buf,i+3); inc=0 }
+        else     { i=index(buf,"<!--"); if (i==0) { line=line buf; buf=""; break } line=line substr(buf,1,i-1); buf=substr(buf,i+4); inc=1 }
+      }
+      print line
+    }' "$f")
+  # grep -o|wc -l 数"次数"(grep -c 数"行"——一行多个标记会漏计,n2 偏低即漏报);
+  # 语义对齐 .ps1 版的 [regex]::Matches().Count。
+  n2=$(printf '%s\n' "$body" | grep -o 'novelty=N2' 2>/dev/null | wc -l | tr -d ' ')
+  acc=$(printf '%s\n' "$body" | grep -o '\*\*验收\*\*' 2>/dev/null | wc -l | tr -d ' ')
   : "${n2:=0}"; : "${acc:=0}"
   if [ "$n2" -gt "$acc" ]; then
     echo "[n2-missing-verification] $f: N2 条目 $n2 个,「**验收**」仅 $acc 处"
