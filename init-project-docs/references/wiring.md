@@ -1,9 +1,11 @@
 # 把检查器接上（pre-commit / CI / 宿主钩子）
 
 > 目的：让 L1 铁律里标 `[机器]` 的规则**真的会触发**，而不是停在脚本里等人手动跑。
-> 两个脚本（Windows 用同名 `.ps1`）：
+> 两个检查器脚本（Windows 用同名 `.ps1`）：
 > - `scripts/check-docs-sync.sh` —— 代码动了但本项目当前维护的文档(`docs/` 除 `docs/reviews/` 对账留档——历史快照不算同步)与 L1 记忆文件都没动 → 提醒。
 > - `scripts/check-doc-refs.sh` —— `docs/` 里的死链(含大小写错链)、未填占位符、标了 N2 却缺 `**验收**`、活文档引记录。
+>
+> 另有 `scripts/review-backlog` —— **辅助脚本,不属于本页的接线面**:不判定、不拦截(退出码恒 0),复核前手动跑,列出"自上次复核以来的契约 delta"。不上 pre-commit / CI。
 
 ## 先拷进项目
 
