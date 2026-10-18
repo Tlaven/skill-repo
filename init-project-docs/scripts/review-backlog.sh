@@ -10,8 +10,8 @@
 
 set -u
 
-# 契约面:L1/L2/L4 + 术语表 + 模块文档(模块级不变量住 L3;术语表是复核信号 3 的所在)
-CONTRACT="AGENTS.md CLAUDE.md docs/architecture.md docs/core-code.md docs/glossary.md docs/glossary.markdown docs/modules/"
+# 契约面:L1(全部宿主文件名,与 check-docs-sync 的 L1_FILES 对齐)/L2/L4 + 术语表 + 模块文档(模块级不变量住 L3)
+CONTRACT="AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md docs/architecture.md docs/architecture.markdown docs/core-code.md docs/core-code.markdown docs/glossary.md docs/glossary.markdown docs/modules/"
 MARKER="docs/reviews/.last-review"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[review-backlog] 不是 git 仓库，跳过。"; exit 0; }
@@ -40,8 +40,11 @@ printf '%s\n' "$stat" | sed 's/^/  /'
 
 echo ""
 echo "被增删改的编号（复核时只看这些 + 它们引用的上下文）："
+# 编号族是启发式(示例来自试点项目约定):按项目增删
+# 行过滤用 awk(--/++ 元数据行排除,且不吞首字符——行首紧跟 +/- 的编号也要能匹配)
 hits=$(git diff -U0 "$since..HEAD" -- $existing 2>/dev/null \
-  | grep -E '^[+-][^+-].*\b(I-[0-9]+|A-[0-9]+|M[0-9]+-[0-9]+|U-[0-9]+|P-A[0-9]+-[0-9]+)\b' \
+  | awk '/^[+-]/ && !/^(\+\+\+|---)/' \
+  | grep -E '\b(I-[0-9]+|Q-[0-9]+|A-[0-9]+|M[0-9]+-[0-9]+|U-[0-9]+|P-A[0-9]+-[0-9]+)\b' \
   | head -n 80)
 if [ -n "$hits" ]; then printf '%s\n' "$hits" | sed 's/^/  /'; else echo "  （未识别到编号变化——仍需人工扫一眼 diff）"; fi
 

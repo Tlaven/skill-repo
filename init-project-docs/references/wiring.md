@@ -37,11 +37,13 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 - N2 条目用**字面量** `novelty=N2` 标记;
 - 每个 N2 配一个独立一行 `**验收**:…`。
 
-(写法见 `docs-templates/module-doc.md` / `core-code.md`。)
+**"N2 缺验收"只做次数粗检**（`novelty=N2` 计数 > `**验收**` 计数才报；`**验收**` 写在行内也算数），逐条配对不对仍归复核。
+
+(写法见 `docs-templates/module-doc.md` / `docs/core-code.md`——后者按需从 skill 的 `templates/core-code.md` 落地。)
 
 > **扫哪些文件:** `docs/core-code.md`、`docs/architecture.md`、`docs/modules/*`。
 > N2 落在 **L2 的公共节**(跨模块契约、未建 L4 时的家)也算——那里标了 `novelty=N2` 就得配 `**验收**:`。
-> 项目 L2 用了别的文件名 → 把名字加进脚本顶部那张表(脚本里有标注),否则这道门禁对它空跑。
+> 项目 L2 用了别的文件名 → 把名字加进脚本顶部**两张表**(N2 扫描表与 `LIVE_DOCS`,都有"按项目改"标注),否则对应检查对它空跑。
 
 若项目用的是**别的写法**——典型是**早期版本**的 L1(只有"N2 必须给步骤 / 例子 / 验收"这样的**文字规则**,文档里没有 `novelty=N2` 标记)——直接接上会:
 

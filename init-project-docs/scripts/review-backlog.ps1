@@ -15,8 +15,8 @@
 
 $ErrorActionPreference = "Continue"
 
-# 按项目改：哪些文件算"契约"（L1/L2/L4 + 术语表 + 模块文档——模块级不变量住 L3）
-$CONTRACT = @("AGENTS.md", "CLAUDE.md", "docs/architecture.md", "docs/core-code.md", "docs/glossary.md", "docs/glossary.markdown", "docs/modules/")
+# 按项目改：哪些文件算"契约"（L1 全部宿主文件名，与 check-docs-sync 对齐；+ L2/L4 + 术语表 + 模块文档）
+$CONTRACT = @("AGENTS.md", "CLAUDE.md", ".cursorrules", ".cursor/rules/project.mdc", ".windsurfrules", ".github/copilot-instructions.md", "docs/architecture.md", "docs/architecture.markdown", "docs/core-code.md", "docs/core-code.markdown", "docs/glossary.md", "docs/glossary.markdown", "docs/modules/")
 $MARKER = "docs/reviews/.last-review"
 
 git rev-parse --is-inside-work-tree 2>$null | Out-Null
@@ -49,7 +49,8 @@ $stat | ForEach-Object { Write-Host "  $_" }
 Write-Host ""
 Write-Host "被增删改的编号（复核时只看这些 + 它们引用的上下文）："
 $diff = git diff -U0 "$since..HEAD" -- $existing 2>$null
-$hits = @($diff | Select-String -Pattern '^[+-](?![+-]).*\b(I-\d+|A-\d+|M\d+-\d+|U-\d+|P-A\d+-\d+)\b' | ForEach-Object { $_.Line.Trim() })
+# 编号族是启发式(示例来自试点项目约定):按项目增删
+$hits = @($diff | Select-String -Pattern '^[+-](?![+-]).*\b(I-\d+|Q-\d+|A-\d+|M\d+-\d+|U-\d+|P-A\d+-\d+)\b' | ForEach-Object { $_.Line.Trim() })
 if ($hits.Count -gt 0) {
   $hits | Select-Object -First 80 | ForEach-Object { Write-Host "  $_" }
   if ($hits.Count -gt 80) { Write-Host "  …（还有 $($hits.Count - 80) 行，直接看 git diff）" }

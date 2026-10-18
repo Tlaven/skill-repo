@@ -30,12 +30,25 @@ if [ ! -d docs ]; then echo "[check-doc-refs] 无 docs/,跳过"; exit 0; fi
 INC=()
 for e in $DOC_EXT; do INC+=("--include=*.$e"); done
 
-# 探测是否真的匹配到文件(否则会静默假阴性)
+# HTML 注释剥离(行数保真;模板引导注释不算正文)——#3 的计数与 #4 的引用扫描共用
+COMMENT_STRIP='
+  { buf=$0; line=""
+    while (buf != "") {
+      if (inc) { i=index(buf,"-->");  if (i==0) { buf=""; break } buf=substr(buf,i+3); inc=0 }
+      else     { i=index(buf,"<!--"); if (i==0) { line=line buf; buf=""; break } line=line substr(buf,1,i-1); buf=substr(buf,i+4); inc=1 }
+    }
+    print line
+  }'
+
+# 探测是否真的匹配到文件(否则会静默假阴性);计数按"排除后"口径,与 .ps1 一致
 NFILES=0
-for e in $DOC_EXT; do
-  n=$(find docs -type f -name "*.$e" 2>/dev/null | wc -l | tr -d ' ')
-  NFILES=$((NFILES + n))
-done
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  if [ -n "$DOC_EXCLUDE" ] && printf '%s' "$f" | grep -Eq "$DOC_EXCLUDE"; then continue; fi
+  NFILES=$((NFILES + 1))
+done <<EOF
+$(for e in $DOC_EXT; do find docs -type f -name "*.$e" 2>/dev/null; done)
+EOF
 if [ "$NFILES" -eq 0 ]; then
   echo "[check-doc-refs] 警告:docs/ 下没有匹配 DOC_EXT=\"$DOC_EXT\" 的文件。" >&2
   echo "                 若你的文档用别的扩展名,改脚本顶部的 DOC_EXT。" >&2
@@ -50,7 +63,7 @@ while IFS= read -r hit; do
   file=${hit%%:*}
   if [ -n "$DOC_EXCLUDE" ] && printf '%s' "$file" | grep -Eq "$DOC_EXCLUDE"; then continue; fi
   target=$(printf '%s' "$hit" | grep -oE '\]\([^)]+\)' | head -n1 | sed -E 's/^\]\(//; s/\)$//')
-  case "$target" in http*|\#*|mailto:*|"") continue ;; esac
+  if printf '%s' "$target" | grep -Eqi '^(https?:|#|mailto:)'; then continue; fi
   target=${target%%#*}
   [ -z "$target" ] && continue
   # 只看"像路径"的目标(含 / 或 .);形如 `](被拒)` 的标注不是链接,跳过
@@ -92,14 +105,7 @@ fi
 # 按项目改:L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这一行
 for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
-  body=$(awk '
-    { buf=$0; line=""
-      while (buf != "") {
-        if (inc) { i=index(buf,"-->");  if (i==0) { buf=""; break } buf=substr(buf,i+3); inc=0 }
-        else     { i=index(buf,"<!--"); if (i==0) { line=line buf; buf=""; break } line=line substr(buf,1,i-1); buf=substr(buf,i+4); inc=1 }
-      }
-      print line
-    }' "$f")
+  body=$(awk "$COMMENT_STRIP" "$f")
   # grep -o|wc -l 数"次数"(grep -c 数"行"——一行多个标记会漏计,n2 偏低即漏报);
   # 语义对齐 .ps1 版的 [regex]::Matches().Count。
   n2=$(printf '%s\n' "$body" | grep -o 'novelty=N2' 2>/dev/null | wc -l | tr -d ' ')
@@ -119,7 +125,8 @@ LIVE_DOCS="docs/architecture.md docs/architecture.markdown docs/glossary.md docs
 REF_PAT='docs/decisions/|docs/reviews/|ADR-[0-9]{3}|adr-[0-9]{3}-'
 for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
-  LREF=$(grep -nE "$REF_PAT" "$f" 2>/dev/null)
+  # 先剥 HTML 注释(引导注释里的示例引用不算正文;与 #3 同一套状态机,行号保真)
+  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | grep -nE "$REF_PAT" 2>/dev/null)
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
       echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"

@@ -45,7 +45,7 @@
 <!-- 与用户对话后填:
 - 为什么这么拆(粒度选择的理由)
 - 考虑过的替代架构(被拒方案是金矿)
-- 关键架构决策 → 引用 docs/decisions/adr-XXX-*.md
+- 关键架构决策 → 记一条 ADR(模板见 `docs-templates/adr-template.md`)
 -->
 
 ---

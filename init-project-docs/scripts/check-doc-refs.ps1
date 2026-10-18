@@ -36,8 +36,33 @@ if ($DocExclude) {
 
 $found = $false
 
+# HTML 注释剥离(行数保真;模板引导注释不算正文)——#3 计数与 #4 引用扫描共用
+function Strip-Comments([string[]]$lines) {
+  $out = New-Object System.Collections.Generic.List[string]
+  $inC = $false
+  foreach ($line in $lines) {
+    $s = $line
+    while ($true) {
+      if ($inC) {
+        $i = $s.IndexOf('-->')
+        if ($i -lt 0) { $s = ''; break }
+        $s = $s.Substring($i + 3); $inC = $false
+      } else {
+        $i = $s.IndexOf('<!--')
+        if ($i -lt 0) { break }
+        $j = $s.IndexOf('-->', $i + 4)
+        if ($j -ge 0) { $s = $s.Remove($i, $j + 3 - $i) }
+        else { $s = $s.Substring(0, $i); $inC = $true }
+      }
+    }
+    $out.Add($s)
+  }
+  return ,$out
+}
+
 # 1) 死链
 foreach ($f in $docsMd) {
+  $rel = $f.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/')
   $text = Get-Content -Raw -LiteralPath $f.FullName -Encoding UTF8
   foreach ($m in [regex]::Matches($text, '\]\(([^)]+)\)')) {
     $t = $m.Groups[1].Value
@@ -61,9 +86,9 @@ foreach ($f in $docsMd) {
     }
     if (-not $exact) {
       if ($caseHit) {
-        Write-Host "[case-mismatch] $($f.Name) -> $t(目标存在但大小写不一致,大小写敏感系统上会断)"
+        Write-Host "[case-mismatch] ${rel} -> $t(目标存在但大小写不一致,大小写敏感系统上会断)"
       } else {
-        Write-Host "[dead-link] $($f.Name) -> $t"
+        Write-Host "[dead-link] ${rel} -> $t"
       }
       $found = $true
     }
@@ -74,7 +99,7 @@ foreach ($f in $docsMd) {
 $ph = $docsMd | Select-String -Pattern 'TODO|TBD|与用户对话后填|novelty=N[?]|未填写|待补充' -Encoding UTF8
 if ($ph) {
   Write-Host '[placeholder] docs/ 仍有未填占位符 / TODO:'
-  $ph | ForEach-Object { Write-Host "  $($_.Path):$($_.LineNumber)" }
+  $ph | ForEach-Object { $relp = $_.Path.Substring($root.Length).TrimStart('\','/').Replace('\','/'); Write-Host "  ${relp}:$($_.LineNumber):$($_.Line)" }
   $found = $true
 }
 
@@ -85,12 +110,12 @@ $targets = @()
 # L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这张表。
 foreach ($n in @('docs/core-code.md','docs/core-code.markdown','docs/architecture.md','docs/architecture.markdown')) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
-  $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName })
+  $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }
 foreach ($f in $targets) {
   $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
   if ($null -eq $raw) { continue }
-  $body = [regex]::Replace($raw, '(?s)<!--.*?-->', '')
+  $body = (Strip-Comments ($raw -split "`n")) -join "`n"
   $n2  = ([regex]::Matches($body, 'novelty=N2')).Count
   $acc = ([regex]::Matches($body, '\*\*验收\*\*')).Count
   if ($n2 -gt $acc) {
@@ -106,7 +131,7 @@ foreach ($f in $targets) {
 $liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/glossary.md','docs/glossary.markdown')
 foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
 if (Test-Path 'docs/modules') {
-  $liveDocs += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName })
+  $liveDocs += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }
 $refPat = 'docs/decisions/|docs/reviews/|ADR-\d{3}|adr-\d{3}-'
 foreach ($f in $liveDocs) {
@@ -114,7 +139,7 @@ foreach ($f in $liveDocs) {
   $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
   if ($null -eq $raw) { continue }
   $ln = 0
-  foreach ($line in ($raw -split "`n")) {
+  foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释:引导注释里的示例引用不算正文
     $ln++
     if ($line -match $refPat) {
       Write-Host "[live-doc-refs] ${f}:${ln}: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
