@@ -126,7 +126,8 @@ REF_PAT='docs/decisions/|docs/reviews/|ADR-[0-9]{3}|adr-[0-9]{3}-'
 for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   # 先剥 HTML 注释(引导注释里的示例引用不算正文;与 #3 同一套状态机,行号保真)
-  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | grep -nE "$REF_PAT" 2>/dev/null)
+  # 含 ⚠️ 的行是 E1 要求的"已被…推翻"状态标记——是状态,不是依据,跳过
+  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '!/⚠️/ {printf "%d:%s\n", NR, $0}' | grep -E "$REF_PAT" 2>/dev/null)
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
       echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"

@@ -41,21 +41,20 @@ function Strip-Comments([string[]]$lines) {
   $out = New-Object System.Collections.Generic.List[string]
   $inC = $false
   foreach ($line in $lines) {
-    $s = $line
-    while ($true) {
+    $buf = $line; $outLine = ''
+    while ($buf -ne '') {
       if ($inC) {
-        $i = $s.IndexOf('-->')
-        if ($i -lt 0) { $s = ''; break }
-        $s = $s.Substring($i + 3); $inC = $false
+        $i = $buf.IndexOf('-->')
+        if ($i -lt 0) { $buf = ''; break }
+        $buf = $buf.Substring($i + 3); $inC = $false
       } else {
-        $i = $s.IndexOf('<!--')
-        if ($i -lt 0) { break }
-        $j = $s.IndexOf('-->', $i + 4)
-        if ($j -ge 0) { $s = $s.Remove($i, $j + 3 - $i) }
-        else { $s = $s.Substring(0, $i); $inC = $true }
+        $i = $buf.IndexOf('<!--')
+        if ($i -lt 0) { $outLine += $buf; $buf = ''; break }
+        $outLine += $buf.Substring(0, $i)
+        $buf = $buf.Substring($i + 4); $inC = $true
       }
     }
-    $out.Add($s)
+    $out.Add($outLine)
   }
   return ,$out
 }
@@ -141,6 +140,7 @@ foreach ($f in $liveDocs) {
   $ln = 0
   foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释:引导注释里的示例引用不算正文
     $ln++
+    if ($line -match '⚠️') { continue }   # E1 的状态标记,不是依据
     if ($line -match $refPat) {
       Write-Host "[live-doc-refs] ${f}:${ln}: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
       $found = $true

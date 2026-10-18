@@ -33,7 +33,7 @@ proposed / accepted / deprecated / superseded by ADR-YYY
 正面 / 负面后果;需要跟进的
 ```
 
-模板见 `docs-templates/adr-template.md`(由 skill 提供,按需复制为 `adr-XXX-[短描述].md`;模板本身不是真实决策,不要列进下方索引)。
+模板见 `docs-templates/adr-template.md`(按需复制为 `adr-XXX-[短描述].md`;模板本身不是真实决策,不要列进下方索引)。
 
 ## 命名规则
 

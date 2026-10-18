@@ -50,7 +50,8 @@ Write-Host ""
 Write-Host "被增删改的编号（复核时只看这些 + 它们引用的上下文）："
 $diff = git diff -U0 "$since..HEAD" -- $existing 2>$null
 # 编号族是启发式(示例来自试点项目约定):按项目增删
-$hits = @($diff | Select-String -Pattern '^[+-](?![+-]).*\b(I-\d+|Q-\d+|A-\d+|M\d+-\d+|U-\d+|P-A\d+-\d+)\b' | ForEach-Object { $_.Line.Trim() })
+# 行过滤与 .sh 的 awk 等价:先筛行(--/++ 元数据行排除,不吞行首字符),再匹配编号
+$hits = @($diff | Where-Object { $_ -match '^[+-]' -and $_ -notmatch '^(\+\+\+|---)' -and $_ -match '\b(I-\d+|Q-\d+|A-\d+|M\d+-\d+|U-\d+|P-A\d+-\d+)\b' } | ForEach-Object { $_.Trim() })
 if ($hits.Count -gt 0) {
   $hits | Select-Object -First 80 | ForEach-Object { Write-Host "  $_" }
   if ($hits.Count -gt 80) { Write-Host "  …（还有 $($hits.Count - 80) 行，直接看 git diff）" }

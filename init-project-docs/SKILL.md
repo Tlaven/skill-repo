@@ -51,7 +51,7 @@ skill 提供四样东西:
 
 **宿主**指承载 agent 的应用(Claude Code / OpenCode / Cursor / Windsurf / GitHub Copilot…),它决定 L1 文件叫什么名。**宿主 ↔ L1 文件名的映射,唯一归属在 `templates/l1-memory.md` 顶部那张表**(本 skill 不重述,避免两处漂移)——决定文件名前读那里。
 
-- **不确定就问用户"你用哪个 agent 宿主?"**;检测到 `.claude/` 用 `CLAUDE.md`,否则默认 `AGENTS.md`。
+- **不确定就问用户"你用哪个 agent 宿主?"**;检测到 `.claude/` 用 `CLAUDE.md`,其它宿主按 `l1-memory.md` 顶部表落文件名;判不出就问用户(别硬默认 `AGENTS.md`——名字错了宿主不会加载)。
 - **多宿主并存:** 选一个当主文件,其余放一行指针(`见 AGENTS.md`)——不要各写一份,**两份规则必然漂移**(细则同见 `l1-memory.md` 顶部)。
 
 ---
@@ -123,7 +123,7 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 
 1. `scripts/check-docs-sync.sh` —— 只查一件事:`git diff` 里代码变了、但本项目当前维护的文档(`docs/` 除 `docs/reviews/` 对账留档——历史快照不算同步)与 L1 记忆文件都没变 → 提醒。**只查"有没有动过",不判对错**。
 2. `scripts/check-doc-refs.sh` —— 结构性对账:`docs/` 里的死链(含大小写错链)、未填占位符、标了 N2 却缺 `**验收**`、活文档引记录。
-3. `scripts/review-backlog.sh` —— **不判定、不拦截**:列出"自上次复核以来契约变了哪些行、哪些不变量编号增删改"。给**攒批复核**用,零 token。
+3. `scripts/review-backlog.sh` —— **不判定、不拦截**:列出"自上次复核以来**哪些契约文件变了**、哪些不变量 / 开放问题编号增删改（启发式；不见编号时会提示人工扫 diff）"。给**攒批复核**用,零 token。
 
 接线方式(pre-commit / CI / 宿主钩子)与示例见 `references/wiring.md`;skill 不硬绑宿主。
 
@@ -135,33 +135,33 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 
 ### Step 1: 检查环境 + 决定模式 + 定宿主
 
-- 当前目录是否已有 L1 记忆文件(`CLAUDE.md` / `AGENTS.md`)?
+- 当前目录是否已有 L1 记忆文件(按 `templates/l1-memory.md` 顶部的宿主表,共 6 种文件名——`AGENTS.md` / `CLAUDE.md` / Cursor / Windsurf / Copilot 对应文件)?
   - **没有 L1**,且**基本空 / 新项目** → 走 **Step 2A 全新模式**
   - **没有 L1,但已有值得保留的文档**(成体系的 README + `docs/` / 设计规格,**或只有一份 README / 设计文档也算**)→ 走 **Step 2C 嫁接模式**
   - **有 L1,且 L1 里已经写着本方法论**(三段式 / 铁律 / E 规则已成文)→ 走 **Step 2D delta 对账**(项目已在用,只补缺口、别重造)
   - **有 L1,但没引入过本方法论 + 用户想引入** → 走 **Step 2B 合并模式**
   - **有 + 用户没说要改** → 不要主动推销,只回应具体问题
-- 是否 git 仓库?是否基本空目录?
+- 是否 git 仓库?(非 git:第 3.5 步的 delta / SHA 起点不可用,退化为人工清单)是否基本空目录?
 - 用哪个宿主?→ 决定 L1 文件名(见「宿主适配」)
-- **目标工况:人至少给出功能与可验收行为** —— 通常再给核心规则 / 不变量,也可能指定接口与失败处理。**文档写到多细由 novelty 分档决定**(N2 → 可实现);人指定项标 `[已定]`。
+- **目标工况:人至少给出功能与可验收行为** —— 通常再给核心规则 / 不变量,也可能指定接口 / 数据结构 / 失败码。**文档写到多细由 novelty 分档决定**(N2 → 可实现);人指定项标 `[已定]`。
   **若连功能和验收都由 AI 起草,本 skill 不适用**:"AI 自拟的需求"和"AI 自拟的验收"会互相印证,风险性质不同,别硬套。
-  > 任何情况下:**人明确指定的接口 / 数据结构 / 失败码标 `[已定]`**,AI 不得"顺手优化"——改动要先走 ADR。指定得越多,这条越关键:典型失败不是写错,是 AI 把你定的设计改得"更好"了。
+  > 任何情况下:**人明确指定的接口 / 数据结构 / 失败码 / 命名标 `[已定]`**,AI 不得"顺手优化"——改动要先走 ADR。指定得越多,这条越关键:典型失败不是写错,是 AI 把你定的设计改得"更好"了。
 
 ### Step 2A: 全新模式——落 L1 + 整套 `docs-templates/`
 
 **关键:`docs/` 下本项目当前维护的文档不要预先建空骨架**(会被遗忘、最终空着);但 `docs-templates/` 是"运行期手册 + 待复制 stub",属"对账忽略",**应一次性放齐**——否则 L1 正文里指向它们的指针会悬空。
 
 1. 复制 `templates/l1-memory.md` → 项目根的 L1 文件名。
-2. 把**整套** `docs-templates/` 落地(拷进 `docs-templates/`):`templates/module-doc.md`、`templates/adr-template.md`、`references/evolution-rules.md`、`references/verifying-n2.md`、`references/verifying-nonfunctional.md`、`references/teach-back-verifier-prompt.md`。
+2. 把**整套** `docs-templates/` 落地(拷进 `docs-templates/`):`templates/module-doc.md`、`templates/adr-template.md`、`templates/glossary.md`、`templates/decisions-readme.md`、`templates/core-code.md`、`references/evolution-rules.md`、`references/verifying-n2.md`、`references/verifying-nonfunctional.md`、`references/teach-back-verifier-prompt.md`。
 
 然后立即进入 Step 3 对话。**`docs/` 下本项目当前维护的文档按需在对应阶段创建:**
 
-- 出现领域名词 / 易混词 → 复制 `templates/glossary.md` → `docs/glossary.md`
+- 出现领域名词 / 易混词 → 从已在 `docs-templates/glossary.md` 的 stub 生成 `docs/glossary.md`
 - 进入 L2 讨论 → 复制 `templates/architecture.md` → `docs/architecture.md`
 - 首次要写模块文档 → 从已在 `docs-templates/module-doc.md` 的 stub 生成 `docs/modules/<name>.md`
-- 首次记 ADR → 复制 `templates/decisions-readme.md` → `docs/decisions/README.md`(单条模板已在 `docs-templates/adr-template.md`)
+- 首次记 ADR → 从已在 `docs-templates/decisions-readme.md` 的 stub 生成 `docs/decisions/README.md`(单条模板已在 `docs-templates/adr-template.md`)
 - 首次对账(teach-back / 文档考古)→ 产出写 `docs/reviews/YYYY-MM-DD-<主题>.md`(无需模板)
-- 用户明确要 L4 → 复制 `templates/core-code.md` → `docs/core-code.md`
+- 用户明确要 L4 → 从已在 `docs-templates/core-code.md` 的 stub 生成 `docs/core-code.md`
 
 ### Step 2B: 合并模式——已有 L1 记忆文件
 
@@ -184,7 +184,7 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 **核心原则:先映射,再落骨架;既有的"现状事实"文档 = 指针目标,不新造重复层。**
 
 1. **通读既有文档,映射到 4 层:**
-   - 既有的**现状事实**文档(架构描述 / 模块清单)→ 它就是 L2 的事实源。**新 `docs/architecture.md` 只放指针 + 决策 + 不变量,不重抄事实**(E1 指针优先)。
+   - 既有的**现状事实**文档(架构描述 / 模块清单)→ 它就是 L2 的事实源。**新 `docs/architecture.md` 只放指针 + 决策 + 不变量,不重抄事实**(E1 指针优先)。**2C 下主流程叙述由既有事实源承担,新骨架不重写**(重写 = 两套并存)。
    - 既有的**设计动机 / 不变量 / 验收**文档 → 对应 L1/L2 的 `[为什么]`/`[不变量]` 与 L4;用**指针**指过去,别搬。
    - 既有的**存档 / 旧方案**(如 `docs/legacy/`)→ **考古层**,不是本项目当前维护的文档;不迁、不删,标注边界即可(对账要排除它——见 `scripts/check-doc-refs` 的 `DOC_EXCLUDE`)。
 2. **落 L1 + 整套 `docs-templates/`**(同 Step 2A)。
@@ -192,6 +192,7 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 4. **消歧:** 冲突时在**新骨架文件**顶部加一行 banner 声明"谁是事实源、谁是必须维护的正式文档",**不要默默并存**;**但只改新文件、不动作者原有文件**——既有文件的定性冲突(如 README 说"当前实现"、重置章程说"考古层")记为开放问题,交作者拍板(同 2B"不动用户原有内容")。
 5. 进入 Step 3 对话,但**起点是"补既有文档缺的那部分"**。嫁接模式下 `docs/architecture.md` 可作**证据草稿**先行创建(映射素材已由既有文档提供),不必等 L1 对话共识——但仍是草案,标 `推断,待确认`。
 
+> **同名冲突:** 既有事实源恰好占用新骨架文件名(如已有 `docs/architecture.md`)→ 新骨架**另起名**(如 `docs/architecture-l2.md`),顶部 banner 指明事实源;既有文件不动,冲突记入「开放问题」,新名字同步进脚本的两张表(见 wiring)。
 > **若项目方向尚未收敛**(重立项 / "是什么"未定稿):L1 概述可写成**双段**(现状事实 / 方向草案)+ 显式"开放问题"清单,**不要假装收敛**。teach-back 会正确地卡在这里——那不是文档没写好,是信息还没收敛,补它需要人。
 
 ### Step 2D: delta 对账模式——项目已在本方法论上运行
@@ -213,7 +214,7 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 
 - **第一阶段(填 L1 主轴):** 按 [是什么] → [为什么] → [不变量] 顺序,每段问 1-2 个核心问题,答完立即写入 L1 文件
 - **第二阶段(填 L2 主流程):** L1 有共识后**才创建** `docs/architecture.md`,重点产出**主流程叙述**(10-20 行,从入口到出口)
-- **第三阶段(按需,不在初建时一次做完):** 某模块出现 N2 逻辑、或其细节开始往 L2 / 大文档里堆时建 L3;决策发生时建 ADR。跨模块的 N2 **必须有家**——建 L4,或写进 L2 的 `[不变量]` 架构级约束 + L3 留一行指针(L4 默认不建)。
+- **第三阶段(按需,不在初建时一次做完):** 某模块出现 N2 逻辑、或其细节开始往 L2 / 大文档里堆时建 L3;决策发生时建 ADR。跨模块的 N2 **必须有家**——建 L4(**先问"建层还是写进 L2";建层记 ADR**),或写进 L2 的 `[不变量]` 架构级约束 + L3 留一行指针(L4 默认不建)。
 - **若 [是什么] 尚未收敛**(重立项 / 方向未定):L1 概述写成**双段**(现状 / 方向草案)+ 显式"开放问题",**别假装收敛**;teach-back 会正确卡在这里(需人拍板,不是 agent 能补的)
 
 ### Step 3.5: teach-back 复核（按需，可攒批）
@@ -224,16 +225,16 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 
 1. 单元标记 **N2**（AI 未见）；
 2. 改了**不变量**；
-3. 某术语**还没有可判定定义**（词条空白 / 有两种竞争含义 / 含义刚被修改）；
+3. 某术语**还没有可判定定义**（词条空白 / 有 ≥2 种互相竞争的含义 / 含义刚被修改）；
 4. 一次**跨层大改**（横跨 L1–L4 不止一层）。
 
 都不占就跳过；**纯 N1 且验收写得出来**也跳过——它的返工当场可见，不值得花一次复核。
 
 **攒批怎么做才不贵：**
 
-1. 先跑 `scripts/review-backlog`（零 token）：列出"自上次复核以来契约变了哪些行、哪些不变量编号增删改"；
+1. 先跑 `scripts/review-backlog`（零 token）：列出"自上次复核以来**哪些契约文件变了**、哪些不变量 / 开放问题编号增删改（启发式；不见编号时会提示人工扫 diff）"；**未拷入 `scripts/` → 从 skill 目录跑 `bash <skill目录>/scripts/review-backlog.sh`；skill 也不在场 → 用 `git diff --stat <起点>..HEAD -- AGENTS.md docs/` 替代；非 git → 人工列清单**；
 2. 只把**变化的那部分 + 它引用的上下文**喂给独立 agent，不必重读全量；
-3. 结论记一条 `docs/reviews/`，并把当前 HEAD 写进 `docs/reviews/.last-review`（下次 backlog 的起点）。
+3. 结论记一条 `docs/reviews/`，并把**复核覆盖到的提交**（通常是开始复核时的 HEAD；脚本跑完会打印现成命令）写进 `docs/reviews/.last-review`（下次 delta 的起点）。
 
 > 不攒批、当场复核也可以——只要那处改动你觉得"猜错会静默扩散"。
 
@@ -250,7 +251,7 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 - 冒出的假设 / 歧义 → 当场澄清:登记 `docs/glossary.md` / 补不变量 / 记 open questions。
 - 遇 **N2**(新领域核心逻辑)→ **必须**先把"步骤级说明 + 危险实现清单 + 例子 + 验收"补进它的**家**(core-code / L2 公共节 / L3;**若该模块还没有 L3,先照 `docs-templates/module-doc.md` 生成**),再放行实现。
 
-**退化路径(宿主 / 会话派不出"看不到本会话"的独立 agent 时):** 不要自评充数(自评 = 自证,不算数),也不要卡死。① 把待验证正文 + 验证者 prompt + 派发参数**封存**到 `docs/reviews/<日期>-<主题>-package/`,配一份 `MANIFEST`(文件清单 + 摘要 + 是否与当前文档同步);**不要抄进同一份文件**——同一文本两处必然漂移,违反 E1;② 另写一份指针记录,声明范围与"**复核未执行**"(明示它,这次跳过就是可见的);③ 把"跑一次独立验证"作为移交项交给宿主 / 人。**是否等复核由你定**(同 Step 3.5)——要等,就把它当冻结标记;不等,照常实现。
+**退化路径(宿主 / 会话派不出"看不到本会话"的独立 agent 时):** 不要自评充数(自评 = 自证,不算数),也不要卡死。① 把待验证正文 + 验证者 prompt + 派发参数**封存**到 `docs/reviews/<日期>-<主题>-package/`,配一份 `MANIFEST`(文件清单 + 摘要 + 是否与当前文档同步);**不要抄进同一份文件**——同一文本两处必然漂移,违反 E1;② 另写一份指针记录(如 `docs/reviews/<日期>-<主题>-未复核.md`),声明范围与"**复核未执行**"(明示它,这次跳过就是可见的);③ 把"跑一次独立验证"作为移交项交给宿主 / 人。**是否等复核由你定**(同 Step 3.5)——要等,就把它当冻结标记;不等,照常实现。
 
 结论是「不通过」→ 先改文档;「需人拍板」→ 把清单交人。**它不阻塞实现**——是否等它由你定;但推荐在对应实现前做完(那才是它值钱的位置)。
 
@@ -278,19 +279,19 @@ L1 铁律每条末尾都带这个标签(`[机器]` / `[验证者]` / `[约定]`)
 
 ```
 文档方法论已落地。接下来:
-- 开发新模块前,从 docs-templates/ 复制 module-doc.md 到 docs/modules/<name>.md,先填后写代码
-- 重大决策发生时,在 docs/decisions/ 记一条 ADR
+- 开发新模块前,从 docs-templates/ 复制 module-doc.md 到 docs/modules/<name>.md,先填(标 novelty 档)后写代码
+- 决策发生时(按 E4 的"惊讶度"判据,不是规模),在 docs/decisions/ 记一条 ADR
 - 大改动前,先更新对应层文档,再写代码
-- L4 默认不要——只有核心单元**被 ≥2 个工作场景共同加载**时才补(没补时,跨模块契约写进 L2 的架构级约束 + L3 留一行指针)
+- L4 默认不要(`docs/core-code.md`)——只有核心单元**被 ≥2 个工作场景共同加载**时才补,建层先问用户并记 ADR(没补时,跨模块契约写进 L2 的架构级约束 + L3 留一行指针)
 - 填好任一文档后,删掉其中的引导注释(`<!-- … -->`)——模板注释里的 `与用户对话后填` / `novelty=N?` 这类字样会被 `check-doc-refs` 报为"未填"(它只扫 `docs/`;L1 在项目根,不在扫描面)
-- 出现新领域名词 → 登记 docs/glossary.md;N2 逻辑 → 补"步骤级 + 例子 + 验收"
-- 复核按需做、可攒批(先跑 scripts/review-backlog,只把 delta 喂给独立 agent):命中 N2 / 不变量 / 术语歧义或未定义 / 跨层大改 任一条时值得做,**推荐在对应实现前完成**(**纯 N1 与 N0 跳过**;独立 subagent,见 references/teach-back-verifier-prompt.md)
+- 出现新领域名词 → 登记 docs/glossary.md;N2 逻辑 → 补"步骤级 + 危险实现清单 + 例子 + 验收"
+- 复核按需做、可攒批(先跑 scripts/review-backlog,只把 delta 喂给独立 agent):命中 N2 / 不变量 / 术语歧义或未定义 / 跨层大改 任一条时值得做,**推荐在对应实现前完成**(**纯 N1 与 N0 跳过**;独立 subagent,见 docs-templates/teach-back-verifier-prompt.md)
 - (可选)把 scripts/ 拷进项目,按 references/wiring.md 接到 pre-commit / CI——挡"改代码忘文档"、查死链 / 占位符 / N2 缺 `**验收**` / 活文档引记录(Windows:先按 wiring.md 加一行 `.gitattributes`,否则 `.sh` 会被检出成 CRLF、根本跑不起来)
 
 本文件已含方法论精要,后续 agent 启动会自动加载,不需要再调用这个 skill。
 ```
 
-> **delta 模式(Step 2D)不适用上面这套"全新项目"话术**——只汇报"补了哪些缺口 / 还差什么待定"。
+> **2B / 2C / 2D 不适用上面这套"全新项目"话术**——按各自起点只汇报"补了哪些缺口 / 还差什么待定"。
 
 ---
 
@@ -376,6 +377,9 @@ skill 自身要避免的:
 ./docs-templates/           # skill 提供的模板与运行手册(不是本项目当前维护的文档:对账忽略) —— Step 2A 整套落地
   ├── module-doc.md
   ├── adr-template.md
+  ├── glossary.md                     # 待复制 stub:按需复制到 docs/glossary.md
+  ├── decisions-readme.md             # 待复制 stub:按需复制到 docs/decisions/README.md
+  ├── core-code.md                    # 待复制 stub:按需复制到 docs/core-code.md
   ├── evolution-rules.md              # 运行核心:演化期规则 E1–E7(L1 只留指针)
   ├── verifying-n2.md                 # 运行核心:怎么给 N2 造验收
   ├── verifying-nonfunctional.md      # 运行核心:非功能 / 主观需求怎么造验收(确定性 / 性能 / 审美 / 合规)
@@ -393,14 +397,16 @@ skill 自身要避免的:
 | `templates/l1-memory.md` | L1 记忆文件(三段式 / 4 层 / novelty / 铁律;E1–E7 另见 evolution-rules) | **立即**(Step 2A) | 项目根 `<AGENTS.md / CLAUDE.md>` |
 | `templates/architecture.md` | L2 架构层 | 按需 | `docs/architecture.md` |
 | `templates/module-doc.md` | L3 模块详细 stub(含 novelty 标记) | **立即**(Step 2A) | `docs-templates/module-doc.md` |
-| `templates/glossary.md` | 术语表(受控词汇) | 按需 | `docs/glossary.md` |
-| `templates/core-code.md` | L4 核心代码(含 novelty 分档 / N2 附加栏 / 单元四类卡片) | 按需 | `docs/core-code.md` |
-| `templates/decisions-readme.md` | ADR 索引 + 格式约定 | 按需 | `docs/decisions/README.md` |
+| `templates/glossary.md` | 术语表(受控词汇) | **立即**(Step 2A) | `docs-templates/glossary.md`(按需复制到 `docs/glossary.md`) |
+| `templates/core-code.md` | L4 核心代码(含 novelty 分档 / N2 附加栏 / 单元四类卡片) | **立即**(Step 2A) | `docs-templates/core-code.md`(按需复制到 `docs/core-code.md`) |
+| `templates/decisions-readme.md` | ADR 索引 + 格式约定 | **立即**(Step 2A) | `docs-templates/decisions-readme.md`(按需复制到 `docs/decisions/README.md`) |
 | `templates/adr-template.md` | 单条 ADR 模板(状态/背景/方案/选择/后果) | **立即**(Step 2A) | `docs-templates/adr-template.md` |
 | `references/evolution-rules.md` | 运行核心:演化期规则 E1–E7 | **立即**(Step 2A) | `docs-templates/evolution-rules.md` |
 | `references/verifying-n2.md` | 运行核心:N2 验收手段 / 反模式 / 闸门 | **立即**(Step 2A) | `docs-templates/verifying-n2.md` |
 | `references/verifying-nonfunctional.md` | 运行核心:非功能 / 主观需求(确定性 / 性能 / 审美 / 合规)怎么造验收 | **立即**(Step 2A) | `docs-templates/verifying-nonfunctional.md` |
 | `references/teach-back-verifier-prompt.md` | 运行核心:teach-back 独立验证者 prompt | **立即**(Step 2A) | `docs-templates/teach-back-verifier-prompt.md` |
+| `references/calibration-guide.md` | 验证者 prompt 的校准手册(基线 / 稳定性 / 重跑触发) | 改判定措辞或换模型时 | **不落地**(skill 侧文档) |
+| `references/wiring.md` | 接线指南(pre-commit / CI / 宿主钩子)与示例 | 初始化后接线时 | **不落地**(skill 侧文档) |
 
 ---
 
