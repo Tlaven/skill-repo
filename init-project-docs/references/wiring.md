@@ -19,7 +19,7 @@ DOC_GLOB='^docs/'
 L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md'
 ```
 
-> `check-doc-refs.sh` 顶部另有两项:`DOC_EXT`(文档扩展名,默认 `.md` + `.markdown`)与 `DOC_EXCLUDE`(对账要**排除**的路径,默认排除 `docs/legacy/`、`docs/archive/` 等**考古 / 存档层**、`docs/reviews/` **对账留档**(历史快照,引用退役术语/旧链是常态)、以及 `docs/templates/` 等**模板 stub 目录**——它们不是本项目当前维护的文档,扫进来只会制造噪音)。
+> `check-doc-refs.sh` 顶部另有两项:`DOC_EXT`(文档扩展名,默认 `.md` + `.markdown`)与 `DOC_EXCLUDE`(对账要**排除**的路径,默认排除 `docs/legacy/`、`docs/archive/` 等**考古 / 存档层**、`docs/reviews/` **对账留档**(历史快照,引用退役术语/旧链是常态)、以及 `docs/templates/` 等**待填件目录**——它们不是本项目当前维护的文档,扫进来只会制造噪音)。
 
 > **Windows 必读——先把换行符定死。**
 > Windows 默认 `core.autocrlf=true`，拷进项目的 `.sh` 会被检出成 CRLF；**Linux / WSL / CI 上这会直接语法错**（`$'\r': command not found`），若已接 pre-commit，会挡住**每一次**提交，报错还像"hook 坏了"——很容易被整个删掉。（Git Bash 多数版本能容忍 CRLF，但别赌。）落地一行防住（`.gitattributes` 不存在就新建，存在就追加）：
@@ -55,7 +55,7 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 若项目用的是**别的写法**——典型是**早期版本**的 L1(只有"N2 必须给步骤 / 例子 / 验收"这样的**文字规则**,文档里没有 `novelty=N2` 标记)——直接接上会:
 
 - **漏报**:没有 `novelty=N2` 字面量 → 对账永远看不到 N2 条目,这道门禁形同虚设;
-- **噪音**:`DOC_EXT` / `DOC_EXCLUDE` 没调好时,不该扫的文件(模板 stub / 考古层)被当成对账对象扫。
+- **噪音**:`DOC_EXT` / `DOC_EXCLUDE` 没调好时,不该扫的文件(待填件 / 考古层)被当成对账对象扫。
 
 **对策(二选一):**
 

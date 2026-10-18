@@ -13,7 +13,7 @@ description: "为 AI 协作初始化项目文档骨架(AGENTS.md / CLAUDE.md + d
 
 > **L 的所指:** 本 skill 的 **L** 一律指**文档层**(L1 记忆文件 / L2 架构 / L3 模块 / L4 core-code)。
 
-> **三套标签别互相污染:** `[脚本可查]` / `[需独立复核]` / `[只能靠自觉]` = **执行面**(这条规则靠什么生效);`强制` / `约定` = **验证方式**(这条不变量怎么验,其中"约定"=只写在文档里、没有自动检查);`决策级` / `实现级` = **判定档**。两套轴不要互推。
+> **两套标签别混:** 执行面（`[脚本可查]` / `[需独立复核]` / `[只能靠自觉]`，规则靠什么生效）与验证方式（`强制` / `约定`，不变量怎么验）是两套轴；两者的完整区分见 `templates/l1-memory.md` 铁律段。
 
 ## 定位
 
@@ -26,7 +26,7 @@ skill 提供四样东西:
 1. **方法论框架**——让 agent 知道有这套思维方式(三段式 × 4 层)
 2. **文件结构骨架**——项目应该有哪些文档文件、放哪里
 3. **对话地图**——告诉 agent 该问什么,而不是替用户答
-4. **可判定化护栏**——术语先定义、N2 写到可实现;独立复核是**按需工具**、可攒批(见 Step 3.5)
+4. **可判定的约束**——术语先定义、N2 写到可实现;独立复核是**按需工具**、可攒批(见 Step 3.5)
 
 **关键边界:** 不替用户写内容——但**允许"从代码 / 证据推断草稿 + 标注『推断,待确认』"**,禁止凭空编造。
 
@@ -140,19 +140,19 @@ L1 铁律每条末尾都带这个标签(`[脚本可查]` / `[需独立复核]` /
 
 ### Step 2A: 全新模式——落 L1 + 整套 `docs-templates/`
 
-**关键:`docs/` 下本项目当前维护的文档不要预先建空骨架**(会被遗忘、最终空着);但 `docs-templates/` 是"运行期手册 + 待复制 stub",属"对账忽略",**应一次性放齐**——否则 L1 正文里指向它们的指针会悬空。
+**关键:`docs/` 下本项目当前维护的文档不要预先建空骨架**(会被遗忘、最终空着);但 `docs-templates/` 里放的是两类"不是本项目当前维护的文档",属"对账忽略",**应一次性放齐**——否则 L1 正文里指向它们的指针会悬空:**待填件**(复制出去、填完删注释才成为契约)与**就地读件**(留在原地被引用,不复制、不改)。
 
 1. 复制 `templates/l1-memory.md` → 项目根的 L1 文件名。
 2. 把**整套** `docs-templates/` 落地(拷进 `docs-templates/`):`templates/module-doc.md`、`templates/adr-template.md`、`templates/glossary.md`、`templates/decisions-readme.md`、`templates/core-code.md`、`references/evolution-rules.md`、`references/verifying-n2.md`、`references/verifying-nonfunctional.md`、`references/teach-back-verifier-prompt.md`。
 
 然后立即进入 Step 3 对话。**`docs/` 下本项目当前维护的文档按需在对应阶段创建:**
 
-- 出现领域名词 / 易混词 → 从已在 `docs-templates/glossary.md` 的 stub 生成 `docs/glossary.md`
-- 进入 L2 讨论 → 从 skill 侧复制 `templates/architecture.md` → `docs/architecture.md`
-- 首次要写模块文档 → 从已在 `docs-templates/module-doc.md` 的 stub 生成 `docs/modules/<name>.md`
-- 首次记 ADR → 从已在 `docs-templates/decisions-readme.md` 的 stub 生成 `docs/decisions/README.md`(单条模板已在 `docs-templates/adr-template.md`)
+- 出现领域名词 / 易混词 → 把待填件 `docs-templates/glossary.md` 复制到 `docs/glossary.md` 再填
+- 进入 L2 讨论 → 从 skill 侧取待填件 `templates/architecture.md` → `docs/architecture.md`
+- 首次要写模块文档 → 把待填件 `docs-templates/module-doc.md` 复制到 `docs/modules/<name>.md` 再填
+- 首次记 ADR → 把待填件 `docs-templates/decisions-readme.md` 复制到 `docs/decisions/README.md` 再填(单条模板也在 `docs-templates/adr-template.md`)
 - 首次对账(teach-back / 文档考古)→ 产出写 `docs/reviews/YYYY-MM-DD-<主题>.md`(无需模板)
-- 用户明确要 L4 → 从已在 `docs-templates/core-code.md` 的 stub 生成 `docs/core-code.md`
+- 用户明确要 L4 → 把待填件 `docs-templates/core-code.md` 复制到 `docs/core-code.md` 再填
 
 ### Step 2B: 合并模式——已有 L1 记忆文件
 
@@ -192,8 +192,8 @@ L1 铁律每条末尾都带这个标签(`[脚本可查]` / `[需独立复核]` /
 
 **动作 = 补 delta + 对账(≈跑一次 E5):**
 
-1. **先对账,别先动手**:通读 L1 + `docs/`,列"方法论要求 vs 项目现状"的缺口(死链、缺的运行手册、规则与执行说明脱节…),每项标**是否需要用户拍板**。
-2. **只补无争议缺口**:如 L1 声明了 `docs/templates/<x>.md` 却**该文件不存在**(死链)→ 补上;运行期手册(`verifying-n2` / `teach-back-verifier-prompt`)缺失 → 补;**不改 L1 已成文的措辞**。
+1. **先对账,别先动手**:通读 L1 + `docs/`,列"方法论要求 vs 项目现状"的缺口(死链、缺的就地读件、规则与执行说明脱节…),每项标**是否需要用户拍板**。
+2. **只补无争议缺口**:如 L1 声明了 `docs/templates/<x>.md` 却**该文件不存在**(死链)→ 补上;就地读件(`verifying-n2` / `teach-back-verifier-prompt`)缺失 → 补;**不改 L1 已成文的措辞**。
 3. **布局跟随项目**:项目用 `docs/templates/`、就用 `docs/templates/`——**不要**强行改成 skill 的 `docs-templates/`(两套并存 = E4 违例)。要统一旧布局 → ADR + 用户决定。
 4. **版本差异不擅自升级**:项目 L1 可能是本方法论的**早期版本**(铁律条数不同、E2 三类 vs 四类、无 scripts)。**保留项目版**;是否升到当前版本 = **用户的决定**(牵动既有文档),不默默替换。
 5. **本项目当前维护的文档默认不建**:`docs/core-code.md`、`docs/modules/*`、新 ADR……凡是要新增**本项目当前维护的文档**的,先列进提问清单,别自作主张。
@@ -260,7 +260,7 @@ L1 铁律每条末尾都带这个标签(`[脚本可查]` / `[需独立复核]` /
 
 **退化路径的停笔判据(派不出独立验证者 / 没有用户可问时):** 上面第 1 条**不适用**,改判为三条同时满足:① 投递包就绪(待验证正文 + prompt + 派发参数已封存 + `MANIFEST` 已标同步状态);② "复核未执行"已显式标注;③ 拍板清单已列出。这三条 = **骨架交付态**;实现要不要等复核,由你定(同 Step 3.5——它不阻塞)。
 
-> **快照失效:** 若 `MANIFEST` 记的摘要与当前文档不符 → **快照已过期**,必须重新封存;过期的快照**不得再被当作当前文档引用**(否则它就是 E1 警告的第二份"尸体")。
+> **快照失效:** 若 `MANIFEST` 记的摘要与当前文档不符 → **快照已过期**,必须重新封存;过期的快照**不得再被当作当前文档引用**(否则它就是 E1 警告的又一份"该删没删的旧陈述")。
 
 **初始化期(技术栈还没定)的验收怎么写:** 允许命令形态待定——写成"与语言无关的 property 断言 / approved fixture + `形如 <runner> tests/...`",但必须满足:① 断言内容写实(不能只有一个名字或一句"要有测试");② 把它登记进「开放问题」。**命令待定 ≠ 验收可以欠着**;技术栈一拍板,立刻把命令补成可跑的。
 
@@ -310,7 +310,7 @@ L1 铁律每条末尾都带这个标签(`[脚本可查]` / `[需独立复核]` /
 
 - 为什么用这个技术栈 / 架构风格?(强约束还是偏好)
 - 核心价值观 / 设计哲学,2-3 条?(例:统一模型优先于扩展、性能优先于优雅)
-- 考虑过哪些替代方案?为什么拒绝?(被拒方案是金矿)
+- 考虑过哪些替代方案?为什么拒绝?(被拒方案要记下"为什么不")
 
 ### [不变量] 段——问硬约束
 
@@ -368,16 +368,16 @@ skill 自身要避免的:
   └── decisions/
       ├── README.md         # ADR 索引 —— 首次记 ADR 时创建
       └── adr-XXX-*.md      # 真实 ADR
-./docs-templates/           # skill 提供的模板与运行手册(不是本项目当前维护的文档:对账忽略) —— Step 2A 整套落地
-  ├── module-doc.md
-  ├── adr-template.md
-  ├── glossary.md                     # 待复制 stub:按需复制到 docs/glossary.md
-  ├── decisions-readme.md             # 待复制 stub:按需复制到 docs/decisions/README.md
-  ├── core-code.md                    # 待复制 stub:按需复制到 docs/core-code.md
-  ├── evolution-rules.md              # 运行核心:演化期规则 E1–E7(L1 只留指针)
-  ├── verifying-n2.md                 # 运行核心:怎么给 N2 造验收
-  ├── verifying-nonfunctional.md      # 运行核心:非功能 / 主观需求怎么造验收(确定性 / 性能 / 审美 / 合规)
-  └── teach-back-verifier-prompt.md   # 运行核心:teach-back 验证者 prompt
+./docs-templates/           # skill 提供的两类件(不是本项目当前维护的文档:对账忽略) —— Step 2A 整套落地
+  ├── module-doc.md                   # 待填件:复制到 docs/modules/<name>.md 再填
+  ├── adr-template.md                 # 待填件:复制成 adr-XXX-<短描述>.md 再填
+  ├── glossary.md                     # 待填件:复制到 docs/glossary.md 再填
+  ├── decisions-readme.md             # 待填件:复制到 docs/decisions/README.md 再填
+  ├── core-code.md                    # 待填件:复制到 docs/core-code.md 再填
+  ├── evolution-rules.md              # 就地读件:演化期规则 E1–E7(L1 只留指针)
+  ├── verifying-n2.md                 # 就地读件:怎么给 N2 造验收
+  ├── verifying-nonfunctional.md      # 就地读件:非功能 / 主观需求怎么造验收(确定性 / 性能 / 审美 / 合规)
+  └── teach-back-verifier-prompt.md   # 就地读件:teach-back 验证者 prompt
 ```
 
 除 L1 与**整套 `docs-templates/`** 外,`docs/` 下本项目当前维护的文档**全部按需创建**(理由见 Step 2A)。
@@ -388,17 +388,17 @@ skill 自身要避免的:
 
 | 文件 | 用途 | 何时用 | 落地到(项目内) |
 |---|---|---|---|
-| `templates/l1-memory.md` | L1 记忆文件(三段式 / 4 层 / novelty / 铁律;E1–E7 另见 evolution-rules) | **立即**(Step 2A) | 项目根 `<AGENTS.md / CLAUDE.md>` |
-| `templates/architecture.md` | L2 架构层 | 按需 | `docs/architecture.md` |
-| `templates/module-doc.md` | L3 模块详细 stub(含 novelty 标记) | **立即**(Step 2A) | `docs-templates/module-doc.md` |
-| `templates/glossary.md` | 术语表(受控词汇) | **立即**(Step 2A) | `docs-templates/glossary.md`(按需复制到 `docs/glossary.md`) |
-| `templates/core-code.md` | L4 核心代码(含 novelty 分档 / N2 附加栏 / 单元四类卡片) | **立即**(Step 2A) | `docs-templates/core-code.md`(按需复制到 `docs/core-code.md`) |
-| `templates/decisions-readme.md` | ADR 索引 + 格式约定 | **立即**(Step 2A) | `docs-templates/decisions-readme.md`(按需复制到 `docs/decisions/README.md`) |
-| `templates/adr-template.md` | 单条 ADR 模板(状态/背景/方案/选择/后果) | **立即**(Step 2A) | `docs-templates/adr-template.md` |
-| `references/evolution-rules.md` | 运行核心:演化期规则 E1–E7 | **立即**(Step 2A) | `docs-templates/evolution-rules.md` |
-| `references/verifying-n2.md` | 运行核心:N2 验收手段 / 反模式 / 闸门 | **立即**(Step 2A) | `docs-templates/verifying-n2.md` |
-| `references/verifying-nonfunctional.md` | 运行核心:非功能 / 主观需求(确定性 / 性能 / 审美 / 合规)怎么造验收 | **立即**(Step 2A) | `docs-templates/verifying-nonfunctional.md` |
-| `references/teach-back-verifier-prompt.md` | 运行核心:teach-back 独立验证者 prompt | **立即**(Step 2A) | `docs-templates/teach-back-verifier-prompt.md` |
+| `templates/l1-memory.md` | 待填件:L1 记忆文件(三段式 / 4 层 / novelty / 铁律;E1–E7 另见 evolution-rules) | **立即**(Step 2A) | 项目根 `<AGENTS.md / CLAUDE.md>` |
+| `templates/architecture.md` | 待填件:L2 架构层 | 按需 | `docs/architecture.md` |
+| `templates/module-doc.md` | 待填件:L3 模块详细(含 novelty 标记) | **立即**(Step 2A) | `docs-templates/module-doc.md` |
+| `templates/glossary.md` | 待填件:术语表(受控词汇) | **立即**(Step 2A) | `docs-templates/glossary.md`(按需复制到 `docs/glossary.md`) |
+| `templates/core-code.md` | 待填件:L4 核心代码(含 novelty 分档 / N2 附加栏 / 单元四类卡片) | **立即**(Step 2A) | `docs-templates/core-code.md`(按需复制到 `docs/core-code.md`) |
+| `templates/decisions-readme.md` | 待填件:ADR 索引 + 格式约定 | **立即**(Step 2A) | `docs-templates/decisions-readme.md`(按需复制到 `docs/decisions/README.md`) |
+| `templates/adr-template.md` | 待填件:单条 ADR 模板(状态/背景/方案/选择/后果) | **立即**(Step 2A) | `docs-templates/adr-template.md` |
+| `references/evolution-rules.md` | 就地读件:演化期规则 E1–E7 | **立即**(Step 2A) | `docs-templates/evolution-rules.md` |
+| `references/verifying-n2.md` | 就地读件:N2 验收手段 / 反模式 / 闸门 | **立即**(Step 2A) | `docs-templates/verifying-n2.md` |
+| `references/verifying-nonfunctional.md` | 就地读件:非功能 / 主观需求(确定性 / 性能 / 审美 / 合规)怎么造验收 | **立即**(Step 2A) | `docs-templates/verifying-nonfunctional.md` |
+| `references/teach-back-verifier-prompt.md` | 就地读件:teach-back 独立验证者 prompt | **立即**(Step 2A) | `docs-templates/teach-back-verifier-prompt.md` |
 | `references/calibration-guide.md` | 验证者 prompt 的校准手册(基线 / 稳定性 / 重跑触发) | 改判定措辞或换模型时 | **不落地**(skill 侧文档) |
 | `references/wiring.md` | 接线指南(pre-commit / CI / 宿主钩子)与示例 | 初始化后接线时 | **不落地**(skill 侧文档) |
 

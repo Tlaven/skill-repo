@@ -10,7 +10,7 @@ $DocExt = @('.md', '.markdown')
 
 # 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:考古 / 存档层
 # (如 docs/legacy/)、对账留档(docs/reviews/——历史快照,引用退役术语/旧链接是常态,
-# 不是错误)与模板 stub 目录(docs/templates/——有些项目把模板放在 docs/ 内)。
+# 不是错误)与待填件目录(docs/templates/——有些项目把待填件放在 docs/ 内)。
 # 置空字符串则不过滤。
 $DocExclude = '^(docs/legacy/|docs/archive/|docs/templates/|docs/reviews/)'
 
