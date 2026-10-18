@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、危险清单行缺"挡住者"、活文档引记录。
+# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、模块文档缺「失败语义」、危险清单行未填(空/占位符)、活文档引记录。
 # Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 在 Linux / WSL / CI 上会直接语法错(Git Bash 多数版本能容忍,但别赌)。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
@@ -104,8 +104,12 @@ if [ -n "$PH" ]; then
   found=1
 fi
 
-# 3) 标了 N2 却缺 `**验收**`(兼容 .md / .markdown)
+# 3) 标了 N2 却缺 `**验收**` / 没有「危险实现清单」;模块文档缺「失败语义」(共用同一批文件与剥注释后的 body)
 #    先剥掉 HTML 注释——模板里的引导文字本身含这些词,不剥会把计数算花(假阴性)。
+#    「危险实现清单」这条要求出自 module-doc 模板(N2 必须给"步骤级说明 + 危险实现清单 + 例子 + 验收")。
+#    指针形豁免只给"必须有那一节"的两条(危险实现清单 / 失败语义):模具允许"N2 正文记在公共处、
+#    本模块只留一行 `**验收**: 见 docs/<…>`"——那一行即指针形凭据。"缺验收"那条不吃豁免。
+#    边界(如实说):它数的是**短语出现**,不是"那一节在不在一句话之上"——短语出现在正文别处会漏报。
 # 按项目改:L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这一行
 for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
@@ -119,6 +123,24 @@ for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/arc
     echo "[n2-missing-verification] $f: N2 条目 $n2 个,「**验收**」仅 $acc 处"
     found=1
   fi
+  # 指针形(模块按 N2 路由把正文记在公共处、只留一行指针)
+  pointer=0
+  printf '%s\n' "$body" | grep -qE '\*\*验收\*\*[^\r]*见 *`?docs/' && pointer=1
+  # 标了 N2 却没有「危险实现清单」(指针形除外)
+  dan=$(printf '%s\n' "$body" | grep -o '危险实现清单' 2>/dev/null | wc -l | tr -d ' ')
+  : "${dan:=0}"
+  if [ "$n2" -gt 0 ] && [ "$dan" -eq 0 ] && [ "$pointer" -eq 0 ]; then
+    echo "[n2-missing-checklist] $f: 标了 N2 却没有「危险实现清单」"
+    found=1
+  fi
+  # 模块文档必须有「失败语义」一节(覆盖 N1;指针形除外)
+  case "$f" in
+    docs/modules/*)
+      if [ "$pointer" -eq 0 ] && ! printf '%s\n' "$body" | grep -q '失败语义'; then
+        echo "[module-missing-failure-semantics] $f: 模块文档没有「失败语义」一节"
+        found=1
+      fi ;;
+  esac
 done
 
 # 4) 活文档里出现指向"记录类文档"的引用
@@ -140,29 +162,36 @@ for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md 
   fi
 done
 
-# 5) 危险实现清单的行级粗检:每行"由谁挡住"必须非空,且是编号 / "验收" / "不变量"之一
+# 5) 危险清单的行级粗检:数据行的「挡住者」列要有内容、不能是占位符
+#    列位置由表头定位(找含"挡住"的那一列;表头没有这一列 → 不猜、不报),因此**不看列数与写法**——
+#    填完的文档会演化出两列 / 四列等不同形状,判据只认"这一格填没填"。
 #    起始形态:标题(`### 危险实现清单…`)或粗体(`**危险实现清单**——`,含 `- ` 前缀);
 #    表结束(表开始后的第一个非表行)即停止——避免把同节后续的普通表格算进来。
-#    机器只查形式;这条错法是否真被挡住仍是 teach-back 验证者的事(见 verifying-n2 的"先跑一次"节)
+#    机器只查"填没填";写法是否真挡得住仍是 teach-back 验证者的事
 for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   DB=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk -F'|' '
-    /^#+[[:space:]]*\**危险实现清单/ || /^([[:space:]]*-[[:space:]]+)?\*\*危险实现清单/ { insec=1; intab=0; next }
+    /^#+[[:space:]]*\**危险实现清单/ || /^([[:space:]]*-[[:space:]]+)?\*\*危险实现清单/ { insec=1; intab=0; bcol=0; next }
     !insec { next }
-    /^#/ { insec=0; intab=0; next }
+    /^#/ { insec=0; intab=0; bcol=0; next }
     /^\|/ {
-      if (!intab) { intab=1; next }                        # 表头行
+      if (!intab) {                                    # 表头行:定位"挡住者"列
+        intab=1; bcol=0
+        for (i=2; i<=NF; i++) if ($i ~ /挡住/) { bcol=i; break }
+        next
+      }
+      if (bcol == 0) next                              # 表头没有"挡住"列 → 不猜
       if ($0 ~ /^\|[[:space:]:|-]+\|[[:space:]]*$/) next   # 分隔行
-      cell=$5; lc=tolower(cell); gsub(/^[[:space:]]+|[[:space:]]+$/, "", lc)
-      if (lc == "" || lc ~ /^(-|—|待补|tbd|todo|\?|n\/a)$/ || (lc !~ /[a-z]+-[0-9]+/ && cell !~ /验收/ && cell !~ /不变量/))
+      cell=(bcol <= NF) ? $bcol : ""; lc=tolower(cell); gsub(/^[[:space:]]+|[[:space:]]+$/, "", lc)
+      if (lc == "" || lc ~ /^(-|—|待补|tbd|todo|\?|n\/a)$/)
         printf "%d:%s\n", FNR, $0
       next
     }
-    { if (intab) { insec=0; intab=0 } }                     # 表后首个非表行 → 结束
+    { if (intab) { insec=0; intab=0; bcol=0 } }        # 表后首个非表行 → 结束
   ')
   if [ -n "$DB" ]; then
     printf '%s\n' "$DB" | while IFS= read -r l; do
-      echo "[danger-blocker] $f:$l: 危险清单行缺\"挡住者\"(应为编号 / 验收 / 不变量)"
+      echo "[danger-blocker] $f:$l: 危险清单行未填(\"挡住者\"列为空 / 占位符)"
     done
     found=1
   fi

@@ -1,4 +1,4 @@
-﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、危险清单行缺"挡住者"、活文档引记录。
+﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、模块文档缺「失败语义」、危险清单行未填(空/占位符)、活文档引记录。
 # 用法:
 #   powershell -File check-doc-refs.ps1
 #   powershell -File check-doc-refs.ps1 -Strict
@@ -122,6 +122,19 @@ foreach ($f in $targets) {
     Write-Host "[n2-missing-verification] $($f): N2 条目 $n2 个,「**验收**」仅 $acc 处"
     $found = $true
   }
+  # 指针形(模块按 N2 路由把正文记在公共处、只留一行指针)
+  $pointer = ($body -match '\*\*验收\*\*[^\r]*见 *`?docs/')
+  # 标了 N2 却没有「危险实现清单」(指针形除外)
+  $dan = ([regex]::Matches($body, '危险实现清单')).Count
+  if (($n2 -gt 0) -and ($dan -eq 0) -and (-not $pointer)) {
+    Write-Host "[n2-missing-checklist] $($f): 标了 N2 却没有「危险实现清单」"
+    $found = $true
+  }
+  # 模块文档必须有「失败语义」一节(覆盖 N1;指针形除外)
+  if (($f -like 'docs/modules/*') -and (-not $pointer) -and ($body -notmatch '失败语义')) {
+    Write-Host "[module-missing-failure-semantics] $($f): 模块文档没有「失败语义」一节"
+    $found = $true
+  }
 }
 
 # 4) 活文档里出现指向"记录类文档"的引用
@@ -149,33 +162,39 @@ foreach ($f in $liveDocs) {
   }
 }
 
-# 5) 危险实现清单的行级粗检:每行"由谁挡住"必须非空,且是编号 / "验收" / "不变量"之一
+# 5) 危险清单的行级粗检:数据行的「挡住者」列要有内容、不能是占位符
+#    列位置由表头定位(找含"挡住"的那一列;表头没有这一列 → 不猜、不报),因此**不看列数与写法**。
 #    起始形态:标题(`### 危险实现清单…`)或粗体(`**危险实现清单**——`,含 `- ` 前缀);
 #    表结束(表开始后的第一个非表行)即停止——避免把同节后续的普通表格算进来。
-#    机器只查形式;这条错法是否真被挡住仍是 teach-back 验证者的事(见 verifying-n2 的"先跑一次"节)
+#    机器只查"填没填";写法是否真挡得住仍是 teach-back 验证者的事
 foreach ($f in $targets) {
   $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
   if ($null -eq $raw) { continue }
-  $ln2 = 0; $inSec = $false; $inTab = $false
+  $ln2 = 0; $inSec = $false; $inTab = $false; $bcol = -1
   foreach ($line in (Strip-Comments ($raw -split "`n"))) {
     $ln2++
-    if ($line -match '^#+\s*\**危险实现清单' -or $line -match '^(\s*-\s+)?\*\*危险实现清单') { $inSec = $true; $inTab = $false; continue }
+    if ($line -match '^#+\s*\**危险实现清单' -or $line -match '^(\s*-\s+)?\*\*危险实现清单') { $inSec = $true; $inTab = $false; $bcol = -1; continue }
     if (-not $inSec) { continue }
-    if ($line -match '^#') { $inSec = $false; $inTab = $false; continue }
+    if ($line -match '^#') { $inSec = $false; $inTab = $false; $bcol = -1; continue }
     if ($line -match '^\|') {
-      if (-not $inTab) { $inTab = $true; continue }   # 表头行
-      if ($line -match '^\|[\s:|-]+\|\s*$') { continue }   # 分隔行
       $cells = $line -split '\|'
+      if (-not $inTab) {   # 表头行:定位"挡住者"列
+        $inTab = $true; $bcol = -1
+        for ($j = 1; $j -lt $cells.Count; $j++) { if ($cells[$j] -match '挡住') { $bcol = $j; break } }
+        continue
+      }
+      if ($bcol -lt 0) { continue }   # 表头没有"挡住"列 → 不猜
+      if ($line -match '^\|[\s:|-]+\|\s*$') { continue }   # 分隔行
       $cell = ''
-      if ($cells.Count -ge 5) { $cell = $cells[4] }
+      if ($cells.Count -gt $bcol) { $cell = $cells[$bcol] }
       $lc = $cell.Trim().ToLower()
-      if ($lc -eq '' -or $lc -match '^(-|—|待补|tbd|todo|\?|n/a)$' -or ($lc -notmatch '[a-z]+-[0-9]+' -and $cell -notmatch '验收' -and $cell -notmatch '不变量')) {
-        Write-Host "[danger-blocker] ${f}:${ln2}:${line}: 危险清单行缺""挡住者""(应为编号 / 验收 / 不变量)"
+      if ($lc -eq '' -or $lc -match '^(-|—|待补|tbd|todo|\?|n/a)$') {
+        Write-Host "[danger-blocker] ${f}:${ln2}:${line}: 危险清单行未填(""挡住者""列为空 / 占位符)"
         $found = $true
       }
       continue
     }
-    if ($inTab) { $inSec = $false; $inTab = $false }   # 表后首个非表行 → 结束
+    if ($inTab) { $inSec = $false; $inTab = $false; $bcol = -1 }   # 表后首个非表行 → 结束
   }
 }
 

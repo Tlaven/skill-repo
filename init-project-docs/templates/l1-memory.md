@@ -119,9 +119,9 @@
 ### 日常入口(立项之后怎么用)
 
 - **建新模块**:从 `docs-templates/module-doc.md` 生成 `docs/modules/<name>.md`,先填三段式(标 novelty 档),再写代码 `[机器]`
-- **改代码前(每次改动)**:载入相关 L2/L3。**不需要每次跑复核**;攒到你觉得"这批改动值得看一眼"时,跑 `scripts/review-backlog`(`.sh` / `.ps1`;未拷 scripts/ 时:从 skill 目录跑,或用 `git diff --stat <起点>..HEAD -- <L1 文件名> docs/`——L1 文件名按宿主;非 git 人工列),再派独立 agent(见 `docs-templates/teach-back-verifier-prompt.md`)只复核 delta,复核完把起点写进 `docs/reviews/.last-review`——**推荐在对应实现之前完成** `[约定]`
+- **改代码前(每次改动)**:载入相关 L2/L3。**不需要每次跑复核**;攒到你觉得"这批改动值得看一眼"时,跑 `scripts/review-backlog`(`.sh` / `.ps1`;未拷 scripts/ 时:从 skill 目录跑,或用 `git diff --stat <起点>..HEAD -- <L1 文件名> docs/`——L1 文件名按宿主;非 git 人工列),再派独立 agent(见 `docs-templates/teach-back-verifier-prompt.md`)只复核 delta(喂整节:定义段 + 验收段必须同在——否则"没给"会被误判成缺口),复核完把起点写进 `docs/reviews/.last-review`——**推荐在对应实现之前完成** `[约定]`
 - **做决策**:按 E4 判要不要记 ADR;要记就当场写 `[验证者]`
-- **收尾(可选)**:若已把 `scripts/` 拷进项目,跑 `scripts/check-docs-sync`(代码动过但文档没动)与 `scripts/check-doc-refs`(死链 / 占位符 / N2 缺 `**验收**` / 危险清单缺挡住者 / 活文档引记录)（均 `.sh` / `.ps1`）,可再接 pre-commit / CI `[机器]`(Windows:先确保 `.sh` 为 LF——`*.sh text eol=lf`);未接入则跳过——**但文档里"已验证 / 全绿"这类声称要标"未接 / 未复跑":声称不是证据**
+- **收尾(可选)**:若已把 `scripts/` 拷进项目,跑 `scripts/check-docs-sync`(代码动过但文档没动)与 `scripts/check-doc-refs`(死链 / 占位符 / N2 缺 `**验收**` / N2 缺危险清单 / 模块缺失败语义 / 危险清单行未填 / 活文档引记录)（均 `.sh` / `.ps1`）,可再接 pre-commit / CI `[机器]`(Windows:先确保 `.sh` 为 LF——`*.sh text eol=lf`);未接入则跳过——**但文档里"已验证 / 全绿"这类声称要标"未接 / 未复跑":声称不是证据**
 
 ### 铁律
 
