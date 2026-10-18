@@ -19,10 +19,10 @@ if (-not $root) { $root = (Get-Location).Path }
 Set-Location $root
 if (-not (Test-Path 'docs')) { Write-Host '[check-doc-refs] 无 docs/,跳过'; exit 0 }
 
-$docsMd = Get-ChildItem -Path 'docs' -Recurse -File | Where-Object { $DocExt -contains $_.Extension }
+$docsMd = Get-ChildItem -Path 'docs' -Recurse -File | Where-Object { $DocExt -ccontains $_.Extension }
 if (($docsMd | Measure-Object).Count -eq 0) {
   Write-Host "[check-doc-refs] 警告:docs/ 下没有匹配 DocExt=$($DocExt -join ',') 的文件。"
-  Write-Host '                 若你的文档用别的扩展名,改脚本顶部的 $DocExt。'
+  Write-Host '                 若你的文档用别的扩展名,改脚本顶部的 DocExt / DOC_EXT。'
   exit 0
 }
 
@@ -77,6 +77,7 @@ foreach ($f in $docsMd) {
     foreach ($p in @($cand1, $cand2)) {
       if (Test-Path -LiteralPath $p) {
         $base = [IO.Path]::GetFileName($p)
+        if ([string]::IsNullOrEmpty($base)) { $exact = $true; continue }   # 尾斜杠目录链接:不比大小写
         $dir  = [IO.Path]::GetDirectoryName($p)
         if (Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue |
               Where-Object { $_.Name -ceq $base }) { $exact = $true }
@@ -109,7 +110,7 @@ $targets = @()
 # L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这张表。
 foreach ($n in @('docs/core-code.md','docs/core-code.markdown','docs/architecture.md','docs/architecture.markdown')) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
-  $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
+  $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }
 foreach ($f in $targets) {
   $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
@@ -130,7 +131,7 @@ foreach ($f in $targets) {
 $liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/glossary.md','docs/glossary.markdown')
 foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
 if (Test-Path 'docs/modules') {
-  $liveDocs += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -contains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
+  $liveDocs += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }
 $refPat = 'docs/decisions/|docs/reviews/|ADR-\d{3}|adr-\d{3}-'
 foreach ($f in $liveDocs) {
@@ -140,7 +141,7 @@ foreach ($f in $liveDocs) {
   $ln = 0
   foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释:引导注释里的示例引用不算正文
     $ln++
-    if ($line -match '⚠️') { continue }   # E1 的状态标记,不是依据
+    if ($line -match '⚠') { continue }   # E1 的状态标记(带不带变体选择符都算),不是依据
     if ($line -match $refPat) {
       Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
       $found = $true
@@ -149,26 +150,32 @@ foreach ($f in $liveDocs) {
 }
 
 # 5) 危险实现清单的行级粗检:每行"由谁挡住"必须非空,且是编号 / "验收" / "不变量"之一
+#    起始形态:标题(`### 危险实现清单…`)或粗体(`**危险实现清单**——`,含 `- ` 前缀);
+#    表结束(表开始后的第一个非表行)即停止——避免把同节后续的普通表格算进来。
 #    机器只查形式;这条错法是否真被挡住仍是 teach-back 验证者的事(见 verifying-n2 的"先跑一次"节)
 foreach ($f in $targets) {
   $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
   if ($null -eq $raw) { continue }
-  $ln2 = 0; $inSec = $false
+  $ln2 = 0; $inSec = $false; $inTab = $false
   foreach ($line in (Strip-Comments ($raw -split "`n"))) {
     $ln2++
-    if ($line -match '^#+\s*危险实现清单') { $inSec = $true; continue }
+    if ($line -match '^#+\s*\**危险实现清单' -or $line -match '^(\s*-\s+)?\*\*危险实现清单') { $inSec = $true; $inTab = $false; continue }
     if (-not $inSec) { continue }
-    if ($line -match '^#') { $inSec = $false; continue }
-    if ($line -notmatch '^\|') { continue }
-    if ($line -match '由谁挡住') { continue }
-    if ($line -match '^\|[\s:|-]+\|\s*$') { continue }
-    $cells = $line -split '\|'
-    $cell = ''
-    if ($cells.Count -ge 5) { $cell = $cells[4].Trim() }
-    if ($cell -eq '' -or $cell -match '^(—|-|待补|TBD|TODO|\?|N/A)$' -or ($cell -notmatch '[A-Z]+-[0-9]+' -and $cell -notmatch '验收' -and $cell -notmatch '不变量')) {
-      Write-Host "[danger-blocker] ${f}:${ln2}:${line}: 危险清单行缺""挡住者""(应为编号 / 验收 / 不变量)"
-      $found = $true
+    if ($line -match '^#') { $inSec = $false; $inTab = $false; continue }
+    if ($line -match '^\|') {
+      if (-not $inTab) { $inTab = $true; continue }   # 表头行
+      if ($line -match '^\|[\s:|-]+\|\s*$') { continue }   # 分隔行
+      $cells = $line -split '\|'
+      $cell = ''
+      if ($cells.Count -ge 5) { $cell = $cells[4] }
+      $lc = $cell.Trim().ToLower()
+      if ($lc -eq '' -or $lc -match '^(-|—|待补|tbd|todo|\?|n/a)$' -or ($lc -notmatch '[a-z]+-[0-9]+' -and $cell -notmatch '验收' -and $cell -notmatch '不变量')) {
+        Write-Host "[danger-blocker] ${f}:${ln2}:${line}: 危险清单行缺""挡住者""(应为编号 / 验收 / 不变量)"
+        $found = $true
+      }
+      continue
     }
+    if ($inTab) { $inSec = $false; $inTab = $false }   # 表后首个非表行 → 结束
   }
 }
 

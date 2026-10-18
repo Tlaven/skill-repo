@@ -21,14 +21,14 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 
 > `check-doc-refs.sh` 顶部另有两项:`DOC_EXT`(文档扩展名,默认 `.md` + `.markdown`)与 `DOC_EXCLUDE`(对账要**排除**的路径,默认排除 `docs/legacy/`、`docs/archive/` 等**考古 / 存档层**、`docs/reviews/` **对账留档**(历史快照,引用退役术语/旧链是常态)、以及 `docs/templates/` 等**模板 stub 目录**——它们不是本项目当前维护的文档,扫进来只会制造噪音)。
 
-> **Windows 必读——先把换行符定死（否则脚本根本跑不起来）。**
-> Windows 默认 `core.autocrlf=true`，拷进项目的 `.sh` 会被检出成 CRLF，bash 会以 `$'\r': command not found` 语法错直接拒绝执行；若已接 pre-commit，会挡住**每一次**提交，报错还像"hook 坏了"——很容易被整个删掉。落地一行防住（`.gitattributes` 不存在就新建，存在就追加）：
+> **Windows 必读——先把换行符定死。**
+> Windows 默认 `core.autocrlf=true`，拷进项目的 `.sh` 会被检出成 CRLF；**Linux / WSL / CI 上这会直接语法错**（`$'\r': command not found`），若已接 pre-commit，会挡住**每一次**提交，报错还像"hook 坏了"——很容易被整个删掉。（Git Bash 多数版本能容忍 CRLF，但别赌。）落地一行防住（`.gitattributes` 不存在就新建，存在就追加）：
 >
 > ```bash
 > printf '*.sh text eol=lf\n' >> .gitattributes
 > ```
 >
-> `.ps1` 用 Windows 换行、不受影响，无需处理。
+> `.ps1` 不受换行影响；但**必须保持 UTF-8 BOM**——PowerShell 5.1 读无 BOM 的 UTF-8 会乱码甚至解析失败，别把文件重存成 ANSI / 无 BOM。
 
 ## 接入前先对齐约定（否则别接）
 
@@ -36,14 +36,14 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 
 - N2 条目用**字面量** `novelty=N2` 标记;
 - 每个 N2 配一个独立一行 `**验收**:…`;
-- 危险实现清单每行的"由谁挡住"要有内容,且是编号(`I-2` / `Q-1`)或"验收 / 不变量"字样。
+- 危险实现清单每行的"由谁挡住"要有内容,且是**不变量编号**(`I-2`)或"验收 / 不变量"字样;占位符(`—` / `待补` / `TBD` 等)会被拒,`Q-`(开放问题)不是挡法。
 
 **"N2 缺验收"只做次数粗检**（`novelty=N2` 计数 > `**验收**` 计数才报；`**验收**` 写在行内也算数），逐条配对不对仍归复核。
 **危险清单只做行级形式粗检**（列非空 + 形如编号 / 验收 / 不变量）——挡不挡得住仍归复核。
 
 (写法见 `docs-templates/module-doc.md` / `docs/core-code.md`——后者按需从 skill 的 `templates/core-code.md` 落地。)
 
-> **扫哪些文件:** `docs/core-code.md`、`docs/architecture.md`、`docs/modules/*`。
+> **扫哪些文件:** N2 计数与危险清单看 `docs/core-code.md`、`docs/architecture.md`、`docs/modules/*`；「活文档引记录」还看 `docs/glossary.md`。
 > N2 落在 **L2 的公共节**(跨模块契约、未建 L4 时的家)也算——那里标了 `novelty=N2` 就得配 `**验收**:`。
 > 项目 L2 用了别的文件名 → 把名字加进脚本顶部**两张表**(N2 扫描表与 `LIVE_DOCS`,都有"按项目改"标注),否则对应检查对它空跑。
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、危险清单行缺"挡住者"、活文档引记录。
-# Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 会让 bash 拒绝执行。
+# Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 在 Linux / WSL / CI 上会直接语法错(Git Bash 多数版本能容忍,但别赌)。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
 # 用法:
@@ -50,8 +50,9 @@ done <<EOF
 $(for e in $DOC_EXT; do find docs -type f -name "*.$e" 2>/dev/null; done)
 EOF
 if [ "$NFILES" -eq 0 ]; then
-  echo "[check-doc-refs] 警告:docs/ 下没有匹配 DOC_EXT=\"$DOC_EXT\" 的文件。" >&2
-  echo "                 若你的文档用别的扩展名,改脚本顶部的 DOC_EXT。" >&2
+  DEXT_LABEL=".$(printf '%s' "$DOC_EXT" | sed 's/ /,./g')"
+  echo "[check-doc-refs] 警告:docs/ 下没有匹配 DocExt=$DEXT_LABEL 的文件。"
+  echo '                 若你的文档用别的扩展名,改脚本顶部的 DocExt / DOC_EXT。'
   exit 0
 fi
 
@@ -73,7 +74,10 @@ while IFS= read -r hit; do
   # (GNU/BSD find 都不吃 quoting 坑;ls 在 GNU 管道输出会给含空格名加引号,故不用)。
   d=$(dirname "$file")
   exact=0; casehit=0
-  for p in "$d/$target" "$target"; do
+  # 根相对链接(/docs/…):从仓库根解析(与 .ps1 的 Join-Path $root 对齐)
+  CANDS=("$d/$target" "$target")
+  case "$target" in /*) CANDS+=("$ROOT$target");; esac
+  for p in "${CANDS[@]}"; do
     if [ -e "$p" ]; then
       if find "$(dirname "$p")" -maxdepth 1 2>/dev/null | sed -e 's|.*/||' | grep -qFx -- "$(basename "$p")"; then
         exact=1
@@ -92,11 +96,11 @@ $(grep -rno "${INC[@]}" -E '\]\([^)]+\)' docs 2>/dev/null)
 EOF
 
 # 2) 未填占位符 / TODO
-PH=$(grep -rn "${INC[@]}" -E 'TODO|TBD|与用户对话后填|novelty=N[?]|未填写|待补充' docs 2>/dev/null)
-[ -n "$DOC_EXCLUDE" ] && PH=$(printf '%s\n' "$PH" | grep -Ev "$DOC_EXCLUDE")
+PH=$(grep -rni "${INC[@]}" -E 'TODO|TBD|与用户对话后填|novelty=N[?]|未填写|待补充' docs 2>/dev/null)
+[ -n "$DOC_EXCLUDE" ] && PH=$(printf '%s\n' "$PH" | grep -Evi "$DOC_EXCLUDE")
 if [ -n "$PH" ]; then
   echo "[placeholder] docs/ 仍有未填占位符 / TODO:"
-  printf '  %s\n' "$PH"
+  printf '%s\n' "$PH" | sed 's/^/  /'
   found=1
 fi
 
@@ -126,8 +130,8 @@ REF_PAT='docs/decisions/|docs/reviews/|ADR-[0-9]{3}|adr-[0-9]{3}-'
 for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   # 先剥 HTML 注释(引导注释里的示例引用不算正文;与 #3 同一套状态机,行号保真)
-  # 含 ⚠️ 的行是 E1 要求的"已被…推翻"状态标记——是状态,不是依据,跳过
-  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '!/⚠️/ {printf "%d:%s\n", NR, $0}' | grep -E "$REF_PAT" 2>/dev/null)
+  # 含 ⚠ 的行是 E1 要求的"已被…推翻"状态标记(带不带变体选择符都算)——是状态,不是依据,跳过
+  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '!/⚠/ {printf "%d:%s\n", NR, $0}' | grep -iE "$REF_PAT" 2>/dev/null)
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
       echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
@@ -137,19 +141,25 @@ for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md 
 done
 
 # 5) 危险实现清单的行级粗检:每行"由谁挡住"必须非空,且是编号 / "验收" / "不变量"之一
+#    起始形态:标题(`### 危险实现清单…`)或粗体(`**危险实现清单**——`,含 `- ` 前缀);
+#    表结束(表开始后的第一个非表行)即停止——避免把同节后续的普通表格算进来。
 #    机器只查形式;这条错法是否真被挡住仍是 teach-back 验证者的事(见 verifying-n2 的"先跑一次"节)
 for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   DB=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk -F'|' '
-    /^#+[[:space:]]*危险实现清单/ { insec=1; next }
-    insec && /^#/ { insec=0 }
-    insec && /^\|/ {
-      if ($0 ~ /由谁挡住/) next
-      if ($0 ~ /^\|[[:space:]:|-]+\|[[:space:]]*$/) next
-      cell=$5; gsub(/^[[:space:]]+|[[:space:]]+$/, "", cell)
-      if (cell == "" || cell ~ /^(-|—|待补|TBD|TODO|\?|N\/A)$/ || (cell !~ /[A-Z]+-[0-9]+/ && cell !~ /验收/ && cell !~ /不变量/))
+    /^#+[[:space:]]*\**危险实现清单/ || /^([[:space:]]*-[[:space:]]+)?\*\*危险实现清单/ { insec=1; intab=0; next }
+    !insec { next }
+    /^#/ { insec=0; intab=0; next }
+    /^\|/ {
+      if (!intab) { intab=1; next }                        # 表头行
+      if ($0 ~ /^\|[[:space:]:|-]+\|[[:space:]]*$/) next   # 分隔行
+      cell=$5; lc=tolower(cell); gsub(/^[[:space:]]+|[[:space:]]+$/, "", lc)
+      if (lc == "" || lc ~ /^(-|—|待补|tbd|todo|\?|n\/a)$/ || (lc !~ /[a-z]+-[0-9]+/ && cell !~ /验收/ && cell !~ /不变量/))
         printf "%d:%s\n", FNR, $0
-    }')
+      next
+    }
+    { if (intab) { insec=0; intab=0 } }                     # 表后首个非表行 → 结束
+  ')
   if [ -n "$DB" ]; then
     printf '%s\n' "$DB" | while IFS= read -r l; do
       echo "[danger-blocker] $f:$l: 危险清单行缺\"挡住者\"(应为编号 / 验收 / 不变量)"

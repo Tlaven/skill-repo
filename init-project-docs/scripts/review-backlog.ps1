@@ -8,9 +8,8 @@
 #
 # 用法：
 #   pwsh scripts/review-backlog.ps1
-# 复核完成后，把当前 HEAD 记为下次起点：
-#   "<sha> <yyyy-MM-dd>" > docs/reviews/.last-review
-#
+# 复核完成后，把当前 HEAD 记为下次起点（用 Set-Content -Encoding utf8，别用 `>`——PS 5.1 的 `>` 写成 UTF-16）：
+#   Set-Content -Encoding utf8 docs/reviews/.last-review "<sha> <yyyy-MM-dd>"
 # 退出码恒为 0 —— 它不拦任何东西。
 
 $ErrorActionPreference = "Continue"
@@ -22,7 +21,8 @@ $MARKER = "docs/reviews/.last-review"
 git rev-parse --is-inside-work-tree 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) { Write-Host "[review-backlog] 不是 git 仓库，跳过。"; exit 0 }
 
-$head = (git rev-parse --short HEAD 2>$null).Trim()
+$headRaw = git rev-parse --short HEAD 2>$null
+$head = if ($headRaw) { "$headRaw".Trim() } else { "" }
 $existing = @($CONTRACT | Where-Object { Test-Path $_ })
 if ($existing.Count -eq 0) { Write-Host "[review-backlog] 未找到契约文件（$($CONTRACT -join ', ')）。"; exit 0 }
 
@@ -37,7 +37,11 @@ if (-not $since) {
   Write-Host "契约文件:"
   $existing | ForEach-Object { Write-Host "  - $_" }
   Write-Host ""
-  Write-Host "复核完成后写入起点:  `"$head $(Get-Date -Format yyyy-MM-dd)`" > $MARKER"
+  if ($head) {
+    Write-Host "复核完成后写入起点:  New-Item -ItemType Directory -Force docs/reviews | Out-Null; Set-Content -Encoding utf8 $MARKER `"$head $(Get-Date -Format yyyy-MM-dd)`""
+  } else {
+    Write-Host "（尚无提交——先提交一次,再把 HEAD 写入 $MARKER 作为起点）"
+  }
   exit 0
 }
 
@@ -60,5 +64,9 @@ if ($hits.Count -gt 0) {
 }
 
 Write-Host ""
-Write-Host "复核完成后写入新起点:  `"$head $(Get-Date -Format yyyy-MM-dd)`" > $MARKER"
+if ($head) {
+  Write-Host "复核完成后写入新起点:  New-Item -ItemType Directory -Force docs/reviews | Out-Null; Set-Content -Encoding utf8 $MARKER `"$head $(Get-Date -Format yyyy-MM-dd)`""
+} else {
+  Write-Host "（尚无提交——先提交一次,再把 HEAD 写入 $MARKER 作为起点）"
+}
 exit 0

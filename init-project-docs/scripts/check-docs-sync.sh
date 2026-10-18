@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # check-docs-sync.sh — 最小检查器:代码变了,但本项目当前维护的文档(docs/ 除 reviews/——对账留档是历史快照,不算同步)和 L1 记忆文件都没动 → 提醒。
-# Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 会让 bash 拒绝执行,pre-commit 反过来挡住每次提交。
+# Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 在 Linux / WSL / CI 上会直接语法错,pre-commit 反过来挡住每次提交(Git Bash 多数版本能容忍,但别赌)。
 # 它只查"有没有动过",不判对错(判对错交给 teach-back 验证者)。
 #
 # 用法:
@@ -64,12 +64,12 @@ $CHANGED
 EOF
 
 if [ "$code_hit" = 0 ] && [ "$doc_hit" = 0 ]; then
-  echo "[check-docs-sync] 本次改动未匹配到任何代码/文档文件——若属配置问题,请检查顶部 CODE_GLOB / DOC_GLOB。" >&2
+  echo "[check-docs-sync] 本次改动未匹配到任何代码/文档文件——若属配置问题,请检查顶部 CODE_GLOB / DOC_GLOB。"
 fi
 
 if [ "$code_hit" = 1 ] && [ "$doc_hit" = 0 ]; then
-  echo "[check-docs-sync] 本次改了代码,但 docs/ 和 L1 记忆文件都没动。" >&2
-  echo "                 确认对应层文档 / 不变量 / ADR 是否需同步?(见 L1「铁律 1」)" >&2
+  echo "[check-docs-sync] 本次改了代码,但 docs/ 和 L1 记忆文件都没动。"
+  echo "                 确认对应层文档 / 不变量 / ADR 是否需同步?(见 L1「铁律 1」)"
   [ "$STRICT" = 1 ] && exit 1
 fi
 exit 0
