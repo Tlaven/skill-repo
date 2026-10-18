@@ -3,7 +3,7 @@
 > 目的：让 L1 铁律里标 `[机器]` 的规则**真的会触发**，而不是停在脚本里等人手动跑。
 > 两个检查器脚本（Windows 用同名 `.ps1`）：
 > - `scripts/check-docs-sync.sh` —— 代码动了但本项目当前维护的文档(`docs/` 除 `docs/reviews/` 对账留档——历史快照不算同步)与 L1 记忆文件都没动 → 提醒。
-> - `scripts/check-doc-refs.sh` —— `docs/` 里的死链(含大小写错链)、未填占位符、标了 N2 却缺 `**验收**`、活文档引记录。
+> - `scripts/check-doc-refs.sh` —— `docs/` 里的死链(含大小写错链)、未填占位符、标了 N2 却缺 `**验收**`、危险清单行缺"挡住者"、活文档引记录。
 >
 > 另有 `scripts/review-backlog` —— **辅助脚本,不属于本页的接线面**:不判定、不拦截(退出码恒 0),复核前手动跑,列出"自上次复核以来的契约 delta"。不上 pre-commit / CI。
 
@@ -32,12 +32,14 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 
 ## 接入前先对齐约定（否则别接）
 
-`check-doc-refs` 认的是**当前 skill 的两条约定**:
+`check-doc-refs` 认的是**当前 skill 的三条约定**:
 
 - N2 条目用**字面量** `novelty=N2` 标记;
-- 每个 N2 配一个独立一行 `**验收**:…`。
+- 每个 N2 配一个独立一行 `**验收**:…`;
+- 危险实现清单每行的"由谁挡住"要有内容,且是编号(`I-2` / `Q-1`)或"验收 / 不变量"字样。
 
 **"N2 缺验收"只做次数粗检**（`novelty=N2` 计数 > `**验收**` 计数才报；`**验收**` 写在行内也算数），逐条配对不对仍归复核。
+**危险清单只做行级形式粗检**（列非空 + 形如编号 / 验收 / 不变量）——挡不挡得住仍归复核。
 
 (写法见 `docs-templates/module-doc.md` / `docs/core-code.md`——后者按需从 skill 的 `templates/core-code.md` 落地。)
 
@@ -98,7 +100,7 @@ jobs:
 | 脚本 | 查什么 | 误报 | 建议 |
 |---|---|---|---|
 | `check-docs-sync` | 代码动了但 `docs/` 与 L1 没动 | 极低（纯重构会命中，属例外） | pre-commit / CI 加 `--strict` |
-| `check-doc-refs` | 死链(含大小写错链) / 未填占位符 / N2 缺 `**验收**` / 活文档引记录 | 低-中 | 先当提醒，基线干净后加 `--strict` |
+| `check-doc-refs` | 死链(含大小写错链) / 未填占位符 / N2 缺 `**验收**` / 危险清单缺"挡住者" / 活文档引记录 | 低-中 | 先当提醒，基线干净后加 `--strict` |
 
 ## 记住边界
 

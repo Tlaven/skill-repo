@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、活文档引记录。
+# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、危险清单行缺"挡住者"、活文档引记录。
 # Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 会让 bash 拒绝执行。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
@@ -96,7 +96,7 @@ PH=$(grep -rn "${INC[@]}" -E 'TODO|TBD|与用户对话后填|novelty=N[?]|未填
 [ -n "$DOC_EXCLUDE" ] && PH=$(printf '%s\n' "$PH" | grep -Ev "$DOC_EXCLUDE")
 if [ -n "$PH" ]; then
   echo "[placeholder] docs/ 仍有未填占位符 / TODO:"
-  printf '%s\n' "$PH"
+  printf '  %s\n' "$PH"
   found=1
 fi
 
@@ -131,6 +131,28 @@ for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md 
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
       echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
+    done
+    found=1
+  fi
+done
+
+# 5) 危险实现清单的行级粗检:每行"由谁挡住"必须非空,且是编号 / "验收" / "不变量"之一
+#    机器只查形式;这条错法是否真被挡住仍是 teach-back 验证者的事(见 verifying-n2 的"先跑一次"节)
+for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
+  [ -f "$f" ] || continue
+  DB=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk -F'|' '
+    /^#+[[:space:]]*危险实现清单/ { insec=1; next }
+    insec && /^#/ { insec=0 }
+    insec && /^\|/ {
+      if ($0 ~ /由谁挡住/) next
+      if ($0 ~ /^\|[[:space:]:|-]+\|[[:space:]]*$/) next
+      cell=$5; gsub(/^[[:space:]]+|[[:space:]]+$/, "", cell)
+      if (cell == "" || cell ~ /^(-|—|待补|TBD|TODO|\?|N\/A)$/ || (cell !~ /[A-Z]+-[0-9]+/ && cell !~ /验收/ && cell !~ /不变量/))
+        printf "%d:%s\n", FNR, $0
+    }')
+  if [ -n "$DB" ]; then
+    printf '%s\n' "$DB" | while IFS= read -r l; do
+      echo "[danger-blocker] $f:$l: 危险清单行缺\"挡住者\"(应为编号 / 验收 / 不变量)"
     done
     found=1
   fi

@@ -1,4 +1,4 @@
-﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、活文档引记录。
+﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**`、危险清单行缺"挡住者"、活文档引记录。
 # 用法:
 #   powershell -File check-doc-refs.ps1
 #   powershell -File check-doc-refs.ps1 -Strict
@@ -142,7 +142,31 @@ foreach ($f in $liveDocs) {
     $ln++
     if ($line -match '⚠️') { continue }   # E1 的状态标记,不是依据
     if ($line -match $refPat) {
-      Write-Host "[live-doc-refs] ${f}:${ln}: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
+      Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
+      $found = $true
+    }
+  }
+}
+
+# 5) 危险实现清单的行级粗检:每行"由谁挡住"必须非空,且是编号 / "验收" / "不变量"之一
+#    机器只查形式;这条错法是否真被挡住仍是 teach-back 验证者的事(见 verifying-n2 的"先跑一次"节)
+foreach ($f in $targets) {
+  $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
+  if ($null -eq $raw) { continue }
+  $ln2 = 0; $inSec = $false
+  foreach ($line in (Strip-Comments ($raw -split "`n"))) {
+    $ln2++
+    if ($line -match '^#+\s*危险实现清单') { $inSec = $true; continue }
+    if (-not $inSec) { continue }
+    if ($line -match '^#') { $inSec = $false; continue }
+    if ($line -notmatch '^\|') { continue }
+    if ($line -match '由谁挡住') { continue }
+    if ($line -match '^\|[\s:|-]+\|\s*$') { continue }
+    $cells = $line -split '\|'
+    $cell = ''
+    if ($cells.Count -ge 5) { $cell = $cells[4].Trim() }
+    if ($cell -eq '' -or $cell -match '^(—|-|待补|TBD|TODO|\?|N/A)$' -or ($cell -notmatch '[A-Z]+-[0-9]+' -and $cell -notmatch '验收' -and $cell -notmatch '不变量')) {
+      Write-Host "[danger-blocker] ${f}:${ln2}:${line}: 危险清单行缺""挡住者""(应为编号 / 验收 / 不变量)"
       $found = $true
     }
   }
