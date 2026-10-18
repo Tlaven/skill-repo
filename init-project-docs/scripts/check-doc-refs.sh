@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、模块文档缺「失败语义」、危险清单行未填(空/占位符)、活文档引记录。
+# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、模块文档缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录。
 # Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 在 Linux / WSL / CI 上会直接语法错(Git Bash 多数版本能容忍,但别赌)。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
@@ -143,7 +143,7 @@ for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/arc
   esac
 done
 
-# 4) 活文档里出现指向"记录类文档"的引用
+# 4) 现状文档里出现指向"记录类文档"的引用
 #    规则(E1):现状 / 规则陈述必须**自足**,不许挂到记录类文档上当依据;
 #    "要理由 / 被拒方案 / 来由时去哪读"的引用只许写在**入口类文档的导航位**(那类不扫)。
 #    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
@@ -162,7 +162,7 @@ for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md 
   fi
 done
 
-# 5) 危险清单的行级粗检:数据行的「挡住者」列要有内容、不能是占位符
+# 5) 危险实现清单的行级粗检:数据行的「挡住者」列要有内容、不能是占位符
 #    列位置由表头定位(找含"挡住"的那一列;表头没有这一列 → 不猜、不报),因此**不看列数与写法**——
 #    填完的文档会演化出两列 / 四列等不同形状,判据只认"这一格填没填"。
 #    起始形态:标题(`### 危险实现清单…`)或粗体(`**危险实现清单**——`,含 `- ` 前缀);
@@ -191,7 +191,7 @@ for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/arc
   ')
   if [ -n "$DB" ]; then
     printf '%s\n' "$DB" | while IFS= read -r l; do
-      echo "[danger-blocker] $f:$l: 危险清单行未填(\"挡住者\"列为空 / 占位符)"
+      echo "[danger-blocker] $f:$l: 危险实现清单行未填(\"挡住者\"列为空 / 占位符)"
     done
     found=1
   fi
