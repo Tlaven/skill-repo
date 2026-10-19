@@ -10,3 +10,9 @@ desktop.ini
 
 # 本地校准物料（teach-back prompt 的基线与盲测草稿，不入库）
 init-project-docs/.calibration/
+
+# 机器本地产物（taste / 会话设置；各目录通用，不入库）
+.commandcode/
+
+# 本地抽象项目脚手架（仅本地使用，不随仓库分发）
+/notes/
