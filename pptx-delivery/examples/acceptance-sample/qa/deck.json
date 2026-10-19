@@ -11,7 +11,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "slides=15, media=2, pictures=2"
+        "detail": "slides=13, media=2, pictures=2"
       }
     ],
     "C2-placeholder": [
@@ -39,7 +39,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "checked=183, below-threshold=0, unresolved(needs visual)=0"
+        "detail": "checked=291, below-threshold=0, unresolved(needs visual)=0"
       }
     ],
     "C6-image-aspect": [
@@ -74,7 +74,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "Microsoft YaHei x173; Consolas x10"
+        "detail": "Microsoft YaHei x280; Consolas x11"
       }
     ]
   }
