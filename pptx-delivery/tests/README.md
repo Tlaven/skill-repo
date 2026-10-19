@@ -15,7 +15,7 @@ python tests/run_tests.py --which controls  # 只跑负控
 python tests/run_tests.py --no-build --no-render  # 只复用已有产物重测
 ```
 
-另有 C7 检测逻辑自测(无需渲染器):`python tests/c7_selftest.py`——人造跨缘 PDF,验证 C7 能红。
+另有检测逻辑自测(无需渲染器):`python tests/c5_selftest.py`(叠层背景:有衬底不误报 / 无衬底照报)、`python tests/c7_selftest.py`(人造跨缘 PDF,验证 C7 能红)。
 
 前提:渲染器(WPS / PowerPoint COM,经 `scripts/render_slides.ps1`)、poppler(`pdftotext` 在 PATH)。
 

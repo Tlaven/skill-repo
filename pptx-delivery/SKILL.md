@@ -21,6 +21,8 @@ license: Proprietary. LICENSE.txt has complete terms
 | **Reference example** | Open [examples/acceptance-sample/](examples/acceptance-sample/)(deck + 渲染 + 证据 + 检查指引) |
 | Render (COM / LibreOffice) | `scripts/render_slides.ps1 -Pptx deck.pptx -OutDir render/ -Pdf` |
 
+> 检测逻辑自测(无需渲染器):`python tests/c5_selftest.py`(叠层背景:有衬底不误报 / 无衬底照报)、`python tests/c7_selftest.py`(人造跨缘 PDF,验证 C7 能红)。
+
 ---
 
 ## When to NOT Use

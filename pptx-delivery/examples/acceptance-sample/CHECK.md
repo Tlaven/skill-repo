@@ -10,20 +10,21 @@
 - [ ] 每页都能直接改文字、移动形状(不是整页图片)——对应 C9 可编辑性;
 - [ ] 标题与正文左缘在同一条线上(0.8\"),内容页底部注脚落在同一高度(≈6.25\");
 - [ ] 颜色只有三个角色:标题藏青 `1E2761` / 正文深灰 `222222` / 说明与注脚灰 `5F6B7C`(深底页用白 / `CADCFC`);
-- [ ] 第 3 页四张卡片、第 4 页表格线、第 5 页柱图(2:1,无拉伸);
+- [ ] 第 4 页四张流程卡、第 6 页表格线、第 10 页柱图(2:1,无拉伸);
+- [ ] 组件密度抽查:第 2 页六张部件卡、第 5 页 C1–C9 九宫格、第 7 页命令块、第 8 页新旧对比、第 9 页六色卡;
 - [ ] 图片的"替代文字"是描述而不是本地路径(右键图片 → 查看替代文字)。
 
 ## 2. 看渲染图与 PDF(导出保真)
 
-- [ ] 打开 `render/slide-01..06.png`(或 `render/deck.pdf`),与直接开 PPTX 的观感一致;
-- [ ] 第 4 页表格无缺行、第 5 页柱图无变形(对应 C8 / C6)。
+- [ ] 打开 `render/slide-01..11.png`(或 `render/deck.pdf`),与直接开 PPTX 的观感一致;
+- [ ] 第 6 页表格无缺行、第 10 页柱图无变形(对应 C8 / C6)。
 
 ## 3. 亲手跑机器断言(一条命令,预期全绿)
 
 在 pptx-delivery 目录下:
 
 ```powershell
-python scripts/qa_check.py examples/acceptance-sample/deck.pptx --pdf examples/acceptance-sample/render/deck.pdf --strict --expect-slides 6
+python scripts/qa_check.py examples/acceptance-sample/deck.pptx --pdf examples/acceptance-sample/render/deck.pdf --strict --expect-slides 11
 ```
 
 预期:每个检查输出 info,`summary: errors=0, flags=0`,退出码 0(JSON 证据在 `qa/deck-pdf.json`)。

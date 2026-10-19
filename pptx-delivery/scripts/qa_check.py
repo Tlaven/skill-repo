@@ -312,7 +312,7 @@ def check_contrast(prs, report):
         slide_bg, _ = _slide_bg(prs, slide)
         filled_shapes = []
         for shp in iter_shapes(slide.shapes):
-            if shp.has_text_frame or getattr(shp, "has_table", False):
+            if getattr(shp, "has_table", False):
                 continue
             try:
                 frgb, _ = _fill_rgb(shp.fill)

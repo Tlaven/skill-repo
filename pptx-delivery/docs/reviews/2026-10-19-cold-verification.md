@@ -50,3 +50,4 @@
 - **判定**:**DONE**——0 error / 0 flag;经历一轮真实 fix→verify(初稿继承 `notesMasterIdLst` 次序缺陷,`validate.py` FAILED → 归一化 → PASSED);页级像素差证明未触碰其余页面。
 - **摩擦 → 处置**:① "编辑产物是否需归一化"未写明 → editing.md 增第 8 步(归一化 + 校验必做);② editing.md 缺 CJK 标点 / 空格保真指引 → 新增小节(码位勘察 + 口径对齐);③ 图 alt 文本为本地绝对路径(夹具遗留)→ e2e 与示例包均补 `altText`。
 - 原始报告:本目录 `report-E-editing-path.md`。
+- **补记**:示例包扩容(6 → 11 页版式)时发现 C5 "叠层背景解析"对 autoshape 失效(过滤误排除——autoshape 恒有 text frame,白字叠深色带仍按页面底色算,渲染为 FLAG);已修复并以 `tests/c5_selftest.py` 锁定(有衬底不误报 / 无衬底照常报)。

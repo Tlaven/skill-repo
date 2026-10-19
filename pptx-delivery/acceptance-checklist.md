@@ -67,7 +67,7 @@ python scripts/qa_check.py deck.pptx --pdf render/deck.pdf --strict --json rende
 ## 5. 已知盲区(诚实声明)
 
 - **生成器已知问题**:pptxgenjs 4.0.1 把 `<p:notesMasterIdLst>` 写在 `<p:sldIdLst>` 之后,严格 schema 校验(validate.py)报次序错误——PowerPoint/WPS 仍能打开,但交付前建议跑 `normalize_pptx_order.py` 修复。【实测:tests/evidence/normalize_check.log(raw FAILED → normalized PASSED)】
-- 对比度:渐变 / 图片背景、主题色继承 —— 仅目检;透明文本框叠色块已按"中心点命中的最上层色块"解析(复杂叠加仍目检);表格主题条纹填充不可解析。
+- 对比度:渐变 / 图片背景、主题色继承 —— 仅目检;透明文本框叠色块已按"中心点命中的最上层色块"解析(复杂叠加仍目检);表格主题条纹填充不可解析。该解析有自测锁定:`tests/c5_selftest.py`。
 - CJK 的"等价大字号"WCAG 未给数值;本工具按 18pt/14pt 罗马值执行,对中文属**偏宽**(可能少判,不会多判)。
 - 行距 / 字距美观、孤字控制:无自动判据。
 - C7 是防御性检查——本机 WPS 对 4 种越界构造(右半 / 全出界 / 底部 / 负坐标)全部裁切,LibreOffice 未安装;且 poppler 会丢弃"整字越界"字形、只对**跨缘**字形给出真实包围盒。检测逻辑已用人造跨缘 PDF 自测可红(`tests/c7_selftest.py`);deck 级夹具仍缺。
