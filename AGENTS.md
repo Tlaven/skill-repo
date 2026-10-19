@@ -19,7 +19,7 @@
 | init-project-docs | 项目文档骨架引导;三段式 × 4 层方法论的**唯一归属** | teach-back |
 | macro-market-radar | 全球宏观市场雷达:数据快照 → 收集 → 交叉验证 → 融合解读 | 未验收 |
 | pptx-delivery | PPTX 生成 / 编辑 / QA:可执行断言 C1–C9 + 负控套件 + 交付验收清单 | acceptance |
-| seeding-skills | skill 设计范式:种子式演化(静态导航 + 动态生长) | 未验收 |
+| seeding-skills | skill 设计范式:上下文 / 约束定位 + 类型分诊 + 种子式演化 | 未验收 |
 | thesis-docx | 中文论文 .docx 读写:Locator → Anchor → Mutation 内容寻址 | 未验收 |
 | video-decode | 视频链接 → 完整文字稿 + 结构化解读(可按需逐条核查) | 未验收 |
 
