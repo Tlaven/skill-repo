@@ -8,7 +8,7 @@
 
 - 个人 **skill 单源仓库**:每个顶层目录 = 一个可加载的 skill;使用点(`~/.commandcode/skills/`、`~/.claude/skills/`、`~/.config/opencode/skills/`)以 **junction** 指回本仓库(现有一处例外:OpenCode 侧 `macro-market-radar` 为普通副本,见开放问题)。
 - 根 `scripts/` = 仓库级工具(门禁脚本);各 skill 的 `scripts/` 归各 skill 自己。
-- 根 `notes/` = 跨项目方法笔记(非 skill:验证纪律的素材与候选母本,格式跟随 `essentials` 脚手架模板);各项目取用时按 essentials 规则复制 + 重审。
+- 根 `notes/` = 「agent」抽象项目的汇总脚手架(非 skill;自带生长纪律,见其 README)——与具体项目层的 `docs/scaffolds/` 同族异层;项目向下取用后各自独立、不设同步。【作者拍板 2026-10-19】
 - skill 地图(9 个):
 
 | skill | 一句话 |
