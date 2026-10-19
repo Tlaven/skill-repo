@@ -51,6 +51,10 @@ async function build() {
     });
   });
 
+  s2.addText("五类缺陷的检测详见 C1–C9 检查项", {
+    x: 0.8, y: 6.25, w: 11.7, h: 0.4, fontFace: FONT, fontSize: 12, color: G, margin: 0,
+  });
+
   // ---- S3 process -----------------------------------------------------------
   const s3 = pres.addSlide();
   s3.background = { color: C.light };
@@ -77,6 +81,10 @@ async function build() {
     s3.addText(desc, {
       x: x + 0.28, y: 3.72, w: 2.2, h: 1.0, fontFace: FONT, fontSize: 13, color: G, valign: "top", margin: 0,
     });
+  });
+
+  s3.addText("对应工具:qa_check.py / render_slides.ps1", {
+    x: 0.8, y: 6.25, w: 11.7, h: 0.4, fontFace: FONT, fontSize: 12, color: G, margin: 0,
   });
 
   // ---- S4 checks list ---------------------------------------------------------
@@ -140,7 +148,7 @@ async function build() {
     }
   );
   s5.addText("阈值与来源详见 pptx/acceptance-checklist.md", {
-    x: 0.8, y: 6.0, w: 11.7, h: 0.4, fontFace: FONT, fontSize: 12, color: G,
+    x: 0.8, y: 6.25, w: 11.7, h: 0.4, fontFace: FONT, fontSize: 12, color: G, margin: 0,
   });
 
   // ---- S6 output sample -------------------------------------------------------

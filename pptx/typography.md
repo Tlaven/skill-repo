@@ -42,6 +42,7 @@
 
 ## 本项目的默认设定(实测通过,可作起点)
 
-- 字族:`Microsoft YaHei`(本机场景);深底页文字:白/`CADCFC`,浅底正文:`222222`,说明字:`5F6B7C`(在 `FFFFFF` 与 `F7F8FA` 底上均 ≥ 4.5:1【实测:tests/out/reports/clean.json, e2e_deck.json】)。
+- 字族:`Microsoft YaHei`(本机场景);**文字角色**:标题 / 名称 `1E2761` 粗体(页标题 / 卡片题 / 条目名),正文 `222222`,说明与注脚 `5F6B7C`,深底页文字 白 / `CADCFC`——上述浅底色在 `FFFFFF` 与 `F7F8FA` 底上均 ≥ 4.5:1【实测:tests/out/reports/clean.json, e2e_deck.json】。
+- 版式注脚:内容页的底部锚线(注脚 / 引用行)全篇同款同高,样张落 y=6.25;封面 / 封底脚注另一档(y≈6.6)。【实测:tests/out/render/e2e_deck/】
 - 字号梯度(实拍样张):封面标题 40 / 页标题 28 / 卡片题 16 / 正文 14 / 说明 12–13。
 - 珊瑚色 `E4574F` 白字对比 3.64:1——只用于 **≥18pt 或 ≥14pt 粗**的大文本【实测:qa_check C5】。

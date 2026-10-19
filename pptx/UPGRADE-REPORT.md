@@ -36,6 +36,7 @@
 - `scripts/normalize_pptx_order.py`(90 行)—— 修 F1,幂等。
 - `tests/` —— `lib.js` / `make_controls.js`(7 缺陷)/ `make_badcolor.py` / `make_e2e_deck.js` / `run_tests.py` / `expected.json` / `README.md`;`evidence/`(run.log、逐 deck JSON、normalize_check.log)。
 - `acceptance-checklist.md`(89 行)、`typography.md`(20 行)、`UPGRADE-PLAN.md`、本文件。
+- `docs/scaffolds/visual-quality-essentials.md`(视觉质量脚手架 v0.1;2026-10-19 加入并于 §7 首用)——观感级判断层,补 C1–C9 与目检之间的判据。
 
 **修改**:`SKILL.md`、`pptxgenjs.md`、`lessons.md`、`requirements.txt`(+python-pptx)、`scripts/office/soffice.py`、`scripts/thumbnail.py`(见 §1)。
 
@@ -66,6 +67,7 @@ python tests/run_tests.py          # 8 负控 + 端到端,一键复跑
 4. **轮 3(L0)**:validate.py 抓出 F1 次序问题 → normalize 修复 → **All validations PASSED**;修后 L1 仍 0/0、渲染正常。
 5. **内容 QA**:markitdown 抽取正常;占位/待办模式零命中(文中「占位残留」为主题词,非残留)。
 6. **双渲染器交叉**:WPS 26.8.1 COM 与 LibreOffice 26.8.1 —— PDF 均 7 页 960×540pt;C8 在两个渲染器的产出上均命中(c3 控制组)。
+7. **视觉收敛(2026-10-19)**:以视觉质量脚手架为尺收敛 §7 风格余项(S2 / S3 增底部锚线、S5 注脚同基线)——重建 → 渲染 → 断言 0/0,复看通过。
 
 记录:`tests/evidence/run.log`(本报告为结论摘要,原始输出以日志为准)。
 
@@ -113,7 +115,7 @@ python tests/run_tests.py          # 8 负控 + 端到端,一键复跑
 
 ## 7. 仍未完成 / 已知限制(及原因)
 
-- **目检余项(~9 条,风格级)**:首轮 22 项轻微中未逐条处理的包括——全篇底部留白节奏、三种灰阶并存(#1E1E1E/#5F6B7C/#1E2760 的角色化使用)、中文标点全/半角混用(与作者既有文风一致,刻意保留)、第 4 页 5:4 列表不对称(9 条目固有)、S6 要点与 S4 名称的颜色角色差异。均为观感级选择,非缺陷;如需要可继续收敛。
+- **目检余项(风格级)——已收敛(2026-10-19,首用 [docs/scaffolds/visual-quality-essentials.md](docs/scaffolds/visual-quality-essentials.md) 当尺)**:① 底部留白节奏 → **修复**:S2 / S3 补底部锚线、S5 注脚对齐,内容页收口统一到 y=6.25 一带;② 三种灰阶的角色化使用 → **保留并写实**:文字角色表补进 [typography.md](typography.md)(标题 / 名称 `1E2761` 粗体、正文 `222222`、说明 / 注脚 `5F6B7C`);③ 标点全 / 半角混用 → **保留**(作者文风,自此为明示决策);④ 5:4 列表不对称 → **保留**(刻意不对称合法,对齐基准未动);⑤ S6 要点 / S4 名称颜色角色 → **保留并写实**(名称 = 标题色、要点 = 正文色,属两个角色)。复验:重建 → 渲染 → C1–C9 0 error / 0 flag,渲染图复看通过。
 - **C7 无触发夹具**(见 §5 现状)。
 - **测试场景集中在 Windows + 中文**;Linux/macOS 渲染链逻辑保留(soffice.py)但未实测。
 - **未安装 MS PowerPoint 本体**,用 WPS 兼容接口代偿(PowerPoint 渲染差异属已知风险,文档已注明"以目标环境打开为准")。
