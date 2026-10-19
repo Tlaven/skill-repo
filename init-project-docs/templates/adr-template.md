@@ -11,6 +11,7 @@ proposed
 <!-- 状态取值:
 - proposed    提出但未确认
 - accepted    已采纳(默认目标状态)
+- accepted(修订)  已采纳,经 append-only 补充修订(见文末「修订 / 补充」)
 - deprecated  已弃用
 - superseded by ADR-YYY   被新决策取代
 -->
@@ -66,6 +67,15 @@ proposed
 ### 需要跟进的
 - 后续要做什么来支撑这个决策?
 - 若本决策推翻了旧决策:联动义务(改正文 + 修订不变量)见 `docs-templates/evolution-rules.md` 的 E3,此处不重述。
+-->
+
+## 修订 / 补充(append-only,可选)
+
+<!-- 
+同一决策路径内的修正(参数 / 实现方式 / 边界补强)→ 在文末按时间追加「补充 N」小节:
+**不改原文、不新建 ADR**,状态保持 accepted(可标「(修订)」);每条写:日期 + 触发(谁 / 什么反馈)+ 改动 + 被拒做法(如有)+ 验证。
+**换掉被选方案本身、或引入第二套并行机制 → 另开新 ADR**,本文件标 `superseded by ADR-YYY`。
+补充只增不改——ADR 仍是「记录」,不是「现状文档」(现状陈述不得引用 ADR,见 evolution-rules E1)。
 -->
 
 ---

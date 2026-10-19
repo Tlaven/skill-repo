@@ -18,7 +18,7 @@
 # ADR-XXX: [决策标题]
 
 ## 状态
-proposed / accepted / deprecated / superseded by ADR-YYY
+proposed / accepted / accepted(修订) / deprecated / superseded by ADR-YYY
 
 ## 背景
 为什么需要这个决策?遇到了什么问题?
@@ -32,6 +32,8 @@ proposed / accepted / deprecated / superseded by ADR-YYY
 ## 后果
 正面 / 负面后果;需要跟进的
 ```
+
+**可选第六段「修订 / 补充」(append-only):** 同一决策内的修正用带日期的补充追加在文末,不改原文、不新建 ADR;换掉被选方案本身 → 新 ADR(superseded),不要用补充改写选择。
 
 模板见 `docs-templates/adr-template.md`(按需复制为 `adr-XXX-[短描述].md`;模板本身不是真实决策,不要列进下方索引)。
 
@@ -51,4 +53,5 @@ adr-XXX-[短描述].md
 - ADR-003: 用事件溯源替代直接 CRUD — accepted
 - ADR-002: 模块间用消息队列通信 — superseded by ADR-003
 - ADR-001: 选 PostgreSQL 作为主数据库 — accepted
+- 索引行可标注最新状态,例:accepted(修订;见补充 3) —— 正文仍保留原决策与全部补充(append-only)。
 -->

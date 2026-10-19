@@ -362,6 +362,7 @@ skill 自身要避免的:
 ./docs/                     # 本项目当前维护的文档 —— 对账只扫这里
   ├── architecture.md       # L2 —— 进入 L2 讨论时创建
   ├── glossary.md           # 术语表 —— 出现领域名词时创建
+  ├── scaffolds/            # 可选:项目自搭的跨领域脚手架(见 essentials skill);L1 用目录规则声明
   ├── modules/<name>.md     # L3 —— 每模块开发前
   ├── core-code.md          # L4 —— 可选:被 ≥2 个工作场景共同加载的核心单元才建;不建时跨模块契约写进 architecture.md 的「架构级约束」
   ├── reviews/              # E5 对账产出(teach-back / 文档考古) —— 首次对账时创建
@@ -403,6 +404,8 @@ skill 自身要避免的:
 | `references/wiring.md` | 接线指南(pre-commit / CI / 宿主钩子)与示例 | 初始化后接线时 | **不落地**(skill 侧文档) |
 
 ---
+
+> **维护者入口:** 方法论演化待办(单案例观察 / 待答问题 / 结案条件)见 `RESEARCH-BACKLOG.md`——该文件不随项目落地。
 
 ## 参考来源(改版时借鉴)
 
