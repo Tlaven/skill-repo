@@ -1,0 +1,22 @@
+﻿== normalize/validate check (2026-10-19) ==
+
+[1] raw pptxgenjs output (e2e_deck.pptx):
+FAILED - Found NEW validation errors:
+  ppt\presentation.xml: 1 new error(s)
+    - Element '{http://schemas.openxmlformats.org/presentationml/2006/main}notesMasterIdLst': This element is not expected. Expected is one of ( {http://schemas.openxmlformats.org/presentationml/2006/main}sldSz, {http://schemas.openxmlformats.org/presentat...
+
+[2] normalize:
+C:\Users\TL\skills-repo\pptx\tests\out\e2e_deck.pptx -> C:\Users\TL\AppData\Local\Temp\commandcode\C--Users-TL-skills-repo-essentials\23d8f706-fe95-40d3-bb8a-f8c8cfc83279\scratchpad\e2e_fixed.pptx: moved notesMasterIdLst before sldIdLst
+
+[3] normalized output:
+All validations PASSED!
+
+[4] python-pptx output (com_test.pptx) for contrast:
+All validations PASSED!
+
+[5] idempotence on already-correct file:
+C:\Users\TL\AppData\Local\Temp\commandcode\C--Users-TL-skills-repo-essentials\23d8f706-fe95-40d3-bb8a-f8c8cfc83279\scratchpad\com_test.pptx -> C:\Users\TL\AppData\Local\Temp\commandcode\C--Users-TL-skills-repo-essentials\23d8f706-fe95-40d3-bb8a-f8c8cfc83279\scratchpad\com_test_noop.pptx: no notesMasterIdLst
+All validations PASSED!
+
+[6] normalized deck still passes L1 + render:
+summary: errors=0, flags=0, info=10

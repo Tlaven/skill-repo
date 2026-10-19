@@ -1,0 +1,81 @@
+{
+  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c4_stretched.pptx",
+  "summary": {
+    "errors": 0,
+    "flags": 1,
+    "info": 9
+  },
+  "unresolved": [],
+  "checks": {
+    "C1-structure": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "slides=1, media=2, pictures=2"
+      }
+    ],
+    "C2-placeholder": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no placeholder pattern found"
+      }
+    ],
+    "C3-min-font": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "below-min=0, inherited-size(not checked)=0"
+      }
+    ],
+    "C4-color-hygiene": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "hex colors well-formed"
+      }
+    ],
+    "C5-contrast": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "checked=3, below-threshold=0, unresolved(needs visual)=0"
+      }
+    ],
+    "C6-image-aspect": [
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "'Image 0': displayed aspect 2.000 vs native 4.000 (deviation 50.0% > 2.0%)"
+      }
+    ],
+    "C9-editable": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no full-page-image-only slides"
+      }
+    ],
+    "C7-pdf-bounds": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no words outside slide bounds across 1 page(s)"
+      }
+    ],
+    "C8-render-text": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "all paragraphs present in PDF text layer (1 page(s))"
+      }
+    ],
+    "I1-font-inventory": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "Microsoft YaHei x3"
+      }
+    ]
+  }
+}

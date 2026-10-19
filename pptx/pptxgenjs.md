@@ -167,6 +167,8 @@ slide.addImage({
 
 ### Image Sizing Modes
 
+⚠️ 实测（本移植）：`contain` **不可靠**，渲染仍会拉伸；手动按原始比例计算尺寸——正典实现见下文「图片分辨率与 DPI」的 `fitInside`（原则说明见 lessons.md §1）。
+
 ```javascript
 // Contain - fit inside, preserve ratio
 { sizing: { type: 'contain', w: 4, h: 3 } }
@@ -454,6 +456,12 @@ titleSlide.addText("My Title", { placeholder: "title" });
    slide.addShape(pres.shapes.RECTANGLE, { x: 1, y: 1, w: 3, h: 1.5, fill: { color: "FFFFFF" } });
    slide.addShape(pres.shapes.RECTANGLE, { x: 1, y: 1, w: 0.08, h: 1.5, fill: { color: "0891B2" } });
    ```
+
+9. **生成的 deck 过不了严格 schema 校验（已知顺序问题）** - pptxgenjs 4.0.1 把 `<p:notesMasterIdLst>` 写在 `<p:sldIdLst>` 之后，`scripts/office/validate.py` 会报元素次序错误（PowerPoint/WPS 仍能打开）。交付前跑一次归一化：
+   ```bash
+   python scripts/normalize_pptx_order.py inplace output.pptx
+   ```
+   【实测:tests/evidence/normalize_check.log】
 
 ---
 

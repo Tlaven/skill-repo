@@ -1,0 +1,91 @@
+{
+  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c2_lowcontrast.pptx",
+  "summary": {
+    "errors": 0,
+    "flags": 2,
+    "info": 10
+  },
+  "unresolved": [],
+  "checks": {
+    "C1-structure": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "slides=2, media=1, pictures=0"
+      }
+    ],
+    "C2-placeholder": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no placeholder pattern found"
+      }
+    ],
+    "C3-min-font": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "below-min=0, inherited-size(not checked)=0"
+      }
+    ],
+    "C4-color-hygiene": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "hex colors well-formed"
+      }
+    ],
+    "C5-contrast": [
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "ratio 1.36 < 4.5 (normal text) in 'Text 1': '浅灰文字压在纯白底上(约 1.4:1)' color=#DDDDDD bg=#FFFFFF"
+      },
+      {
+        "severity": "flag",
+        "slide": 2,
+        "detail": "ratio 1.16 < 4.5 (normal text) in 'Text 1': '近白文字压在奶油底上(约 1.1:1)' color=#FCF6F5 bg=#F9E795"
+      },
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "checked=4, below-threshold=2, unresolved(needs visual)=0"
+      }
+    ],
+    "C6-image-aspect": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "all pictures within aspect tolerance"
+      }
+    ],
+    "C9-editable": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no full-page-image-only slides"
+      }
+    ],
+    "C7-pdf-bounds": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no words outside slide bounds across 2 page(s)"
+      }
+    ],
+    "C8-render-text": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "all paragraphs present in PDF text layer (2 page(s))"
+      }
+    ],
+    "I1-font-inventory": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "Microsoft YaHei x4"
+      }
+    ]
+  }
+}

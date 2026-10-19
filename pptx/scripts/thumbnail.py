@@ -158,6 +158,9 @@ def create_hidden_placeholder(size: tuple[int, int]) -> Image.Image:
 
 
 def get_soffice_path() -> str:
+    env_path = os.environ.get("SOFFICE_PATH")
+    if env_path and Path(env_path).exists():
+        return env_path
     if platform.system() == "Windows":
         exe = shutil.which("soffice.exe")
         if exe:
@@ -165,15 +168,16 @@ def get_soffice_path() -> str:
         exe = shutil.which("soffice")
         if exe:
             return exe
-        program_files = Path(os.environ.get("PROGRAMFILES", "C:\\Program Files"))
-        program_files_x86 = Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"))
-        common_paths = [
-            program_files / "LibOffice" / "program" / "soffice.exe",
-            program_files_x86 / "LibOffice" / "program" / "soffice.exe",
-            program_files / "LibreOffice" / "program" / "soffice.exe",
-            program_files_x86 / "LibreOffice" / "program" / "soffice.exe",
+        candidates = []
+        for base in (os.environ.get("PROGRAMFILES"), os.environ.get("PROGRAMFILES(X86)")):
+            if base:
+                candidates.append(Path(base) / "LibreOffice" / "program" / "soffice.exe")
+        home = os.environ.get("USERPROFILE") or os.path.expanduser("~")
+        candidates += [
+            Path(home) / "scoop" / "apps" / "libreoffice" / "current" / "LibreOffice" / "program" / "soffice.exe",
+            Path(home) / "scoop" / "shims" / "soffice.exe",
         ]
-        for p in common_paths:
+        for p in candidates:
             if p.exists():
                 return str(p)
         return "soffice"

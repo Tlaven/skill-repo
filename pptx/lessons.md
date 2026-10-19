@@ -10,21 +10,7 @@ type: reference
 
 ### 1.1 先扫图后定布局，不可倒置
 
-```javascript
-// ❌ 错误：先定盒子尺寸，再用 contain 模式"期望"它自适应
-slide.addImage({ path, x: 0, y: 0, w: 9, h: 2.5, sizing: { type: "contain", w: 9, h: 2.5 } });
-
-// ✓ 正确：先用 sharp 读原图宽高，反推渲染尺寸，再定周围文字位置
-const meta = await sharp(path).metadata(); // { width, height }
-const ratio = meta.width / meta.height;
-// 给定 maxW×maxH 盒子 → 计算等比例 (w, h) + 居中偏移 (cx, cy)
-function fitInside(ow, oh, maxW, maxH) {
-  const ratio = ow / oh;
-  let w = maxW, h = maxW / ratio;
-  if (h > maxH) { h = maxH; w = maxH * ratio; }
-  return { w, h, cx: (maxW - w) / 2, cy: (maxH - h) / 2 };
-}
-```
+> 实现代码只在正典处保留一份：[pptxgenjs.md「图片分辨率与 DPI」](pptxgenjs.md) 的 `fitInside`。
 
 ### 1.2 不同比例的图需要不同的盒子
 
@@ -47,7 +33,7 @@ function fitInside(ow, oh, maxW, maxH) {
 
 ## 2. pptxgenjs 避坑
 
-- `sizing: { type: "contain" }` **不可靠**，实测仍会拉伸。必须手动算 w/h
+- `sizing: { type: "contain" }` **不可靠**，实测仍会拉伸——必须手动算 w/h（实现见 pptxgenjs.md「图片分辨率」节）
 - 不要复用 option 对象，PptxGenJS 会原地修改（用工厂函数每次创建新对象）
 - `lineSpacingMultiple` **不是有效属性**，用 `lineSpacing`（单位 pt）
 - 不要在 hex 颜色前加 `#`（如 `"#FF0000"`），会导致文件损坏。用 `"FF0000"`
@@ -75,20 +61,15 @@ function fitInside(ow, oh, maxW, maxH) {
 ### 5.1 视觉QA工具链（Windows 适配）
 
 - LibreOffice 转 PDF → pdftoppm 转图片做视觉检查是最可靠的方案
-- `soffice.py` 已适配 Windows：自动检测 LibreOffice 安装路径（`Program Files\LibreOffice\program\soffice.exe`），跳过 LD_PRELOAD shim
-- 兜底方案：解压 PPTX，统计 slides/ + media/ 文件数，提取文本检查占位符（见 SKILL.md [Windows Fallback]）
+- `soffice.py` 已适配 Windows：自动检测安装路径（`Program Files\…`、scoop 的 `apps\libreoffice\current\LibreOffice\program\`），跳过 LD_PRELOAD shim；可用 `SOFFICE_PATH` 覆盖
+- 兜底方案：`scripts/qa_check.py` 的 XML 层检查（无渲染器也能跑 C1–C6、C9；见 SKILL.md「Windows without LibreOffice」）
 
-### 5.2 文本校验用解压XML
+### 5.2 结构/文本校验用脚本
 
-```powershell
-# 统计幻灯片数量 + 媒体文件数
-Add-Type -A 'System.IO.Compression.FileSystem'
-$z = [System.IO.Compression.ZipFile]::OpenRead("out.pptx")
-$entries = $z.Entries
-$slides = ($entries | Where-Object { $_.FullName -match '^ppt/slides/slide\d+\.xml$' }).Count
-$imgs = ($entries | Where-Object { $_.FullName -match '^ppt/media/' }).Count
-$z.Dispose()
-Write-Host "Slides: $slides, Media: $imgs"
+交给 `scripts/qa_check.py`（C1 结构 / C2 占位 / C8 渲染保真；见 SKILL.md QA 节），不再手贴 PowerShell：
+
+```bash
+python scripts/qa_check.py output.pptx --pdf render/output.pdf --strict
 ```
 
 ## 6. 运行脚本注意路径

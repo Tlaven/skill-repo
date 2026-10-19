@@ -1,0 +1,81 @@
+{
+  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c6_flatslide.pptx",
+  "summary": {
+    "errors": 0,
+    "flags": 1,
+    "info": 9
+  },
+  "unresolved": [],
+  "checks": {
+    "C1-structure": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "slides=1, media=2, pictures=1"
+      }
+    ],
+    "C2-placeholder": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no placeholder pattern found"
+      }
+    ],
+    "C3-min-font": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "below-min=0, inherited-size(not checked)=0"
+      }
+    ],
+    "C4-color-hygiene": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "hex colors well-formed"
+      }
+    ],
+    "C5-contrast": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "checked=0, below-threshold=0, unresolved(needs visual)=0"
+      }
+    ],
+    "C6-image-aspect": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "all pictures within aspect tolerance"
+      }
+    ],
+    "C9-editable": [
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "slide looks non-editable: a picture covers 100% of the slide and no text was found"
+      }
+    ],
+    "C7-pdf-bounds": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no words outside slide bounds across 1 page(s)"
+      }
+    ],
+    "C8-render-text": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "all paragraphs present in PDF text layer (1 page(s))"
+      }
+    ],
+    "I1-font-inventory": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no explicit font faces (all inherited)"
+      }
+    ]
+  }
+}

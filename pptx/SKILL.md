@@ -1,6 +1,6 @@
 ---
 name: pptx
-description: "Use when a .pptx file is involved as input, output, or reference. Trigger on \"deck,\" \"slides,\" \"presentation,\" or any .pptx filename. Do not use for converting non-PPTX file formats or for image-only processing."
+description: "Use when a .pptx file is involved as input, output, or reference. Trigger on \"deck,\" \"slides,\" \"presentation,\" \"PPT,\" \"幻灯片,\" \"演示文稿,\" \"答辩,\" or any .pptx filename. Do not use for converting non-PPTX file formats or for image-only processing."
 license: Proprietary. LICENSE.txt has complete terms
 ---
 
@@ -14,13 +14,17 @@ license: Proprietary. LICENSE.txt has complete terms
 | Edit or create from template | Read [editing.md](editing.md) |
 | Create from scratch | Read [pptxgenjs.md](pptxgenjs.md) |
 | Operational lessons | Read [lessons.md](lessons.md) |
+| **Automated QA (executable)** | `python scripts/qa_check.py output.pptx --pdf render/output.pdf --strict` |
+| **Delivery acceptance checklist** | Read [acceptance-checklist.md](acceptance-checklist.md) |
+| **CJK typography** | Read [typography.md](typography.md) |
+| Render (COM / LibreOffice) | `scripts/render_slides.ps1 -Pptx deck.pptx -OutDir render/ -Pdf` |
 
 ---
 
 ## When to NOT Use
 
 - **纯图片处理**（批量裁剪/调色/水印）→ 用 ImageMagick / sharp，不用这个 skill
-- **非 PPTX 格式转换**（PDF→PPTX、Markdown→PPTX 无模板）→ 先用其他工具生成 PPTX，再用本 skill 优化
+- **纯格式转换**（如 PDF→PPTX，只求能打开、不做设计与内容加工）→ 转换本身交给专门工具；但转换产物若要交付，回到本 skill 跑验收（见 [acceptance-checklist.md](acceptance-checklist.md)）
 - **文档排版**（纯文字排版需求）→ 用 Word / thesis-docx skill
 
 ---
@@ -126,6 +130,8 @@ Choose colors that match your topic — don't default to generic blue. Use these
 | Body text | 14-16pt |
 | Captions | 10-12pt muted |
 
+**中文（CJK）**：回到 [typography.md](typography.md)——字体跨平台可用性、字号下限、行距与混排规则（带来源）。
+
 ### Spacing
 
 - 0.5" minimum margins
@@ -152,6 +158,25 @@ Choose colors that match your topic — don't default to generic blue. Use these
 **Assume there are problems. Your job is to find them.**
 
 Your first render is almost never correct. Approach QA as a bug hunt, not a confirmation step. If you found zero issues on first inspection, you weren't looking hard enough.
+
+### Automated checks first (this port)
+
+Run the executable assertions before eyes touch it:
+
+```bash
+# 0) pptxgenjs 产出先归一化(修 notesMasterIdLst 次序,见 normalize_pptx_order.py):
+python scripts/normalize_pptx_order.py inplace output.pptx
+
+# 1) render (Windows: WPS/PowerPoint COM; 或 LibreOffice):
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render_slides.ps1 -Pptx output.pptx -OutDir render/ -Pdf
+python scripts/office/soffice.py --headless --convert-to pdf --outdir render output.pptx
+
+# 2) assertions C1-C9: structure / placeholders / font sizes / color hygiene /
+#    contrast (WCAG) / image aspect / pdf bounds / render fidelity / editability
+python scripts/qa_check.py output.pptx --pdf render/output.pdf --strict --json render/qa.json
+```
+
+All thresholds + the full acceptance workflow: [acceptance-checklist.md](acceptance-checklist.md). What the tools cannot judge (overlaps, spacing, wrapping) goes to the visual pass below.
 
 ### Content QA
 
@@ -241,53 +266,32 @@ To re-render specific slides after fixes:
 pdftoppm -jpeg -r 150 -f N -l N output.pdf slide-fixed
 ```
 
-### Windows Fallback (No LibreOffice)
+### Windows without LibreOffice
 
-如果 LibreOffice 或 pdftoppm 不可用，可以用 PowerShell 做基础的结构检查：
-
-```powershell
-# 统计幻灯片和媒体文件数量
-Add-Type -A 'System.IO.Compression.FileSystem'
-$z = [System.IO.Compression.ZipFile]::OpenRead("output.pptx")
-$slides = ($z.Entries | Where-Object { $_.FullName -match '^ppt/slides/slide\d+\.xml$' }).Count
-$imgs = ($z.Entries | Where-Object { $_.FullName -match '^ppt/media/' }).Count
-$z.Dispose()
-Write-Host "Slides: $slides, Media: $imgs"
-
-# 提取文本检查占位符残留
-Add-Type -A 'System.IO.Compression.FileSystem'
-$z = [System.IO.Compression.ZipFile]::OpenRead("output.pptx")
-$text = @()
-foreach ($entry in $z.Entries | Where-Object { $_.FullName -match '^ppt/slides/slide\d+\.xml$' }) {
-    $reader = New-Object System.IO.StreamReader($entry.Open())
-    $xml = $reader.ReadToEnd()
-    $reader.Close()
-    $matches = [regex]::Matches($xml, '<a:t[^>]*>([^<]+)</a:t>')
-    $text += "=== $($entry.Name) ==="
-    $text += $matches | ForEach-Object { $_.Groups[1].Value }
-}
-$z.Dispose()
-$text -join "`r`n" | Set-Content slide_text.txt
-
-# 检查占位符文本
-Select-String -Path slide_text.txt -Pattern "xxxx|lorem|ipsum|placeholder|this.*(page|slide).*layout" -CaseSensitive:$false
-```
+Windows 上无需 LibreOffice 也能完整跑 QA：用 `scripts/render_slides.ps1`（PowerPoint/WPS COM 导出 PNG+PDF；WPS 场景实测）渲染后交给 `scripts/qa_check.py`。两个渲染器都不可用时，qa_check.py 仍执行 XML 层检查（C1–C6、C9；C7/C8 需要渲染产物）——结构、占位、字号、对比度照样管住。
 
 ---
 
 ## Dependencies
 
 ```bash
-# Python (use requirements.txt)
+# Python (use requirements.txt) - incl. python-pptx (qa_check.py), Pillow, defusedxml, markitdown
 pip install -r requirements.txt
 
-# PptxGenJS (creating from scratch)
-npm install -g pptxgenjs
+# Node (creating from scratch) - global; set NODE_PATH to `npm root -g` if resolution fails
+npm install -g pptxgenjs sharp
+# icon workflow (pptxgenjs.md) additionally needs: npm install -g react-icons react react-dom
 ```
 
 | Tool | Purpose | Windows Install |
 |------|---------|-----------------|
-| LibreOffice | PDF conversion (visual QA) | [Download](https://www.libreoffice.org/download/) - add `program\` dir to PATH |
-| Poppler (`pdftoppm`) | PDF → images | `winget install poppler` or [download](https://github.com/oschwartz10612/poppler-windows/releases/) |
+| WPS Office or MS PowerPoint | render to PNG/PDF via COM (`scripts/render_slides.ps1`) | any |
+| LibreOffice | render to PDF (`scripts/office/soffice.py`) | [Download](https://www.libreoffice.org/download/) or `scoop install extras/libreoffice` |
+| Poppler (`pdftoppm`/`pdftotext`) | PDF → images; C7/C8 text checks | `winget install poppler` or [download](https://github.com/oschwartz10612/poppler-windows/releases/) |
 
-On Windows, `soffice.py` auto-detects common LibreOffice install paths (`Program Files\LibreOffice\program\soffice.exe`, etc.). Visual QA also has a pure-PowerShell fallback (see [Windows Fallback](#windows-fallback-no-libreoffice)).
+On Windows, `soffice.py` auto-detects common install paths (`Program Files\LibreOffice\...`, scoop's `apps\libreoffice\current\LibreOffice\program\`); override anytime with the `SOFFICE_PATH` env var.
+
+## Sources & License
+
+- Base material: Anthropic's pptx skill (© 2025 Anthropic PBC; see LICENSE.txt — distribution restrictions apply, keep that file with any copy).
+- Local additions of this port: `qa_check.py` / `render_slides.ps1` / `tests/` / `acceptance-checklist.md` / `typography.md` + Chinese-localized guidance; claims are tagged 【实测】/【引用】/【假设待测】 where they are made.

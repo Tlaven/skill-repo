@@ -1,0 +1,91 @@
+{
+  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c1_placeholder.pptx",
+  "summary": {
+    "errors": 0,
+    "flags": 3,
+    "info": 9
+  },
+  "unresolved": [],
+  "checks": {
+    "C1-structure": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "slides=1, media=1, pictures=0"
+      }
+    ],
+    "C2-placeholder": [
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "matched 'XXXX' in shape 'Text 1': 'XXXX 这里是占位标题'"
+      },
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "matched 'Click to edit' in shape 'Text 2': 'Click to edit 单击此处填写内容'"
+      },
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "matched '单击此处' in shape 'Text 2': 'Click to edit 单击此处填写内容'"
+      }
+    ],
+    "C3-min-font": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "below-min=0, inherited-size(not checked)=0"
+      }
+    ],
+    "C4-color-hygiene": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "hex colors well-formed"
+      }
+    ],
+    "C5-contrast": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "checked=4, below-threshold=0, unresolved(needs visual)=0"
+      }
+    ],
+    "C6-image-aspect": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "all pictures within aspect tolerance"
+      }
+    ],
+    "C9-editable": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no full-page-image-only slides"
+      }
+    ],
+    "C7-pdf-bounds": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "no words outside slide bounds across 1 page(s)"
+      }
+    ],
+    "C8-render-text": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "all paragraphs present in PDF text layer (1 page(s))"
+      }
+    ],
+    "I1-font-inventory": [
+      {
+        "severity": "info",
+        "slide": null,
+        "detail": "Microsoft YaHei x4"
+      }
+    ]
+  }
+}

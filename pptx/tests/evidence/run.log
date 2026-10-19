@@ -1,0 +1,276 @@
+== build fixtures ==
+$ node C:\Users\TL\skills-repo\pptx\tests\make_controls.js
+wrote C:\Users\TL\skills-repo\pptx\tests\out\clean.pptx
+wrote C:\Users\TL\skills-repo\pptx\tests\out\c1_placeholder.pptx
+wrote C:\Users\TL\skills-repo\pptx\tests\out\c2_lowcontrast.pptx
+wrote C:\Users\TL\skills-repo\pptx\tests\out\c3_overflow.pptx
+wrote C:\Users\TL\skills-repo\pptx\tests\out\c4_stretched.pptx
+wrote C:\Users\TL\skills-repo\pptx\tests\out\c5_tinyfont.pptx
+wrote C:\Users\TL\skills-repo\pptx\tests\out\c6_flatslide.pptx
+controls done -> C:\Users\TL\skills-repo\pptx\tests\out
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\tests\make_badcolor.py
+c7_badcolor.pptx written (corrupted=True)
+$ node C:\Users\TL\skills-repo\pptx\tests\make_e2e_deck.js
+wrote C:\Users\TL\skills-repo\pptx\tests\out\e2e_deck.pptx
+e2e deck done -> C:\Users\TL\skills-repo\pptx\tests\out
+== render clean ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\clean.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\clean -Pdf
+== qa clean ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\clean.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\clean\clean.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\clean.json
+== qa_check: clean.pptx ==
+[C1-structure] info=1
+    info: slides=3, media=2, pictures=1
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] info=1
+    info: checked=19, below-threshold=0, unresolved(needs visual)=0
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 3 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (3 page(s))
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x19
+summary: errors=0, flags=0, info=10
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\clean.json
+== render c1_placeholder ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c1_placeholder.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c1_placeholder -Pdf
+== qa c1_placeholder ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c1_placeholder.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c1_placeholder\c1_placeholder.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c1_placeholder.json
+== qa_check: c1_placeholder.pptx ==
+[C1-structure] info=1
+    info: slides=1, media=1, pictures=0
+[C2-placeholder] flag=3
+    FLAG: slide 1: matched 'XXXX' in shape 'Text 1': 'XXXX 这里是占位标题'
+    FLAG: slide 1: matched 'Click to edit' in shape 'Text 2': 'Click to edit 单击此处填写内容'
+    FLAG: slide 1: matched '单击此处' in shape 'Text 2': 'Click to edit 单击此处填写内容'
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] info=1
+    info: checked=4, below-threshold=0, unresolved(needs visual)=0
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 1 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (1 page(s))
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x4
+summary: errors=0, flags=3, info=9
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c1_placeholder.json
+== render c2_lowcontrast ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c2_lowcontrast.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c2_lowcontrast -Pdf
+== qa c2_lowcontrast ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c2_lowcontrast.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c2_lowcontrast\c2_lowcontrast.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c2_lowcontrast.json
+== qa_check: c2_lowcontrast.pptx ==
+[C1-structure] info=1
+    info: slides=2, media=1, pictures=0
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] flag=2, info=1
+    info: checked=4, below-threshold=2, unresolved(needs visual)=0
+    FLAG: slide 1: ratio 1.36 < 4.5 (normal text) in 'Text 1': '浅灰文字压在纯白底上(约 1.4:1)' color=#DDDDDD bg=#FFFFFF
+    FLAG: slide 2: ratio 1.16 < 4.5 (normal text) in 'Text 1': '近白文字压在奶油底上(约 1.1:1)' color=#FCF6F5 bg=#F9E795
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 2 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (2 page(s))
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x4
+summary: errors=0, flags=2, info=10
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c2_lowcontrast.json
+== render c3_overflow ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c3_overflow.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c3_overflow -Pdf
+== qa c3_overflow ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c3_overflow.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c3_overflow\c3_overflow.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c3_overflow.json
+== qa_check: c3_overflow.pptx ==
+[C1-structure] info=1
+    info: slides=1, media=1, pictures=0
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] info=1
+    info: checked=2, below-threshold=0, unresolved(needs visual)=0
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 1 page(s)
+[C8-render-text] flag=1
+    FLAG: slide 1: missing last 8 char(s) '导出时就丢内容。' of paragraph in 'Text 1'
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x2
+summary: errors=0, flags=1, info=9
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c3_overflow.json
+== render c4_stretched ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c4_stretched.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c4_stretched -Pdf
+== qa c4_stretched ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c4_stretched.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c4_stretched\c4_stretched.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c4_stretched.json
+== qa_check: c4_stretched.pptx ==
+[C1-structure] info=1
+    info: slides=1, media=2, pictures=2
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] info=1
+    info: checked=3, below-threshold=0, unresolved(needs visual)=0
+[C6-image-aspect] flag=1
+    FLAG: slide 1: 'Image 0': displayed aspect 2.000 vs native 4.000 (deviation 50.0% > 2.0%)
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 1 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (1 page(s))
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x3
+summary: errors=0, flags=1, info=9
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c4_stretched.json
+== render c5_tinyfont ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c5_tinyfont.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c5_tinyfont -Pdf
+== qa c5_tinyfont ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c5_tinyfont.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c5_tinyfont\c5_tinyfont.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c5_tinyfont.json
+== qa_check: c5_tinyfont.pptx ==
+[C1-structure] info=1
+    info: slides=1, media=1, pictures=0
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] flag=1, info=1
+    info: below-min=1, inherited-size(not checked)=0
+    FLAG: slide 1: 7.0pt (min 10.0pt) in 'Text 2': '这条备注只有 7pt,投影环境基本不可读,应当被检查抓出。'
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] info=1
+    info: checked=3, below-threshold=0, unresolved(needs visual)=0
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 1 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (1 page(s))
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x3
+summary: errors=0, flags=1, info=10
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c5_tinyfont.json
+== render c6_flatslide ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c6_flatslide.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c6_flatslide -Pdf
+== qa c6_flatslide ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c6_flatslide.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c6_flatslide\c6_flatslide.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c6_flatslide.json
+== qa_check: c6_flatslide.pptx ==
+[C1-structure] info=1
+    info: slides=1, media=2, pictures=1
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] info=1
+    info: checked=0, below-threshold=0, unresolved(needs visual)=0
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 1 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (1 page(s))
+[C9-editable] flag=1
+    FLAG: slide 1: slide looks non-editable: a picture covers 100% of the slide and no text was found
+[I1-font-inventory] info=1
+    info: no explicit font faces (all inherited)
+summary: errors=0, flags=1, info=9
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c6_flatslide.json
+== render c7_badcolor ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c7_badcolor.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c7_badcolor -Pdf
+== qa c7_badcolor ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c7_badcolor.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c7_badcolor\c7_badcolor.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c7_badcolor.json
+== qa_check: c7_badcolor.pptx ==
+[C1-structure] info=1
+    info: slides=3, media=2, pictures=1
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] error=1
+    ERROR: ppt/slides/slide1.xml: srgbClr val='#1E2761'
+[C5-contrast] flag=2, info=1
+    info: checked=19, below-threshold=2, unresolved(needs visual)=0
+    FLAG: slide 1: ratio 1.00 < 3.0 (large text) in 'Text 1': '交付验收 · 基线样张' color=#FFFFFF bg=#FFFFFF
+    FLAG: slide 1: ratio 1.39 < 3.0 (large text) in 'Text 2': 'qa_check.py 干净对照:预期 0 error / 0 flag' color=#CADCFC bg=#FFFFFF
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 3 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (3 page(s))
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x19
+summary: errors=1, flags=2, info=9
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c7_badcolor.json
+== render e2e_deck ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\e2e_deck.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\e2e_deck -Pdf
+== qa e2e_deck ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\e2e_deck.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\e2e_deck\e2e_deck.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\e2e_deck.json
+== qa_check: e2e_deck.pptx ==
+[C1-structure] info=1
+    info: slides=7, media=2, pictures=1
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] info=1
+    info: checked=78, below-threshold=0, unresolved(needs visual)=0
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 7 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (7 page(s))
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x78
+summary: errors=0, flags=0, info=10
+json: C:\Users\TL\skills-repo\pptx\tests\out\reports\e2e_deck.json
+
+== summary ==
+[PASS] clean: fired: (none) | flags=0, errors=0
+[PASS] c1_placeholder: fired: C2-placeholder | flags=3, errors=0
+[PASS] c2_lowcontrast: fired: C5-contrast | flags=2, errors=0
+[PASS] c3_overflow: fired: C8-render-text | flags=1, errors=0
+[PASS] c4_stretched: fired: C6-image-aspect | flags=1, errors=0
+[PASS] c5_tinyfont: fired: C3-min-font | flags=1, errors=0
+[PASS] c6_flatslide: fired: C9-editable | flags=1, errors=0
+[PASS] c7_badcolor: fired: C4-color-hygiene, C5-contrast | flags=2, errors=1
+[PASS] e2e_deck: flags=0, errors=0

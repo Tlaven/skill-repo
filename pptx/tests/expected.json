@@ -1,0 +1,14 @@
+{
+  "comment": "Expected outcomes for the negative-control suite. 'must_include' = check ID that must produce at least one error/flag. 'max_flags'/'max_errors' constrain the clean baseline (false-positive gate).",
+  "settings": { "min_font_pt": 10, "aspect_tol": 0.02 },
+  "decks": {
+    "clean": { "must_include": [], "max_flags": 0, "max_errors": 0 },
+    "c1_placeholder": { "must_include": ["C2-placeholder"] },
+    "c2_lowcontrast": { "must_include": ["C5-contrast"] },
+    "c3_overflow": { "must_include": ["C8-render-text"] },
+    "c4_stretched": { "must_include": ["C6-image-aspect"] },
+    "c5_tinyfont": { "must_include": ["C3-min-font"] },
+    "c6_flatslide": { "must_include": ["C9-editable"] },
+    "c7_badcolor": { "must_include": ["C4-color-hygiene"] }
+  }
+}
