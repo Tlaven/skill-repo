@@ -1,6 +1,6 @@
 ---
 name: aigc-derate
-description: "Use when the user mentions 降重, AIGC, 查重, 标红, detect_colors, roundtrip, clear_colors, check_length_diff, run_all, or any .docx file that is a 查重报告/标红版/redundancy-check report"
+description: "Use when the user mentions 降重, AIGC, 查重, 标红, detect_colors, roundtrip, clear_colors, check_length_diff, run_all, or any .docx file that is a 查重报告/标红版/redundancy-check report. TRIGGER: 降重, AIGC降率, 查重, 标红, .docx 查重报告"
 ---
 
 # AIGC 降重 / 查重降重 Skill

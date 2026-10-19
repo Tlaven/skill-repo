@@ -53,8 +53,9 @@
 2. 改脚本 → 同步文档,否则 hook 挡(不变量 1);
 3. 提交信息:`type(scope): 中文摘要——要点`,细节在正文分点(参考 `git log`);
 4. 写 AI 未见领域逻辑(N2)前 → 按 `init-project-docs` 的 teach-back 做一次独立复核(按需、可攒批);
-5. 新机器恢复门禁:把 `bash scripts/check-docs-sync.sh --staged --strict` 与 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Changed || true`(只提示)接进 `.git/hooks/pre-commit`(现网 hook 首注释即模板);
-6. 改 skill 行为 → 跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Changed`;无验收入口的 skill 显示「未接入」,补 `## 验收` 段(档位:smoke / golden / acceptance / teach-back)+ 可选 `eval/run.ps1` 再接入。
+5. 新机器恢复门禁:把 `bash scripts/check-docs-sync.sh --staged --strict`、`powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Changed || true`(只提示)与 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check-skills.ps1 -Changed || true`(只提示)接进 `.git/hooks/pre-commit`(现网 hook 首注释即模板);
+6. 改 skill 行为 → 跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Changed`;无验收入口的 skill 显示「未接入」,补 `## 验收` 段(档位:smoke / golden / acceptance / teach-back)+ 可选 `eval/run.ps1` 再接入;
+7. 改 skill 结构(新 skill / frontmatter / 引用 / SKILL.md 篇幅)→ 跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-skills.ps1`;FAIL 清零,WARN 记账。
 
 ## 常用命令
 
@@ -63,6 +64,7 @@ bash scripts/check-docs-sync.sh            # 门禁自测:工作区 vs HEAD
 bash scripts/check-docs-sync.sh --staged   # 同 pre-commit
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Changed   # 变更涉及的 skill 验收（-Name / -All；默认提示不阻断）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-skill.ps1 -Name <skill>   # 打交付包（dist/<name>-<version>.zip + manifest + sha256；非 golden/acceptance 需 -Force）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-skills.ps1   # 结构检查：frontmatter / TRIGGER / 死链 / 行数（-Changed / -Name / -Strict）
 ```
 
 ## 开放问题
