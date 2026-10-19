@@ -19,7 +19,7 @@ Checks:
 
 Usage:
   python qa_check.py deck.pptx [--json report.json] [--strict] [--pdf render/deck.pdf]
-                      [--min-font-pt 10] [--aspect-tol 0.02] [--expect-slides N]
+                      [--min-font-pt 10] [--aspect-tol 0.02] [--expect-slides N] [--min-coverage 0.8]
 
 Exit codes: 0 ok (or issues without --strict); 1 issues with --strict; 2 runtime error.
 
@@ -132,6 +132,23 @@ def _slide_bg(prs, slide):
     return (255, 255, 255), "default-white-assumed"
 
 
+def _under_text_bg(shape, filled_shapes):
+    """Solid fill of the topmost filled shape whose bbox contains the text shape's center.
+
+    Lets C5 resolve "text over a solid band" when the text frame itself has no fill.
+    【实测:冷启动测试(2026-10-19)——白字叠浅色带被按页面底色误报 1.06:1】
+    """
+    try:
+        cx = shape.left + shape.width / 2
+        cy = shape.top + shape.height / 2
+    except Exception:
+        return None
+    for left, top, width, height, rgb in reversed(filled_shapes):
+        if left <= cx <= left + width and top <= cy <= top + height:
+            return rgb
+    return None
+
+
 def iter_shapes(shapes):
     for shape in shapes:
         yield shape
@@ -204,7 +221,7 @@ class Report:
 def check_structure(prs, path, report, expect_slides):
     n = len(prs.slides)
     with zipfile.ZipFile(path) as zf:
-        media = len([x for x in zf.namelist() if x.startswith("ppt/media/")])
+        media = len([x for x in zf.namelist() if x.startswith("ppt/media/") and not x.endswith("/")])
     pics = 0
     for slide in prs.slides:
         for shape in iter_shapes(slide.shapes):
@@ -293,6 +310,20 @@ def check_contrast(prs, report):
     checked = 0
     for idx, slide in enumerate(prs.slides, 1):
         slide_bg, _ = _slide_bg(prs, slide)
+        filled_shapes = []
+        for shp in iter_shapes(slide.shapes):
+            if shp.has_text_frame or getattr(shp, "has_table", False):
+                continue
+            try:
+                frgb, _ = _fill_rgb(shp.fill)
+            except Exception:
+                frgb = None
+            if frgb is None:
+                continue
+            try:
+                filled_shapes.append((shp.left, shp.top, shp.width, shp.height, frgb))
+            except Exception:
+                pass
         for shape in iter_shapes(slide.shapes):
             shape_bg, bg_reason = None, "none"
             has_text = shape.has_text_frame or getattr(shape, "has_table", False)
@@ -312,7 +343,9 @@ def check_contrast(prs, report):
                 elif shape_bg is not None:
                     bg = shape_bg
                 else:
-                    bg = slide_bg
+                    bg = _under_text_bg(shape, filled_shapes)
+                    if bg is None:
+                        bg = slide_bg
                 if bg is None:
                     if len(report.unresolved) < 200:
                         report.unresolved.append(
@@ -488,13 +521,13 @@ def check_render_text(prs, pdf_path, report):
         report.info("C8-render-text", f"all paragraphs present in PDF text layer ({len(pages)} page(s))")
 
 
-def check_editable(prs, report):
+def check_editable(prs, report, min_coverage=0.8):
     """C9: flag slides that are likely non-editable (single full-page image, no text).
 
     AI pipelines sometimes export pre-rendered slide images; such decks look right but
     cannot be re-edited (they fail the "editable PPTX" delivery goal).
     【引用:https://github.com/orgs/marp-team/discussions/82】【引用:https://github.com/kdnsna/pptlint】
-    覆盖率阈值 80%【假设待测】(可调)。
+    覆盖率阈值 80%【假设待测】(可调:--min-coverage)。
     """
     flagged = 0
     slide_area = prs.slide_width * prs.slide_height
@@ -516,7 +549,7 @@ def check_editable(prs, report):
                 for row in shape.table.rows:
                     for cell in row.cells:
                         texts.append(cell.text_frame.text)
-        if has_pic and area_ratio >= 0.8 and not any(t.strip() for t in texts):
+        if has_pic and area_ratio >= min_coverage and not any(t.strip() for t in texts):
             flagged += 1
             report.add(
                 "C9-editable",
@@ -553,6 +586,8 @@ def main():
     ap.add_argument("--min-font-pt", type=float, default=10.0)
     ap.add_argument("--aspect-tol", type=float, default=0.02)
     ap.add_argument("--expect-slides", type=int, default=None)
+    ap.add_argument("--min-coverage", type=float, default=0.8,
+                    help="C9: full-page-image coverage ratio that flags a slide (default 0.8)")
     args = ap.parse_args()
 
     path = Path(args.pptx)
@@ -569,7 +604,7 @@ def main():
     check_color_hygiene(path, report)
     check_contrast(prs, report)
     check_image_aspect(prs, report, args.aspect_tol)
-    check_editable(prs, report)
+    check_editable(prs, report, args.min_coverage)
     if args.pdf:
         check_pdf_overflow(args.pdf, report)
         check_render_text(prs, args.pdf, report)

@@ -1,12 +1,12 @@
 # pptx-delivery 测试与负控(交付验收)
 
-一个可一键复跑的夹具套件:5 组蓄意缺陷 deck(负控)+ 1 组真实中文 deck(端到端)。
+一个可一键复跑的夹具套件:7 组蓄意缺陷 deck(负控)+ 干净基线 + 1 组真实中文 deck(端到端)。
 用于验证 `scripts/qa_check.py` 的检出能力,并给交付验收提供可复现的基线。
 
 ## 一键复跑
 
 ```powershell
-pip install -r ../requirements.txt        # 首次:Python 依赖
+pip install -r requirements.txt           # 首次:Python 依赖(以下命令均在仓库根目录运行)
 npm install -g pptxgenjs sharp            # 首次:Node 依赖
 $env:NODE_PATH = (npm root -g)            # Windows 需要(全局包解析)
 

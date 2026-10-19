@@ -43,8 +43,13 @@ try {
   }
   $pres.Close()
   Write-Host "[render] done: $n slide(s) -> $outPath"
+} catch {
+  Write-Host "[render] ERROR: $_"
+  exit 1
 } finally {
   if ($null -ne $pres) { try { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($pres) | Out-Null } catch {} }
   try { $app.Quit() } catch {}
   try { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($app) | Out-Null } catch {}
 }
+
+exit 0

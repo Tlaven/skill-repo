@@ -19,7 +19,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\clean.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\clean\clean.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\clean.json
 == qa_check: clean.pptx ==
 [C1-structure] info=1
-    info: slides=3, media=2, pictures=1
+    info: slides=3, media=1, pictures=1
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] info=1
@@ -46,7 +46,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c1_placeholder.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c1_placeholder\c1_placeholder.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c1_placeholder.json
 == qa_check: c1_placeholder.pptx ==
 [C1-structure] info=1
-    info: slides=1, media=1, pictures=0
+    info: slides=1, media=0, pictures=0
 [C2-placeholder] flag=3
     FLAG: slide 1: matched 'XXXX' in shape 'Text 1': 'XXXX 这里是占位标题'
     FLAG: slide 1: matched 'Click to edit' in shape 'Text 2': 'Click to edit 单击此处填写内容'
@@ -75,7 +75,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c2_lowcontrast.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c2_lowcontrast\c2_lowcontrast.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c2_lowcontrast.json
 == qa_check: c2_lowcontrast.pptx ==
 [C1-structure] info=1
-    info: slides=2, media=1, pictures=0
+    info: slides=2, media=0, pictures=0
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] info=1
@@ -104,7 +104,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c3_overflow.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c3_overflow\c3_overflow.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c3_overflow.json
 == qa_check: c3_overflow.pptx ==
 [C1-structure] info=1
-    info: slides=1, media=1, pictures=0
+    info: slides=1, media=0, pictures=0
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] info=1
@@ -131,7 +131,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c4_stretched.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c4_stretched\c4_stretched.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c4_stretched.json
 == qa_check: c4_stretched.pptx ==
 [C1-structure] info=1
-    info: slides=1, media=2, pictures=2
+    info: slides=1, media=1, pictures=2
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] info=1
@@ -158,7 +158,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c5_tinyfont.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c5_tinyfont\c5_tinyfont.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c5_tinyfont.json
 == qa_check: c5_tinyfont.pptx ==
 [C1-structure] info=1
-    info: slides=1, media=1, pictures=0
+    info: slides=1, media=0, pictures=0
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] flag=1, info=1
@@ -186,7 +186,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c6_flatslide.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c6_flatslide\c6_flatslide.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c6_flatslide.json
 == qa_check: c6_flatslide.pptx ==
 [C1-structure] info=1
-    info: slides=1, media=2, pictures=1
+    info: slides=1, media=1, pictures=1
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] info=1
@@ -213,7 +213,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c7_badcolor.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c7_badcolor\c7_badcolor.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c7_badcolor.json
 == qa_check: c7_badcolor.pptx ==
 [C1-structure] info=1
-    info: slides=3, media=2, pictures=1
+    info: slides=3, media=1, pictures=1
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] info=1
@@ -242,7 +242,7 @@ $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pp
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\e2e_deck.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\e2e_deck\e2e_deck.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\e2e_deck.json
 == qa_check: e2e_deck.pptx ==
 [C1-structure] info=1
-    info: slides=7, media=2, pictures=1
+    info: slides=7, media=1, pictures=1
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] info=1

@@ -17,6 +17,7 @@ license: Proprietary. LICENSE.txt has complete terms
 | **Automated QA (executable)** | `python scripts/qa_check.py output.pptx --pdf render/output.pdf --strict` |
 | **Delivery acceptance checklist** | Read [acceptance-checklist.md](acceptance-checklist.md) |
 | **CJK typography** | Read [typography.md](typography.md) |
+| **Visual quality (judgment layer)** | Read [docs/scaffolds/visual-quality-essentials.md](docs/scaffolds/visual-quality-essentials.md) |
 | Render (COM / LibreOffice) | `scripts/render_slides.ps1 -Pptx deck.pptx -OutDir render/ -Pdf` |
 
 ---
@@ -198,6 +199,8 @@ If grep returns results, fix them before declaring success.
 
 **⚠️ USE SUBAGENTS** — even for 2-3 slides. You've been staring at the code and will see what you expect, not what's there. Subagents have fresh eyes.
 
+宿主不支持子代理时:退化为「拼图(contact sheet)+ 逐页自查」,并仍需完成至少一轮 fix→verify。
+
 Convert slides to images (see [Converting to Images](#converting-to-images)), then use this prompt:
 
 ```
@@ -280,7 +283,7 @@ pip install -r requirements.txt
 
 # Node (creating from scratch) - global; set NODE_PATH to `npm root -g` if resolution fails
 npm install -g pptxgenjs sharp
-# icon workflow (pptxgenjs.md) additionally needs: npm install -g react-icons react react-dom
+# icon workflow only (optional) — pptxgenjs.md additionally needs: npm install -g react-icons react react-dom
 ```
 
 | Tool | Purpose | Windows Install |

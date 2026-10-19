@@ -33,10 +33,10 @@ async function build() {
   const s2 = pres.addSlide();
   s2.background = { color: C.white };
   s2.addText("为什么交付前必须检查", {
-    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy,
+    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy, margin: 0,
   });
   const stats = [
-    ["5 类", [{ text: "高频缺陷:占位残留 / 低对比 / 越界", options: { breakLine: true } }, { text: "形变 / 字号过小" }]],
+    ["5 类", [{ text: "高频缺陷:占位残留 / 低对比 /", options: { breakLine: true } }, { text: "越界 / 形变 / 字号过小" }]],
     ["9 项", "可自动检查的断言,由本 skill 的脚本执行"],
     ["0 项", "需要人工逐页重看的残留问题(目标值)"],
   ];
@@ -59,7 +59,7 @@ async function build() {
   const s3 = pres.addSlide();
   s3.background = { color: C.light };
   s3.addText("验收流程:四步走", {
-    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy,
+    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy, margin: 0,
   });
   const steps = [
     ["1", "生成", "从零或模板产出 PPTX"],
@@ -91,7 +91,7 @@ async function build() {
   const s4 = pres.addSlide();
   s4.background = { color: C.white };
   s4.addText("自动检查项(C1–C9)", {
-    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy,
+    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy, margin: 0,
   });
   const checks = [
     ["C1 结构", "页数 / 媒体 / 图片清点"],
@@ -122,7 +122,7 @@ async function build() {
   const s5 = pres.addSlide();
   s5.background = { color: C.white };
   s5.addText("量化阈值(带来源)", {
-    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy,
+    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy, margin: 0,
   });
   const head = (t) => ({
     text: t,
@@ -155,7 +155,7 @@ async function build() {
   const s6 = pres.addSlide();
   s6.background = { color: C.white };
   s6.addText("自动检查的输出长什么样", {
-    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy,
+    x: 0.8, y: 0.55, w: 11.7, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: C.navy, margin: 0,
   });
   s6.addText(
     [
@@ -164,11 +164,11 @@ async function build() {
       { text: "零 flag 才进入渲染目检环节", options: { bullet: true, breakLine: true } },
       { text: "阈值可按项目在上限内收紧", options: { bullet: true } },
     ],
-    { x: 0.8, y: 2.55, w: 4.6, h: 2.8, fontFace: FONT, fontSize: 14, color: C.ink, paraSpaceAfter: 6 }
+    { x: 0.8, y: 3.4, w: 4.3, h: 2.8, fontFace: FONT, fontSize: 14, color: C.ink, paraSpaceAfter: 6 }
   );
-  s6.addImage({ path: path.join(ASSETS, "chart-bars.png"), x: 5.9, y: 1.9, w: 6.8, h: 3.4 });
+  s6.addImage({ path: path.join(ASSETS, "chart-bars.png"), x: 5.6, y: 2.25, w: 7.2, h: 3.6 });
   s6.addText("示意:各检查项在首轮发现的问题数量", {
-    x: 5.9, y: 5.45, w: 6.8, h: 0.4, fontFace: FONT, fontSize: 12, color: G, align: "center",
+    x: 5.6, y: 6.0, w: 7.2, h: 0.4, fontFace: FONT, fontSize: 12, color: G, align: "center",
   });
 
   // ---- S7 closing -------------------------------------------------------------

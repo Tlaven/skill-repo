@@ -40,9 +40,9 @@ python scripts/qa_check.py deck.pptx --pdf render/deck.pdf --strict --json rende
 | C4 颜色卫生 | srgbClr 必须 6 位 hex、无 `#`;无负向 shadow dist | pptxgenjs 破坏项【实测:c4 同族】 |
 | C5 对比度 | 普通 ≥ 4.5:1;大文本(≥18pt 或 ≥14pt 粗)≥ 3:1;**不四舍五入** | 【引用:https://www.w3.org/TR/WCAG21/#contrast-minimum】 |
 | C6 图片形变 | 显示比例 vs 原始像素比例,偏差 ≤ 2% | 【实测:clean 0.0% vs c4 50%】 |
-| C7 页面越界 | 渲染 PDF 中不得有词框越过页面边界 | 【实测:tests/ (C7 检查器)】 |
+| C7 页面越界 | 渲染 PDF 中不得有词框越过页面边界 | 【实测:检查器可运行;无触发夹具(见 §5)】 |
 | C8 渲染保真 | 每个段落必须完整出现在渲染 PDF 文本层 | 【实测:c3 尾行被裁 → 命中】 |
-| C9 可编辑性 | 不得"整页图片 + 零文本"(覆盖率阈值 80%,可调) | 【实测:c6 命中】;外部实践【引用:PPTLint / Marp】 |
+| C9 可编辑性 | 不得"整页图片 + 零文本"(覆盖率阈值 80%,`--min-coverage` 可调) | 【实测:c6 命中】;外部实践【引用:PPTLint / Marp】 |
 
 ## 3. L2 目检清单(机器判不了的部分)
 
@@ -67,14 +67,16 @@ python scripts/qa_check.py deck.pptx --pdf render/deck.pdf --strict --json rende
 ## 5. 已知盲区(诚实声明)
 
 - **生成器已知问题**:pptxgenjs 4.0.1 把 `<p:notesMasterIdLst>` 写在 `<p:sldIdLst>` 之后,严格 schema 校验(validate.py)报次序错误——PowerPoint/WPS 仍能打开,但交付前建议跑 `normalize_pptx_order.py` 修复。【实测:tests/evidence/normalize_check.log(raw FAILED → normalized PASSED)】
-- 对比度:渐变 / 图片背景、主题色继承、透明叠加 —— 仅目检;表格主题条纹填充不可解析。
+- 对比度:渐变 / 图片背景、主题色继承 —— 仅目检;透明文本框叠色块已按"中心点命中的最上层色块"解析(复杂叠加仍目检);表格主题条纹填充不可解析。
 - CJK 的"等价大字号"WCAG 未给数值;本工具按 18pt/14pt 罗马值执行,对中文属**偏宽**(可能少判,不会多判)。
 - 行距 / 字距美观、孤字控制:无自动判据。
+- C7 是防御性检查——本机 WPS / LibreOffice 在导出端裁切越界文本,暂无触发夹具(见 UPGRADE-REPORT §5/§7)。
+- C3 不检查"继承字号"(run 未显式设 size 会跳过,计数在输出里);交付前用渲染目检兜底。
 - 音视频、动画、图表内部:不在本清单。
 
 ## 6. 负控与回归
 
-6 组负控 + 干净基线(误报闸门),一键复跑见 [tests/README.md](tests/README.md):
+7 组负控 + 干净基线(误报闸门),一键复跑见 [tests/README.md](tests/README.md):
 
 ```powershell
 python tests/run_tests.py --which controls

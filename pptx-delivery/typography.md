@@ -22,6 +22,7 @@
 - WCAG 的 18pt / 14pt(bold)是**对比度阈值切换的大文本分界**,不是最小字号;并明确 CJK 的等价尺寸应更大(未给数值)。【引用:https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html】
 - 本项目现状:`qa_check.py` C3 硬下限 **10pt(默认,可调)**;base 建议区间:标题 36–44pt / 正文 14–16pt / 说明 10–12pt。
 - 行业惯例(无权威文档):正文 18–24pt、线上演示 24pt+。【引用(一般博客):https://www.presentations.ai/zh/blog/what-font-size-is-best-for-presentations】
+- 场景优先:本页梯度以**阅读型**交付为准;现场放映型按 Harvard(正文 18–24pt)。SKILL.md 的"标题 36–44pt"属放映型建议,阅读型页标题取 28pt(实测样张);同一文档内不混用两套。
 
 ## 行距与行长
 
@@ -43,6 +44,6 @@
 ## 本项目的默认设定(实测通过,可作起点)
 
 - 字族:`Microsoft YaHei`(本机场景);**文字角色**:标题 / 名称 `1E2761` 粗体(页标题 / 卡片题 / 条目名),正文 `222222`,说明与注脚 `5F6B7C`,深底页文字 白 / `CADCFC`——上述浅底色在 `FFFFFF` 与 `F7F8FA` 底上均 ≥ 4.5:1【实测:tests/out/reports/clean.json, e2e_deck.json】。
-- 版式注脚:内容页的底部锚线(注脚 / 引用行)全篇同款同高,样张落 y=6.25;封面 / 封底脚注另一档(y≈6.6)。【实测:tests/out/render/e2e_deck/】
+- 版式注脚:内容页的底部锚线(注脚 / 引用行)全篇同款同高,样张落 y=6.25;封面 / 封底脚注另一档(y≈6.6);坐标以 13.33×7.5in 宽版式计。【实测:tests/out/render/e2e_deck/】
 - 字号梯度(实拍样张):封面标题 40 / 页标题 28 / 卡片题 16 / 正文 14 / 说明 12–13。
 - 珊瑚色 `E4574F` 白字对比 3.64:1——只用于 **≥18pt 或 ≥14pt 粗**的大文本【实测:qa_check C5】。
