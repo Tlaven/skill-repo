@@ -1,5 +1,5 @@
 ---
-name: pptx-lessons
+name: pptx-delivery-lessons
 description: Accumulated operational lessons for PPTX creation and editing with pptxgenjs.
 type: reference
 ---
@@ -88,7 +88,7 @@ python office/unpack.py input.pptx unpacked/
 
 ## 7. 经验要写对地方
 
-写操作经验前先确认：这个经验归属于哪个skill？不要写错地方。例如PPT生成经验属于 pptx skill，不是 thesis-docx skill。
+写操作经验前先确认：这个经验归属于哪个skill？不要写错地方。例如PPT生成经验属于 pptx-delivery skill，不是 thesis-docx skill。
 
 ## 8. 从用户纠正中提炼通用原则
 

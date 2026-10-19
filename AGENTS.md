@@ -8,6 +8,7 @@
 
 - 个人 **skill 单源仓库**:每个顶层目录 = 一个可加载的 skill;使用点(`~/.commandcode/skills/`、`~/.claude/skills/`、`~/.config/opencode/skills/`)以 **junction** 指回本仓库(现有一处例外:OpenCode 侧 `macro-market-radar` 为普通副本,见开放问题)。
 - 根 `scripts/` = 仓库级工具(门禁脚本);各 skill 的 `scripts/` 归各 skill 自己。
+- 根 `notes/` = 跨项目方法笔记(非 skill:验证纪律的素材与候选母本,格式跟随 `essentials` 脚手架模板);各项目取用时按 essentials 规则复制 + 重审。
 - skill 地图(9 个):
 
 | skill | 一句话 |
@@ -17,7 +18,7 @@
 | essentials | 弱领域方法论:从外部来源提炼可复用的判断脚手架(essentials 文档) |
 | init-project-docs | 项目文档骨架引导;三段式 × 4 层方法论的**唯一归属** |
 | macro-market-radar | 全球宏观市场雷达:数据快照 → 收集 → 交叉验证 → 融合解读 |
-| pptx | PPTX 生成 / 编辑 / QA:可执行断言 C1–C9 + 负控套件 + 交付验收清单 |
+| pptx-delivery | PPTX 生成 / 编辑 / QA:可执行断言 C1–C9 + 负控套件 + 交付验收清单 |
 | seeding-skills | skill 设计范式:种子式演化(静态导航 + 动态生长) |
 | thesis-docx | 中文论文 .docx 读写:Locator → Anchor → Mutation 内容寻址 |
 | video-decode | 视频链接 → 完整文字稿 + 结构化解读(可按需逐条核查) |
@@ -40,8 +41,8 @@
 1. **代码-文档同步门禁**:pre-commit 跑 `scripts/check-docs-sync.sh --staged --strict` —— 改 `scripts/` 下 `.sh/.ps1/.py` 必须同时动文档(`templates|references/`、任一 `SKILL.md` 或本文件),否则被挡;确不需要同步才 `--no-verify`,自担。【实测:hook 接线 2026-10-17】
 2. **`.sh` 必须 LF**:根 `.gitattributes` 已钉 `*.sh text eol=lf` —— CRLF 会让 bash 拒绝执行。【实测】
 3. **新增 skill 必须登记**:新 skill 的 `SKILL.md` 要加进 `scripts/check-docs-sync.sh` 的 `L1_FILES`(essentials 曾漏登记,2026-10-19 补——"缺对账点"的实证)。【实测】
-4. **许可分层**:改编自外部来源的 skill 保留上游许可文件、不与个人文本混写(样板:pptx 的 `LICENSE.txt`)。【实测:pptx;是否升格全仓约定【推断待确认】】
-5. **证据标签**:新增断言 / 阈值标【实测:位置】/【引用:来源】/【假设待测】;假设待测占比尽量 <30%。【实测:pptx 落地;是否升格全仓约定【推断待确认】】
+4. **许可分层**:改编自外部来源的 skill 保留上游许可文件、不与个人文本混写(样板:pptx-delivery 的 `LICENSE.txt`)。【实测:pptx-delivery;是否升格全仓约定【推断待确认】】
+5. **证据标签**:新增断言 / 阈值标【实测:位置】/【引用:来源】/【假设待测】;假设待测占比尽量 <30%。【实测:pptx-delivery 落地;是否升格全仓约定【推断待确认】】
 6. **布局跟随项目**:各 skill 目录形态自定(flat / references / scripts / core……),不强制统一。【实测:三种形态并存】
 7. **本地物料不入库**:校准 / 盲测等物料放 `<skill>/.calibration/` 并在 `.gitignore` 声明(样板:`init-project-docs/.calibration/`)。【实测】
 
@@ -62,8 +63,8 @@ bash scripts/check-docs-sync.sh --staged   # 同 pre-commit
 
 ## 开放问题
 
-- [ ] **使用点覆盖(2026-10-19 核)**:OpenCode 挂 5 个(pptx / drawio-export / thesis-docx / init-project-docs / video-decode),CC 挂 5 个(essentials / init-project-docs / macro-market-radar / seeding-skills / video-decode),Claude 挂 2 个(init-project-docs / seeding-skills)。待拍:① `aigc-derate` 是唯一未挂任何使用点的(与已挂 OpenCode 的 thesis-docx / drawio-export 同属论文套件)——补挂还是判停用?② OpenCode 侧 `macro-market-radar` 为普通副本目录(非 junction;当前与 repo 版一致,仅运行缓存不同)——改 junction 还是保留?
-- [ ] 不变量 4 / 5 是否升格为全仓约定(现仅 pptx 一例)?
+- [ ] **使用点覆盖(2026-10-19 核)**:OpenCode 挂 5 个(pptx-delivery / drawio-export / thesis-docx / init-project-docs / video-decode),CC 挂 5 个(essentials / init-project-docs / macro-market-radar / seeding-skills / video-decode),Claude 挂 2 个(init-project-docs / seeding-skills)。待拍:① `aigc-derate` 是唯一未挂任何使用点的(与已挂 OpenCode 的 thesis-docx / drawio-export 同属论文套件)——补挂还是判停用?② OpenCode 侧 `macro-market-radar` 为普通副本目录(非 junction;当前与 repo 版一致,仅运行缓存不同)——改 junction 还是保留?
+- [ ] 不变量 4 / 5 是否升格为全仓约定(现仅 pptx-delivery 一例)?
 
 ## 指针
 

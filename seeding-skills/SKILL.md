@@ -73,7 +73,7 @@ Claude Code 启动时:
 | `examples/` | 完整可跑的示例代码 | 示例较长,不适合嵌入 SKILL.md 时 | — |
 | `core/` / `lib/` | 底层库代码 | skill 提供可调用 API 时 | thesis-docx |
 | `scripts/` | 命令行脚本 | skill 提供命令行工具时 | drawio-export |
-| 平级 `.md` 文件 | 主题文档(如 `lessons.md`) | 单一辅助文档够用时 | pptx |
+| 平级 `.md` 文件 | 主题文档(如 `lessons.md`) | 单一辅助文档够用时 | pptx-delivery |
 
 ### 引用深度(关键)
 

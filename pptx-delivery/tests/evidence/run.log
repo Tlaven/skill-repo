@@ -1,22 +1,22 @@
 == build fixtures ==
-$ node C:\Users\TL\skills-repo\pptx\tests\make_controls.js
-wrote C:\Users\TL\skills-repo\pptx\tests\out\clean.pptx
-wrote C:\Users\TL\skills-repo\pptx\tests\out\c1_placeholder.pptx
-wrote C:\Users\TL\skills-repo\pptx\tests\out\c2_lowcontrast.pptx
-wrote C:\Users\TL\skills-repo\pptx\tests\out\c3_overflow.pptx
-wrote C:\Users\TL\skills-repo\pptx\tests\out\c4_stretched.pptx
-wrote C:\Users\TL\skills-repo\pptx\tests\out\c5_tinyfont.pptx
-wrote C:\Users\TL\skills-repo\pptx\tests\out\c6_flatslide.pptx
-controls done -> C:\Users\TL\skills-repo\pptx\tests\out
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\tests\make_badcolor.py
+$ node C:\Users\TL\skills-repo\pptx-delivery\tests\make_controls.js
+wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\clean.pptx
+wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\c1_placeholder.pptx
+wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\c2_lowcontrast.pptx
+wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\c3_overflow.pptx
+wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\c4_stretched.pptx
+wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\c5_tinyfont.pptx
+wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\c6_flatslide.pptx
+controls done -> C:\Users\TL\skills-repo\pptx-delivery\tests\out
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\tests\make_badcolor.py
 c7_badcolor.pptx written (corrupted=True)
-$ node C:\Users\TL\skills-repo\pptx\tests\make_e2e_deck.js
-wrote C:\Users\TL\skills-repo\pptx\tests\out\e2e_deck.pptx
-e2e deck done -> C:\Users\TL\skills-repo\pptx\tests\out
+$ node C:\Users\TL\skills-repo\pptx-delivery\tests\make_e2e_deck.js
+wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\e2e_deck.pptx
+e2e deck done -> C:\Users\TL\skills-repo\pptx-delivery\tests\out
 == render clean ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\clean.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\clean -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\clean.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\clean -Pdf
 == qa clean ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\clean.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\clean\clean.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\clean.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\clean.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\clean\clean.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\clean.json
 == qa_check: clean.pptx ==
 [C1-structure] info=1
     info: slides=3, media=2, pictures=1
@@ -39,11 +39,11 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: Microsoft YaHei x19
 summary: errors=0, flags=0, info=10
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\clean.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\clean.json
 == render c1_placeholder ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c1_placeholder.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c1_placeholder -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\c1_placeholder.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c1_placeholder -Pdf
 == qa c1_placeholder ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c1_placeholder.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c1_placeholder\c1_placeholder.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c1_placeholder.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c1_placeholder.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c1_placeholder\c1_placeholder.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c1_placeholder.json
 == qa_check: c1_placeholder.pptx ==
 [C1-structure] info=1
     info: slides=1, media=1, pictures=0
@@ -68,11 +68,11 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: Microsoft YaHei x4
 summary: errors=0, flags=3, info=9
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c1_placeholder.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c1_placeholder.json
 == render c2_lowcontrast ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c2_lowcontrast.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c2_lowcontrast -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\c2_lowcontrast.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c2_lowcontrast -Pdf
 == qa c2_lowcontrast ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c2_lowcontrast.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c2_lowcontrast\c2_lowcontrast.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c2_lowcontrast.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c2_lowcontrast.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c2_lowcontrast\c2_lowcontrast.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c2_lowcontrast.json
 == qa_check: c2_lowcontrast.pptx ==
 [C1-structure] info=1
     info: slides=2, media=1, pictures=0
@@ -97,11 +97,11 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: Microsoft YaHei x4
 summary: errors=0, flags=2, info=10
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c2_lowcontrast.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c2_lowcontrast.json
 == render c3_overflow ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c3_overflow.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c3_overflow -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\c3_overflow.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c3_overflow -Pdf
 == qa c3_overflow ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c3_overflow.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c3_overflow\c3_overflow.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c3_overflow.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c3_overflow.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c3_overflow\c3_overflow.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c3_overflow.json
 == qa_check: c3_overflow.pptx ==
 [C1-structure] info=1
     info: slides=1, media=1, pictures=0
@@ -124,11 +124,11 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: Microsoft YaHei x2
 summary: errors=0, flags=1, info=9
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c3_overflow.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c3_overflow.json
 == render c4_stretched ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c4_stretched.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c4_stretched -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\c4_stretched.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c4_stretched -Pdf
 == qa c4_stretched ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c4_stretched.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c4_stretched\c4_stretched.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c4_stretched.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c4_stretched.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c4_stretched\c4_stretched.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c4_stretched.json
 == qa_check: c4_stretched.pptx ==
 [C1-structure] info=1
     info: slides=1, media=2, pictures=2
@@ -151,11 +151,11 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: Microsoft YaHei x3
 summary: errors=0, flags=1, info=9
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c4_stretched.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c4_stretched.json
 == render c5_tinyfont ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c5_tinyfont.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c5_tinyfont -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\c5_tinyfont.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c5_tinyfont -Pdf
 == qa c5_tinyfont ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c5_tinyfont.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c5_tinyfont\c5_tinyfont.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c5_tinyfont.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c5_tinyfont.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c5_tinyfont\c5_tinyfont.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c5_tinyfont.json
 == qa_check: c5_tinyfont.pptx ==
 [C1-structure] info=1
     info: slides=1, media=1, pictures=0
@@ -179,11 +179,11 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: Microsoft YaHei x3
 summary: errors=0, flags=1, info=10
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c5_tinyfont.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c5_tinyfont.json
 == render c6_flatslide ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c6_flatslide.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c6_flatslide -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\c6_flatslide.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c6_flatslide -Pdf
 == qa c6_flatslide ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c6_flatslide.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c6_flatslide\c6_flatslide.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c6_flatslide.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c6_flatslide.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c6_flatslide\c6_flatslide.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c6_flatslide.json
 == qa_check: c6_flatslide.pptx ==
 [C1-structure] info=1
     info: slides=1, media=2, pictures=1
@@ -206,11 +206,11 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: no explicit font faces (all inherited)
 summary: errors=0, flags=1, info=9
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c6_flatslide.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c6_flatslide.json
 == render c7_badcolor ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\c7_badcolor.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\c7_badcolor -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\c7_badcolor.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c7_badcolor -Pdf
 == qa c7_badcolor ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\c7_badcolor.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\c7_badcolor\c7_badcolor.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\c7_badcolor.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c7_badcolor.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c7_badcolor\c7_badcolor.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c7_badcolor.json
 == qa_check: c7_badcolor.pptx ==
 [C1-structure] info=1
     info: slides=3, media=2, pictures=1
@@ -235,11 +235,11 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: Microsoft YaHei x19
 summary: errors=1, flags=2, info=9
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\c7_badcolor.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c7_badcolor.json
 == render e2e_deck ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx\tests\out\e2e_deck.pptx -OutDir C:\Users\TL\skills-repo\pptx\tests\out\render\e2e_deck -Pdf
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\e2e_deck.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\e2e_deck -Pdf
 == qa e2e_deck ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx\scripts\qa_check.py C:\Users\TL\skills-repo\pptx\tests\out\e2e_deck.pptx --pdf C:\Users\TL\skills-repo\pptx\tests\out\render\e2e_deck\e2e_deck.pdf --json C:\Users\TL\skills-repo\pptx\tests\out\reports\e2e_deck.json
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\e2e_deck.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\e2e_deck\e2e_deck.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\e2e_deck.json
 == qa_check: e2e_deck.pptx ==
 [C1-structure] info=1
     info: slides=7, media=2, pictures=1
@@ -262,7 +262,7 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
 [I1-font-inventory] info=1
     info: Microsoft YaHei x80
 summary: errors=0, flags=0, info=10
-json: C:\Users\TL\skills-repo\pptx\tests\out\reports\e2e_deck.json
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\e2e_deck.json
 
 == summary ==
 [PASS] clean: fired: (none) | flags=0, errors=0

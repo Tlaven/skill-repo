@@ -1,6 +1,6 @@
-# UPGRADE-REPORT — pptx skill 产品化升级对账单
+# UPGRADE-REPORT — pptx-delivery skill 产品化升级对账单
 
-> **任务**:把 pptx skill 从「个人工作流」提升到「可分享 / 可交付」级别(全程自主推进)。
+> **任务**:把 pptx-delivery skill 从「个人工作流」提升到「可分享 / 可交付」级别(全程自主推进)。
 > **日期**:2026-10-19 · **底稿**:[UPGRADE-PLAN.md](UPGRADE-PLAN.md)(先于改动落盘)
 > **阅读顺序**:§1 缺口→处置 → §4/§5 硬条件结果 → §6 证据台账 → §7 未竟事项。
 > **来源标签**:`【实测:路径】` / `【引用:URL】` / `【假设待测】`。

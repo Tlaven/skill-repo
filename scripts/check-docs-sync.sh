@@ -15,7 +15,7 @@
 # 已接本仓库 .git/hooks/pre-commit(--staged --strict);check-doc-refs 不接(本仓库无 docs/)。
 CODE_GLOB='/scripts/.*\.(sh|ps1|py)$'
 DOC_GLOB='/(templates|references)/'
-L1_FILES='AGENTS.md init-project-docs/SKILL.md essentials/SKILL.md aigc-derate/SKILL.md drawio-export/SKILL.md macro-market-radar/SKILL.md pptx/SKILL.md seeding-skills/SKILL.md thesis-docx/SKILL.md video-decode/SKILL.md'
+L1_FILES='AGENTS.md init-project-docs/SKILL.md essentials/SKILL.md aigc-derate/SKILL.md drawio-export/SKILL.md macro-market-radar/SKILL.md pptx-delivery/SKILL.md seeding-skills/SKILL.md thesis-docx/SKILL.md video-decode/SKILL.md'
 
 set -u
 STRICT=0; STAGED=0; BASE=""

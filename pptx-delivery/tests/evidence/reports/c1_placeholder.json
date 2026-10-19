@@ -1,8 +1,8 @@
 {
-  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c7_badcolor.pptx",
+  "file": "C:\\Users\\TL\\skills-repo\\pptx-delivery\\tests\\out\\c1_placeholder.pptx",
   "summary": {
-    "errors": 1,
-    "flags": 2,
+    "errors": 0,
+    "flags": 3,
     "info": 9
   },
   "unresolved": [],
@@ -11,14 +11,24 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "slides=3, media=2, pictures=1"
+        "detail": "slides=1, media=1, pictures=0"
       }
     ],
     "C2-placeholder": [
       {
-        "severity": "info",
-        "slide": null,
-        "detail": "no placeholder pattern found"
+        "severity": "flag",
+        "slide": 1,
+        "detail": "matched 'XXXX' in shape 'Text 1': 'XXXX 这里是占位标题'"
+      },
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "matched 'Click to edit' in shape 'Text 2': 'Click to edit 单击此处填写内容'"
+      },
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "matched '单击此处' in shape 'Text 2': 'Click to edit 单击此处填写内容'"
       }
     ],
     "C3-min-font": [
@@ -30,26 +40,16 @@
     ],
     "C4-color-hygiene": [
       {
-        "severity": "error",
+        "severity": "info",
         "slide": null,
-        "detail": "ppt/slides/slide1.xml: srgbClr val='#1E2761'"
+        "detail": "hex colors well-formed"
       }
     ],
     "C5-contrast": [
       {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "ratio 1.00 < 3.0 (large text) in 'Text 1': '交付验收 · 基线样张' color=#FFFFFF bg=#FFFFFF"
-      },
-      {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "ratio 1.39 < 3.0 (large text) in 'Text 2': 'qa_check.py 干净对照:预期 0 error / 0 flag' color=#CADCFC bg=#FFFFFF"
-      },
-      {
         "severity": "info",
         "slide": null,
-        "detail": "checked=19, below-threshold=2, unresolved(needs visual)=0"
+        "detail": "checked=4, below-threshold=0, unresolved(needs visual)=0"
       }
     ],
     "C6-image-aspect": [
@@ -70,21 +70,21 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "no words outside slide bounds across 3 page(s)"
+        "detail": "no words outside slide bounds across 1 page(s)"
       }
     ],
     "C8-render-text": [
       {
         "severity": "info",
         "slide": null,
-        "detail": "all paragraphs present in PDF text layer (3 page(s))"
+        "detail": "all paragraphs present in PDF text layer (1 page(s))"
       }
     ],
     "I1-font-inventory": [
       {
         "severity": "info",
         "slide": null,
-        "detail": "Microsoft YaHei x19"
+        "detail": "Microsoft YaHei x4"
       }
     ]
   }

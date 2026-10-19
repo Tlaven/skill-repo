@@ -1,6 +1,6 @@
 # 中文(CJK)排版规范(演示文稿)
 
-> 本文件是 pptx skill 的本地增量(base 的 Latin 排版建议见 SKILL.md「Typography」节)。
+> 本文件是 pptx-delivery skill 的本地增量(base 的 Latin 排版建议见 SKILL.md「Typography」节)。
 > 每条规则带来源标签:`【引用:URL】` / `【实测:位置】` / `【假设待测】`。
 > 场景:Windows 制作 → 任意环境打开 / 放映的跨平台交付。
 

@@ -1,9 +1,9 @@
 {
-  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c2_lowcontrast.pptx",
+  "file": "C:\\Users\\TL\\skills-repo\\pptx-delivery\\tests\\out\\c3_overflow.pptx",
   "summary": {
     "errors": 0,
-    "flags": 2,
-    "info": 10
+    "flags": 1,
+    "info": 9
   },
   "unresolved": [],
   "checks": {
@@ -11,7 +11,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "slides=2, media=1, pictures=0"
+        "detail": "slides=1, media=1, pictures=0"
       }
     ],
     "C2-placeholder": [
@@ -37,19 +37,9 @@
     ],
     "C5-contrast": [
       {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "ratio 1.36 < 4.5 (normal text) in 'Text 1': '浅灰文字压在纯白底上(约 1.4:1)' color=#DDDDDD bg=#FFFFFF"
-      },
-      {
-        "severity": "flag",
-        "slide": 2,
-        "detail": "ratio 1.16 < 4.5 (normal text) in 'Text 1': '近白文字压在奶油底上(约 1.1:1)' color=#FCF6F5 bg=#F9E795"
-      },
-      {
         "severity": "info",
         "slide": null,
-        "detail": "checked=4, below-threshold=2, unresolved(needs visual)=0"
+        "detail": "checked=2, below-threshold=0, unresolved(needs visual)=0"
       }
     ],
     "C6-image-aspect": [
@@ -70,21 +60,21 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "no words outside slide bounds across 2 page(s)"
+        "detail": "no words outside slide bounds across 1 page(s)"
       }
     ],
     "C8-render-text": [
       {
-        "severity": "info",
-        "slide": null,
-        "detail": "all paragraphs present in PDF text layer (2 page(s))"
+        "severity": "flag",
+        "slide": 1,
+        "detail": "missing last 8 char(s) '导出时就丢内容。' of paragraph in 'Text 1'"
       }
     ],
     "I1-font-inventory": [
       {
         "severity": "info",
         "slide": null,
-        "detail": "Microsoft YaHei x4"
+        "detail": "Microsoft YaHei x2"
       }
     ]
   }

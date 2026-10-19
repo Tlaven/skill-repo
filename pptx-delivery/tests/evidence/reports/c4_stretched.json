@@ -1,5 +1,5 @@
 {
-  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c6_flatslide.pptx",
+  "file": "C:\\Users\\TL\\skills-repo\\pptx-delivery\\tests\\out\\c4_stretched.pptx",
   "summary": {
     "errors": 0,
     "flags": 1,
@@ -11,7 +11,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "slides=1, media=2, pictures=1"
+        "detail": "slides=1, media=2, pictures=2"
       }
     ],
     "C2-placeholder": [
@@ -39,21 +39,21 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "checked=0, below-threshold=0, unresolved(needs visual)=0"
+        "detail": "checked=3, below-threshold=0, unresolved(needs visual)=0"
       }
     ],
     "C6-image-aspect": [
       {
-        "severity": "info",
-        "slide": null,
-        "detail": "all pictures within aspect tolerance"
+        "severity": "flag",
+        "slide": 1,
+        "detail": "'Image 0': displayed aspect 2.000 vs native 4.000 (deviation 50.0% > 2.0%)"
       }
     ],
     "C9-editable": [
       {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "slide looks non-editable: a picture covers 100% of the slide and no text was found"
+        "severity": "info",
+        "slide": null,
+        "detail": "no full-page-image-only slides"
       }
     ],
     "C7-pdf-bounds": [
@@ -74,7 +74,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "no explicit font faces (all inherited)"
+        "detail": "Microsoft YaHei x3"
       }
     ]
   }

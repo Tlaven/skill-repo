@@ -1,8 +1,8 @@
 {
-  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c4_stretched.pptx",
+  "file": "C:\\Users\\TL\\skills-repo\\pptx-delivery\\tests\\out\\c7_badcolor.pptx",
   "summary": {
-    "errors": 0,
-    "flags": 1,
+    "errors": 1,
+    "flags": 2,
     "info": 9
   },
   "unresolved": [],
@@ -11,7 +11,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "slides=1, media=2, pictures=2"
+        "detail": "slides=3, media=2, pictures=1"
       }
     ],
     "C2-placeholder": [
@@ -30,23 +30,33 @@
     ],
     "C4-color-hygiene": [
       {
-        "severity": "info",
+        "severity": "error",
         "slide": null,
-        "detail": "hex colors well-formed"
+        "detail": "ppt/slides/slide1.xml: srgbClr val='#1E2761'"
       }
     ],
     "C5-contrast": [
       {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "ratio 1.00 < 3.0 (large text) in 'Text 1': '交付验收 · 基线样张' color=#FFFFFF bg=#FFFFFF"
+      },
+      {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "ratio 1.39 < 3.0 (large text) in 'Text 2': 'qa_check.py 干净对照:预期 0 error / 0 flag' color=#CADCFC bg=#FFFFFF"
+      },
+      {
         "severity": "info",
         "slide": null,
-        "detail": "checked=3, below-threshold=0, unresolved(needs visual)=0"
+        "detail": "checked=19, below-threshold=2, unresolved(needs visual)=0"
       }
     ],
     "C6-image-aspect": [
       {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "'Image 0': displayed aspect 2.000 vs native 4.000 (deviation 50.0% > 2.0%)"
+        "severity": "info",
+        "slide": null,
+        "detail": "all pictures within aspect tolerance"
       }
     ],
     "C9-editable": [
@@ -60,21 +70,21 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "no words outside slide bounds across 1 page(s)"
+        "detail": "no words outside slide bounds across 3 page(s)"
       }
     ],
     "C8-render-text": [
       {
         "severity": "info",
         "slide": null,
-        "detail": "all paragraphs present in PDF text layer (1 page(s))"
+        "detail": "all paragraphs present in PDF text layer (3 page(s))"
       }
     ],
     "I1-font-inventory": [
       {
         "severity": "info",
         "slide": null,
-        "detail": "Microsoft YaHei x3"
+        "detail": "Microsoft YaHei x19"
       }
     ]
   }

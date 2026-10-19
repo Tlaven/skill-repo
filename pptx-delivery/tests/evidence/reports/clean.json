@@ -1,9 +1,9 @@
 {
-  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c3_overflow.pptx",
+  "file": "C:\\Users\\TL\\skills-repo\\pptx-delivery\\tests\\out\\clean.pptx",
   "summary": {
     "errors": 0,
-    "flags": 1,
-    "info": 9
+    "flags": 0,
+    "info": 10
   },
   "unresolved": [],
   "checks": {
@@ -11,7 +11,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "slides=1, media=1, pictures=0"
+        "detail": "slides=3, media=2, pictures=1"
       }
     ],
     "C2-placeholder": [
@@ -39,7 +39,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "checked=2, below-threshold=0, unresolved(needs visual)=0"
+        "detail": "checked=19, below-threshold=0, unresolved(needs visual)=0"
       }
     ],
     "C6-image-aspect": [
@@ -60,21 +60,21 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "no words outside slide bounds across 1 page(s)"
+        "detail": "no words outside slide bounds across 3 page(s)"
       }
     ],
     "C8-render-text": [
       {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "missing last 8 char(s) '导出时就丢内容。' of paragraph in 'Text 1'"
+        "severity": "info",
+        "slide": null,
+        "detail": "all paragraphs present in PDF text layer (3 page(s))"
       }
     ],
     "I1-font-inventory": [
       {
         "severity": "info",
         "slide": null,
-        "detail": "Microsoft YaHei x2"
+        "detail": "Microsoft YaHei x19"
       }
     ]
   }

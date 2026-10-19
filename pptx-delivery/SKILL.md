@@ -1,10 +1,10 @@
 ---
-name: pptx
-description: "Use when a .pptx file is involved as input, output, or reference. Trigger on \"deck,\" \"slides,\" \"presentation,\" \"PPT,\" \"幻灯片,\" \"演示文稿,\" \"答辩,\" or any .pptx filename. Do not use for converting non-PPTX file formats or for image-only processing."
+name: pptx-delivery
+description: "Delivery-grade PPTX skill: create, edit, QA, and vet slide decks. Use when a .pptx file is involved as input, output, or reference. Trigger on \"deck,\" \"slides,\" \"presentation,\" \"PPT,\" \"幻灯片,\" \"演示文稿,\" \"答辩,\" or any .pptx filename. Do not use for converting non-PPTX file formats or for image-only processing."
 license: Proprietary. LICENSE.txt has complete terms
 ---
 
-# PPTX Skill
+# pptx-delivery — PPTX 生成、编辑与交付验收
 
 ## Quick Reference
 

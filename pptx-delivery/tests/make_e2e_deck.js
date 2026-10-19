@@ -25,7 +25,7 @@ async function build() {
   s1.addText("把「看起来差不多」变成「逐项查过」—— 一份陌生团队也能直接照用的清单", {
     x: 0.8, y: 3.75, w: 11.7, h: 0.6, fontFace: FONT, fontSize: 18, color: C.ice, margin: 0,
   });
-  s1.addText("Command Code · pptx skill 产品化样本", {
+  s1.addText("Command Code · pptx-delivery skill 产品化样本", {
     x: 0.8, y: 6.6, w: 11.7, h: 0.4, fontFace: FONT, fontSize: 12, color: C.ice, margin: 0,
   });
 
@@ -147,7 +147,7 @@ async function build() {
       valign: "middle", border: { pt: 1, color: "D7DEE8" },
     }
   );
-  s5.addText("阈值与来源详见 pptx/acceptance-checklist.md", {
+  s5.addText("阈值与来源详见 pptx-delivery/acceptance-checklist.md", {
     x: 0.8, y: 6.25, w: 11.7, h: 0.4, fontFace: FONT, fontSize: 12, color: G, margin: 0,
   });
 
@@ -186,7 +186,7 @@ async function build() {
     ],
     { x: 0.8, y: 3.6, w: 11.7, h: 2.2, fontFace: FONT, fontSize: 16, color: C.ice, paraSpaceAfter: 8 }
   );
-  s7.addText("pptx skill · acceptance-checklist.md", {
+  s7.addText("pptx-delivery · acceptance-checklist.md", {
     x: 0.8, y: 6.6, w: 11.7, h: 0.4, fontFace: FONT, fontSize: 12, color: C.ice, margin: 0,
   });
 

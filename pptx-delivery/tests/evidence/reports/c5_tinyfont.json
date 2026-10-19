@@ -1,9 +1,9 @@
 {
-  "file": "C:\\Users\\TL\\skills-repo\\pptx\\tests\\out\\c1_placeholder.pptx",
+  "file": "C:\\Users\\TL\\skills-repo\\pptx-delivery\\tests\\out\\c5_tinyfont.pptx",
   "summary": {
     "errors": 0,
-    "flags": 3,
-    "info": 9
+    "flags": 1,
+    "info": 10
   },
   "unresolved": [],
   "checks": {
@@ -16,26 +16,21 @@
     ],
     "C2-placeholder": [
       {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "matched 'XXXX' in shape 'Text 1': 'XXXX 这里是占位标题'"
-      },
-      {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "matched 'Click to edit' in shape 'Text 2': 'Click to edit 单击此处填写内容'"
-      },
-      {
-        "severity": "flag",
-        "slide": 1,
-        "detail": "matched '单击此处' in shape 'Text 2': 'Click to edit 单击此处填写内容'"
+        "severity": "info",
+        "slide": null,
+        "detail": "no placeholder pattern found"
       }
     ],
     "C3-min-font": [
       {
+        "severity": "flag",
+        "slide": 1,
+        "detail": "7.0pt (min 10.0pt) in 'Text 2': '这条备注只有 7pt,投影环境基本不可读,应当被检查抓出。'"
+      },
+      {
         "severity": "info",
         "slide": null,
-        "detail": "below-min=0, inherited-size(not checked)=0"
+        "detail": "below-min=1, inherited-size(not checked)=0"
       }
     ],
     "C4-color-hygiene": [
@@ -49,7 +44,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "checked=4, below-threshold=0, unresolved(needs visual)=0"
+        "detail": "checked=3, below-threshold=0, unresolved(needs visual)=0"
       }
     ],
     "C6-image-aspect": [
@@ -84,7 +79,7 @@
       {
         "severity": "info",
         "slide": null,
-        "detail": "Microsoft YaHei x4"
+        "detail": "Microsoft YaHei x3"
       }
     ]
   }
