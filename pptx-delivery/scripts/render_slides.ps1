@@ -1,4 +1,4 @@
-# render_slides.ps1 - Render a PPTX to per-slide PNGs (and optionally PDF) via PowerPoint COM.
+﻿# render_slides.ps1 - Render a PPTX to per-slide PNGs (and optionally PDF) via PowerPoint COM.
 #
 # Windows-only. Uses the "PowerPoint.Application" COM server, which is provided by
 # either Microsoft PowerPoint or WPS Office (本机 WPS 26.8.1 的 COM 兼容接口实测, 2026-10-19).

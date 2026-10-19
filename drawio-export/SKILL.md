@@ -232,3 +232,11 @@ python thesis-docx/cli.py insert-image 论文.docx --image fig.svg
 - 首次导出可能较慢（draw.io 启动时间），后续会快一些
 - 如果导出卡住，检查 draw.io 是否已在运行（关闭后重试）
 - 回边（循环回路）通常需要手动设置 `exitX/exitY` 和 `entryX/entryY` 来控制走线方向
+
+## 验收（smoke）
+
+- **档位:** smoke
+- **命令:** `powershell -NoProfile -ExecutionPolicy Bypass -File eval/run.ps1`（或仓库级 `scripts/skills-eval.ps1 -Name drawio-export`）
+- **断言:** ① 合法 spec（两节点一边，带坐标）→ 生成 .drawio 且含 `<mxfile>`；② 负控：重复节点 id 的 spec 必须被拒绝（非零退出、不产出文件）。
+- **证据:** 2026-10-19 首跑通过（正常生成 / 负控拒绝）。
+- **边界:** smoke 只验 JSON→.drawio 与校验层；导出（draw.io 桌面版 / Graphviz）另由 `check` 命令现场探测，不列入 smoke。

@@ -298,6 +298,16 @@ npm install -g pptxgenjs sharp
 
 On Windows, `soffice.py` auto-detects common install paths (`Program Files\LibreOffice\...`, scoop's `apps\libreoffice\current\LibreOffice\program\`); override anytime with the `SOFFICE_PATH` env var.
 
+## 验收（acceptance）
+
+- **档位:** acceptance（交付级）
+- **一键复跑:** `python tests/run_tests.py`（8 组负控 + 干净基线 + 端到端；证据落 `tests/evidence/`）
+- **免渲染自测:** `python tests/c5_selftest.py`、`python tests/c7_selftest.py`（检查器自身的红/绿验证——先红一次原则）
+- **交付清单:** [acceptance-checklist.md](acceptance-checklist.md)（分层检查 + 目检 + 签字项）
+- **独立复核留档:** `docs/reviews/2026-10-19-cold-verification.md`（冷眼复核记录）
+- **判据:** META=PASS、负控全中、干净基线 0 error / 0 flag；改动后必须同套件复跑（比较绑版本）。
+- **注意:** 需先按 `requirements.txt` 与 Node 依赖装好环境；渲染器（WPS/PowerPoint COM 或 LibreOffice）仅影响 C7/C8，缺失时自动降级为 XML 层检查。
+
 ## Sources & License
 
 - Base material: Anthropic's pptx skill (© 2025 Anthropic PBC; see LICENSE.txt — distribution restrictions apply, keep that file with any copy).
