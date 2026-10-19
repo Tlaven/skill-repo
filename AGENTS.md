@@ -6,7 +6,7 @@
 
 ## [是什么]
 
-- 个人 **skill 单源仓库**:每个顶层目录 = 一个可加载的 skill;使用点(`~/.commandcode/skills/`、`~/.claude/skills/`)以 **junction** 指回本仓库。
+- 个人 **skill 单源仓库**:每个顶层目录 = 一个可加载的 skill;使用点(`~/.commandcode/skills/`、`~/.claude/skills/`、`~/.config/opencode/skills/`)以 **junction** 指回本仓库(现有一处例外:OpenCode 侧 `macro-market-radar` 为普通副本,见开放问题)。
 - 根 `scripts/` = 仓库级工具(门禁脚本);各 skill 的 `scripts/` 归各 skill 自己。
 - skill 地图(9 个):
 
@@ -62,7 +62,7 @@ bash scripts/check-docs-sync.sh --staged   # 同 pre-commit
 
 ## 开放问题
 
-- [ ] **junction 覆盖不全**:CC 挂 5 个(essentials / init-project-docs / macro-market-radar / seeding-skills / video-decode),Claude 挂 2 个(init-project-docs / seeding-skills);`aigc-derate`、`drawio-export`、`pptx`、`thesis-docx` 未挂到任何使用点——有意(未发布 / 停用)还是待办?
+- [ ] **使用点覆盖(2026-10-19 核)**:OpenCode 挂 5 个(pptx / drawio-export / thesis-docx / init-project-docs / video-decode),CC 挂 5 个(essentials / init-project-docs / macro-market-radar / seeding-skills / video-decode),Claude 挂 2 个(init-project-docs / seeding-skills)。待拍:① `aigc-derate` 是唯一未挂任何使用点的(与已挂 OpenCode 的 thesis-docx / drawio-export 同属论文套件)——补挂还是判停用?② OpenCode 侧 `macro-market-radar` 为普通副本目录(非 junction;当前与 repo 版一致,仅运行缓存不同)——改 junction 还是保留?
 - [ ] 不变量 4 / 5 是否升格为全仓约定(现仅 pptx 一例)?
 
 ## 指针
