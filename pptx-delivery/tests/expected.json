@@ -9,6 +9,7 @@
     "c4_stretched": { "must_include": ["C6-image-aspect"] },
     "c5_tinyfont": { "must_include": ["C3-min-font"] },
     "c6_flatslide": { "must_include": ["C9-editable"] },
-    "c7_badcolor": { "must_include": ["C4-color-hygiene"] }
+    "c7_badcolor": { "must_include": ["C4-color-hygiene"] },
+    "c8_bgshape": { "must_include": ["C5-contrast"], "max_flags": 1, "max_errors": 0 }
   }
 }

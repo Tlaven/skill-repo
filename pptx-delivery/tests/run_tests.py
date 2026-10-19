@@ -33,7 +33,7 @@ EVID = TESTS / "evidence"
 QA = REPO / "scripts" / "qa_check.py"
 RENDER = REPO / "scripts" / "render_slides.ps1"
 
-CONTROL_DECKS = ["clean", "c1_placeholder", "c2_lowcontrast", "c3_overflow", "c4_stretched", "c5_tinyfont", "c6_flatslide", "c7_badcolor"]
+CONTROL_DECKS = ["clean", "c1_placeholder", "c2_lowcontrast", "c3_overflow", "c4_stretched", "c5_tinyfont", "c6_flatslide", "c7_badcolor", "c8_bgshape"]
 E2E_DECK = "e2e_deck"
 
 TRANSCRIPT = []
@@ -147,6 +147,7 @@ def main():
         if args.which in ("all", "controls"):
             build("make_controls.js")
             run([sys.executable, TESTS / "make_badcolor.py"])
+            run([sys.executable, TESTS / "make_bgshape.py"])
         if args.which in ("all", "e2e"):
             build("make_e2e_deck.js")
 

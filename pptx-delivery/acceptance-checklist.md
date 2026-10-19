@@ -76,7 +76,7 @@ python scripts/qa_check.py deck.pptx --pdf render/deck.pdf --strict --json rende
 
 ## 6. 负控与回归
 
-7 组负控 + 干净基线(误报闸门),一键复跑见 [tests/README.md](tests/README.md):
+8 组负控 + 干净基线(误报闸门),一键复跑见 [tests/README.md](tests/README.md):
 
 ```powershell
 python tests/run_tests.py --which controls

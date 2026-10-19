@@ -10,9 +10,8 @@ wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\c6_flatslide.pptx
 controls done -> C:\Users\TL\skills-repo\pptx-delivery\tests\out
 $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\tests\make_badcolor.py
 c7_badcolor.pptx written (corrupted=True)
-$ node C:\Users\TL\skills-repo\pptx-delivery\tests\make_e2e_deck.js
-wrote C:\Users\TL\skills-repo\pptx-delivery\tests\out\e2e_deck.pptx
-e2e deck done -> C:\Users\TL\skills-repo\pptx-delivery\tests\out
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\tests\make_bgshape.py
+c8_bgshape.pptx written
 == render clean ==
 $ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\clean.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\clean -Pdf
 == qa clean ==
@@ -236,33 +235,34 @@ $ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-rep
     info: Microsoft YaHei x19
 summary: errors=1, flags=2, info=9
 json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c7_badcolor.json
-== render e2e_deck ==
-$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\e2e_deck.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\e2e_deck -Pdf
-== qa e2e_deck ==
-$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\e2e_deck.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\e2e_deck\e2e_deck.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\e2e_deck.json
-== qa_check: e2e_deck.pptx ==
+== render c8_bgshape ==
+$ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\TL\skills-repo\pptx-delivery\scripts\render_slides.ps1 -Pptx C:\Users\TL\skills-repo\pptx-delivery\tests\out\c8_bgshape.pptx -OutDir C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c8_bgshape -Pdf
+== qa c8_bgshape ==
+$ C:\Users\TL\.pyenv\pyenv-win\versions\3.12.4\python.exe C:\Users\TL\skills-repo\pptx-delivery\scripts\qa_check.py C:\Users\TL\skills-repo\pptx-delivery\tests\out\c8_bgshape.pptx --pdf C:\Users\TL\skills-repo\pptx-delivery\tests\out\render\c8_bgshape\c8_bgshape.pdf --json C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c8_bgshape.json
+== qa_check: c8_bgshape.pptx ==
 [C1-structure] info=1
-    info: slides=7, media=1, pictures=1
+    info: slides=1, media=0, pictures=0
 [C2-placeholder] info=1
     info: no placeholder pattern found
 [C3-min-font] info=1
     info: below-min=0, inherited-size(not checked)=0
 [C4-color-hygiene] info=1
     info: hex colors well-formed
-[C5-contrast] info=1
-    info: checked=80, below-threshold=0, unresolved(needs visual)=0
+[C5-contrast] flag=1, info=1
+    info: checked=2, below-threshold=1, unresolved(needs visual)=0
+    FLAG: slide 1: ratio 1.39 < 3.0 (large text) in 'TextBox 3': '灰底灰字：应当被 C5 抓出（约 1.39:1）' color=#808080 bg=#999999
 [C6-image-aspect] info=1
     info: all pictures within aspect tolerance
 [C7-pdf-bounds] info=1
-    info: no words outside slide bounds across 7 page(s)
+    info: no words outside slide bounds across 1 page(s)
 [C8-render-text] info=1
-    info: all paragraphs present in PDF text layer (7 page(s))
+    info: all paragraphs present in PDF text layer (1 page(s))
 [C9-editable] info=1
     info: no full-page-image-only slides
 [I1-font-inventory] info=1
-    info: Microsoft YaHei x80
-summary: errors=0, flags=0, info=10
-json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\e2e_deck.json
+    info: no explicit font faces (all inherited)
+summary: errors=0, flags=1, info=10
+json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\c8_bgshape.json
 
 == summary ==
 [PASS] clean: fired: (none) | flags=0, errors=0
@@ -273,4 +273,4 @@ json: C:\Users\TL\skills-repo\pptx-delivery\tests\out\reports\e2e_deck.json
 [PASS] c5_tinyfont: fired: C3-min-font | flags=1, errors=0
 [PASS] c6_flatslide: fired: C9-editable | flags=1, errors=0
 [PASS] c7_badcolor: fired: C4-color-hygiene, C5-contrast | flags=2, errors=1
-[PASS] e2e_deck: flags=0, errors=0
+[PASS] c8_bgshape: fired: C5-contrast | flags=1, errors=0
