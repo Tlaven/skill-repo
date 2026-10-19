@@ -43,3 +43,10 @@
 
 - 按参数未重跑 build / render 的字节级复现(已由 A 实跑与 C1 / C2 的渲染复看间接覆盖;见 D 报告的"遗留不确定性")。
 - 候选风格项(见上表末行)待作者拍板;`docs/scaffolds/visual-quality-essentials.md` 仍为**候选**,待作者评审。
+
+## 补充:编辑路径冷启动复核(同日,终版完善轮)
+
+- **单元**:冷代理只凭技能文档,对一份现成 PPTX 完成 4 处内容修改并复验(模板勘察 → unpack → 码位核查 → 改 XML → clean → pack → normalize → validate → 渲染 → `qa --strict --pdf`)。
+- **判定**:**DONE**——0 error / 0 flag;经历一轮真实 fix→verify(初稿继承 `notesMasterIdLst` 次序缺陷,`validate.py` FAILED → 归一化 → PASSED);页级像素差证明未触碰其余页面。
+- **摩擦 → 处置**:① "编辑产物是否需归一化"未写明 → editing.md 增第 8 步(归一化 + 校验必做);② editing.md 缺 CJK 标点 / 空格保真指引 → 新增小节(码位勘察 + 口径对齐);③ 图 alt 文本为本地绝对路径(夹具遗留)→ e2e 与示例包均补 `altText`。
+- 原始报告:本目录 `report-E-editing-path.md`。

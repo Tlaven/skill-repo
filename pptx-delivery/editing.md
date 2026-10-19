@@ -41,6 +41,8 @@ When using an existing presentation as a template:
 
 7. **Pack**: `python scripts/office/pack.py unpacked/ output.pptx --original template.pptx`
 
+8. **归一化 + 校验(交付前必做)**:`python scripts/normalize_pptx_order.py inplace output.pptx` + `python scripts/office/validate.py output.pptx`——编辑产物常继承初稿的 schema 次序缺陷(如 `notesMasterIdLst` 排在 `sldIdLst` 之后,PowerPoint/WPS 能打开但严格校验报错),打包后必须过这一步。
+
 ---
 
 ## Scripts
@@ -198,6 +200,14 @@ Handled automatically by unpack/pack. But the Edit tool converts smart quotes to
 | `”` | Right double quote | U+201D | `&#x201D;` |
 | `‘` | Left single quote | U+2018 | `&#x2018;` |
 | `’` | Right single quote | U+2019 | `&#x2019;` |
+
+### CJK 标点与空格(中文场景)
+
+unpack/pack 的智能引号处理只覆盖英文引号;中文文本的全角 / 半角标点与空格会**原样保留**,改动时不注意就会与相邻文字口径不一。
+
+- 动笔前先做**码位勘察**:直接读 `slideN.xml` 里文本的原始码位,不要依赖编辑工具的显示形态(全角逗号 U+FF0C / 全角括号 U+FF08 与它们的半角版本、中英文之间的空格习惯,肉眼都难辨);
+- 替换文本时**保持与目标位置相邻文本相同的口径**(该页用全角就全角,该留空格就留);
+- 不要顺手"统一"全稿标点——那属于改稿范围之外的风格变更。
 
 ### Other
 

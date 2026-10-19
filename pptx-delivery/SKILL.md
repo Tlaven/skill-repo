@@ -18,6 +18,7 @@ license: Proprietary. LICENSE.txt has complete terms
 | **Delivery acceptance checklist** | Read [acceptance-checklist.md](acceptance-checklist.md) |
 | **CJK typography** | Read [typography.md](typography.md) |
 | **Visual quality (judgment layer)** | Read [docs/scaffolds/visual-quality-essentials.md](docs/scaffolds/visual-quality-essentials.md) |
+| **Reference example** | Open [examples/acceptance-sample/](examples/acceptance-sample/)(deck + 渲染 + 证据 + 检查指引) |
 | Render (COM / LibreOffice) | `scripts/render_slides.ps1 -Pptx deck.pptx -OutDir render/ -Pdf` |
 
 ---

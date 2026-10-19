@@ -116,7 +116,7 @@ python tests/run_tests.py          # 8 负控 + 端到端,一键复跑
 ## 7. 仍未完成 / 已知限制(及原因)
 
 - **目检余项(风格级)——已收敛(2026-10-19,首用 [docs/scaffolds/visual-quality-essentials.md](docs/scaffolds/visual-quality-essentials.md) 当尺)**:① 底部留白节奏 → **修复**:S2 / S3 补底部锚线、S5 注脚对齐,内容页收口统一到 y=6.25 一带;② 三种灰阶的角色化使用 → **保留并写实**:文字角色表补进 [typography.md](typography.md)(标题 / 名称 `1E2761` 粗体、正文 `222222`、说明 / 注脚 `5F6B7C`);③ 标点全 / 半角混用 → **保留**(作者文风,自此为明示决策);④ 5:4 列表不对称 → **保留**(刻意不对称合法,对齐基准未动);⑤ S6 要点 / S4 名称颜色角色 → **保留并写实**(名称 = 标题色、要点 = 正文色,属两个角色)。复验:重建 → 渲染 → C1–C9 0 error / 0 flag,渲染图复看通过。(2026-10-19 复核轮:独立 A/B 对照确认收敛方向;S6 图表块随之下移纳入同一节奏带;同轮修标题对齐 / S2 断行等复核项——见 [docs/reviews/2026-10-19-cold-verification.md](docs/reviews/2026-10-19-cold-verification.md)。)
-- **C7 无触发夹具**(见 §5 现状)。
+- **C7 无触发夹具**——已补检测逻辑自测(`tests/c7_selftest.py`,人造跨缘 PDF 可红);deck 级夹具仍缺:WPS 对 4 种越界构造全部裁切、LibreOffice 未安装,且 poppler 会丢弃"整字越界"字形(只保留跨缘字形包围盒)。(见 §5 现状)
 - **测试场景集中在 Windows + 中文**;Linux/macOS 渲染链逻辑保留(soffice.py)但未实测。
 - **未安装 MS PowerPoint 本体**,用 WPS 兼容接口代偿(PowerPoint 渲染差异属已知风险,文档已注明"以目标环境打开为准")。
 - **环境依赖已装但属机器级动作**(LibreOffice via scoop、poppler、Node 全局包);换机需按 Dependencies 重装。

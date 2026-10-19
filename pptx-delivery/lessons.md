@@ -72,6 +72,12 @@ type: reference
 python scripts/qa_check.py output.pptx --pdf render/output.pdf --strict
 ```
 
+### 5.3 复核分档(按改动量)
+
+- **里程碑 / 首次上线**:全轮复核——机器断言 + 独立评审(带校准探针)+ 证据复跑;样例见 `docs/reviews/2026-10-19-cold-verification.md`。
+- **日常改动**:轻量档 = **1 枚校准探针 + 1 次证据复跑**。探针(已知缺陷的对照样本)证明评审者当场"活着";复跑证明结论可复现。
+- **原则:评审者也要先让它红一次**——没有校准过的评审者,它的"没问题"不可采信(负控纪律适用评审者,不只检查器)。
+
 ## 6. 运行脚本注意路径
 
 运行 `scripts/` 下的 Python 脚本时，在 `scripts/` 目录下执行（不要进到 `office/` 子目录）：

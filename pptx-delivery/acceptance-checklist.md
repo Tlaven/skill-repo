@@ -40,7 +40,7 @@ python scripts/qa_check.py deck.pptx --pdf render/deck.pdf --strict --json rende
 | C4 颜色卫生 | srgbClr 必须 6 位 hex、无 `#`;无负向 shadow dist | pptxgenjs 破坏项【实测:c4 同族】 |
 | C5 对比度 | 普通 ≥ 4.5:1;大文本(≥18pt 或 ≥14pt 粗)≥ 3:1;**不四舍五入** | 【引用:https://www.w3.org/TR/WCAG21/#contrast-minimum】 |
 | C6 图片形变 | 显示比例 vs 原始像素比例,偏差 ≤ 2% | 【实测:clean 0.0% vs c4 50%】 |
-| C7 页面越界 | 渲染 PDF 中不得有词框越过页面边界 | 【实测:检查器可运行;无触发夹具(见 §5)】 |
+| C7 页面越界 | 渲染 PDF 中不得有词框越过页面边界 | 【实测:检测逻辑经人造跨缘 PDF 自测可红(tests/c7_selftest.py);deck 级夹具缺(见 §5)】 |
 | C8 渲染保真 | 每个段落必须完整出现在渲染 PDF 文本层 | 【实测:c3 尾行被裁 → 命中】 |
 | C9 可编辑性 | 不得"整页图片 + 零文本"(覆盖率阈值 80%,`--min-coverage` 可调) | 【实测:c6 命中】;外部实践【引用:PPTLint / Marp】 |
 
@@ -70,7 +70,7 @@ python scripts/qa_check.py deck.pptx --pdf render/deck.pdf --strict --json rende
 - 对比度:渐变 / 图片背景、主题色继承 —— 仅目检;透明文本框叠色块已按"中心点命中的最上层色块"解析(复杂叠加仍目检);表格主题条纹填充不可解析。
 - CJK 的"等价大字号"WCAG 未给数值;本工具按 18pt/14pt 罗马值执行,对中文属**偏宽**(可能少判,不会多判)。
 - 行距 / 字距美观、孤字控制:无自动判据。
-- C7 是防御性检查——本机 WPS / LibreOffice 在导出端裁切越界文本,暂无触发夹具(见 UPGRADE-REPORT §5/§7)。
+- C7 是防御性检查——本机 WPS 对 4 种越界构造(右半 / 全出界 / 底部 / 负坐标)全部裁切,LibreOffice 未安装;且 poppler 会丢弃"整字越界"字形、只对**跨缘**字形给出真实包围盒。检测逻辑已用人造跨缘 PDF 自测可红(`tests/c7_selftest.py`);deck 级夹具仍缺。
 - C3 不检查"继承字号"(run 未显式设 size 会跳过,计数在输出里);交付前用渲染目检兜底。
 - 音视频、动画、图表内部:不在本清单。
 

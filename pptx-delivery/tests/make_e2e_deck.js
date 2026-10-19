@@ -166,7 +166,7 @@ async function build() {
     ],
     { x: 0.8, y: 3.4, w: 4.3, h: 2.8, fontFace: FONT, fontSize: 14, color: C.ink, paraSpaceAfter: 6 }
   );
-  s6.addImage({ path: path.join(ASSETS, "chart-bars.png"), x: 5.6, y: 2.25, w: 7.2, h: 3.6 });
+  s6.addImage({ path: path.join(ASSETS, "chart-bars.png"), x: 5.6, y: 2.25, w: 7.2, h: 3.6, altText: "柱状图示意:各检查项在首轮发现的问题数量" });
   s6.addText("示意:各检查项在首轮发现的问题数量", {
     x: 5.6, y: 6.0, w: 7.2, h: 0.4, fontFace: FONT, fontSize: 12, color: G, align: "center",
   });
