@@ -9,10 +9,10 @@ $ErrorActionPreference = 'SilentlyContinue'
 $DocExt = @('.md', '.markdown')
 
 # 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:考古 / 存档层
-# (如 docs/legacy/)、对账留档(docs/reviews/——历史快照,引用退役术语/旧链接是常态,
+# (如 docs/legacy/)、记录类(docs/decisions/、docs/reviews/——历史快照,引用退役术语/旧链接是常态,
 # 不是错误)与待填件目录(docs/templates/——有些项目把待填件放在 docs/ 内)。
 # 置空字符串则不过滤。
-$DocExclude = '^(docs/legacy/|docs/archive/|docs/templates/|docs/reviews/)'
+$DocExclude = '^(docs/legacy/|docs/archive/|docs/decisions/|docs/templates/|docs/reviews/)'
 
 $root = (git rev-parse --show-toplevel 2>$null)
 if (-not $root) { $root = (Get-Location).Path }
@@ -156,7 +156,7 @@ foreach ($f in $liveDocs) {
     $ln++
     if ($line -match '⚠') { continue }   # E1 的状态标记(带不带变体选择符都算),不是依据
     if ($line -match $refPat) {
-      Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
+      Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(历史只作方向,不作事实;现状陈述须自足)"
       $found = $true
     }
   }

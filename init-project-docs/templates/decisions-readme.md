@@ -44,7 +44,7 @@ adr-XXX-[短描述].md
 ```
 
 - `XXX` 是零填充的递增编号(001, 002, ...)
-- 短描述用英文 kebab-case(例:`adr-003-use-event-sourcing.md`)
+- 短描述用英文 kebab-case(例:编号 + 短描述 `adr-003-use-event-sourcing`)
 
 ## ADR 索引
 

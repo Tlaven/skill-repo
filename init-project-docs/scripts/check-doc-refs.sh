@@ -17,10 +17,10 @@ for a in "$@"; do [ "$a" = "--strict" ] && STRICT=1; done
 DOC_EXT="md markdown"
 
 # 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:
-# 考古 / 存档层(如 docs/legacy/ 里对已废文件的链接)、**对账留档**(docs/reviews/——历史快照,
+# 考古 / 存档层(如 docs/legacy/ 里对已废文件的链接)、**记录类**(docs/decisions/、docs/reviews/——历史快照,
 # 引用退役术语 / 旧链接是常态,不是错误)、与**待填件目录**(docs/templates/——
 # 有些项目把待填件放在 docs/ 内,待填件里的占位符不算本项目当前维护的文档内容)。置空则不过滤。
-DOC_EXCLUDE='^(docs/legacy/|docs/archive/|docs/templates/|docs/reviews/)'
+DOC_EXCLUDE='^(docs/legacy/|docs/archive/|docs/decisions/|docs/templates/|docs/reviews/)'
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$ROOT" || exit 0
@@ -106,7 +106,7 @@ fi
 
 # 3) 标了 N2 却缺 `**验收**` / 没有「危险实现清单」;模块文档缺「失败语义」(共用同一批文件与剥注释后的 body)
 #    先剥掉 HTML 注释——模板里的引导文字本身含这些词,不剥会把计数算花(假阴性)。
-#    「危险实现清单」这条要求出自 module-doc 模板(N2 必须给"步骤级说明 + 危险实现清单 + 例子 + 验收")。
+#    「危险实现清单」这条要求出自 module-doc 模板(N2 必须给"步骤级说明 + 危险实现清单 + 例子 + 验收 + 失败语义")。
 #    指针形豁免只给"必须有那一节"的两条(危险实现清单 / 失败语义):模板允许"N2 正文记在公共处、
 #    本模块只留一行 `**验收**: 见 docs/<…>`"——那一行即指针形凭据。"缺验收"那条不吃豁免。
 #    边界(如实说):它数的是**短语出现**,不是"那一节在不在一句话之上"——短语出现在正文别处会漏报。
@@ -156,7 +156,7 @@ for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md 
   LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '!/⚠/ {printf "%d:%s\n", NR, $0}' | grep -iE "$REF_PAT" 2>/dev/null)
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
-      echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(现状陈述须自足;理由类引用请挪到入口类文档的导航位)"
+      echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(历史只作方向,不作事实;现状陈述须自足)"
     done
     found=1
   fi

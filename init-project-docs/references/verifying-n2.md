@@ -73,7 +73,7 @@ N0 / N1 的代码，模型见过大量同类测试；**N2 没有**——而且**
 若某条 N2 逻辑**造不出可跑验收** → 不是"测试先欠着"，而是说明**逻辑还没讲到可实现**：
 回去补 `[步骤级说明]`（core-code / L2 公共节 / L3），**别放行实现**。
 
-> 这道条件管的是"这条逻辑还没讲到能被实现"，**与 teach-back 跑不跑无关**——teach-back 是按需工具、不阻塞实现（见 SKILL 的 Step 3.5）。
+> 这道条件管的是"这条逻辑还没讲到能被实现"，**与 teach-back 跑不跑无关**——teach-back 是按需工具、不阻塞实现（见 skill 侧 `SKILL.md` 的 Step 3.5）。
 
 ## 写进文档
 
@@ -83,5 +83,6 @@ N0 / N1 的代码，模型见过大量同类测试；**N2 没有**——而且**
 - 或断言（property 形式的不变量）；
 - 并注明用的是上面哪 1~2 种手段。
 
-> 写成什么样（`novelty=N2` 字面量 / 一行 `**验收**:…` / 指针形）见 `docs-templates/module-doc.md` 的 N2 说明；检查器只做**字面 / 形式**粗检（清单与边界见 `docs-templates/wiring.md`）。
+> 写成什么样（`novelty=N2` 字面量 / 一行 `**验收**:…` / 指针形）见 `docs-templates/module-doc.md` 的 N2 说明；检查器只做**字面 / 形式**粗检（清单与边界见 skill 侧 `references/wiring.md`）。
+> **批量执行:** 若已拷入 `scripts/`,可用 `scripts/run-n2-acceptance.py --manifest <file> --run` 跑 manifest 里显式列出的验收命令;没有 manifest 只列不跑,并标"未复跑"。
 > **它只查形式、判不了语义**：凑一个 `**验收**` 字样就能骗过它，验收是否真有意义、错法是否真被挡住，仍归 teach-back 验证者。**"检查器过了"≠"验收对了"。**

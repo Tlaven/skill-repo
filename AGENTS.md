@@ -1,7 +1,7 @@
 # AGENTS.md — skills-repo
 
 > **定位**:本仓库的 repo 级 L1 记忆文件(Command Code 宿主加载;若将来接第二宿主,主文件仍为本文件,另一份只放指针,不复制内容)。
-> **边界**:方法论本体(三段式 / 4 层 / novelty / 铁律 / E1–E7)**不在本文件复述**——唯一归属是 `init-project-docs` skill;本文件只承载 **repo 级增量**。
+> **边界**:方法论本体(三时间轴 / 三段式 / 4 层 / novelty / 铁律 / E1–E7)**不在本文件复述**——唯一归属是 `init-project-docs` skill;本文件只承载 **repo 级增量**。
 > **状态**:2026-10-19 由 agent 按证据起草;标 `【推断待确认】` 的行待作者拍板。
 
 ## [是什么]
@@ -16,7 +16,7 @@
 | aigc-derate | 论文降重 / AIGC 降率:标色检测、往返翻译改写、字数偏差检查(配合 thesis-docx) | 未验收 |
 | drawio-export | JSON 描述生成 .drawio,本地 draw.io 导出 SVG/PNG(配合 thesis-docx 插图) | smoke |
 | essentials | 弱领域方法论:从外部来源提炼可复用的判断脚手架(essentials 文档) | teach-back |
-| init-project-docs | 项目文档骨架引导;三段式 × 4 层方法论的**唯一归属** | teach-back |
+| init-project-docs | 项目记忆协议:历史 / 当下 / 未来 + 三段式 × 4 层 + 多镜复核;seeding 子 skill | teach-back |
 | macro-market-radar | 全球宏观市场雷达:数据快照 → 收集 → 交叉验证 → 融合解读 | 未验收 |
 | pptx-delivery | PPTX 生成 / 编辑 / QA:可执行断言 C1–C9 + 负控套件 + 交付验收清单 | acceptance |
 | seeding-skills | skill 设计范式:上下文 / 约束定位 + 类型分诊 + 种子式演化 | 未验收 |
@@ -55,7 +55,8 @@
 4. 写 AI 未见领域逻辑(N2)前 → 按 `init-project-docs` 的 teach-back 做一次独立复核(按需、可攒批);
 5. 新机器恢复门禁:把 `bash scripts/check-docs-sync.sh --staged --strict`、`powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Changed || true`(只提示)与 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check-skills.ps1 -Changed || true`(只提示)接进 `.git/hooks/pre-commit`(现网 hook 首注释即模板);
 6. 改 skill 行为 → 跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Changed`;无验收入口的 skill 显示「未接入」,补 `## 验收` 段(档位:smoke / golden / acceptance / teach-back)+ 可选 `eval/run.ps1` 再接入;
-7. 改 skill 结构(新 skill / frontmatter / 引用 / SKILL.md 篇幅)→ 跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-skills.ps1`;FAIL 清零,WARN 记账。
+7. 改 skill 结构(新 skill / frontmatter / 引用 / SKILL.md 篇幅)→ 跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-skills.ps1`;FAIL 清零,WARN 记账;
+8. 新增 / 修改 `.ps1` → 跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-ps1-bom.ps1`;缺 BOM 必须补(不变量 8)。
 
 ## 常用命令
 
@@ -65,6 +66,7 @@ bash scripts/check-docs-sync.sh --staged   # 同 pre-commit
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Changed   # 变更涉及的 skill 验收（-Name / -All；默认提示不阻断）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-skill.ps1 -Name <skill>   # 打交付包（dist/<name>-<version>.zip + manifest + sha256；非 golden/acceptance 需 -Force）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-skills.ps1   # 结构检查：frontmatter / TRIGGER / 死链 / 行数（-Changed / -Name / -Strict）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-ps1-bom.ps1  # .ps1 BOM 检查（-Strict / -Root）
 ```
 
 ## 开放问题
