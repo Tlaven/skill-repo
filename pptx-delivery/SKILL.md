@@ -76,6 +76,7 @@ Use when no template or reference presentation is available.
 - **Dominance over equality**: One color should dominate (60-70% visual weight), with 1-2 supporting tones and one sharp accent. Never give all colors equal weight.
 - **Dark/light contrast**: Dark backgrounds for title + conclusion slides, light for content ("sandwich" structure). Or commit to dark throughout for a premium feel.
 - **Commit to a visual motif**: Pick ONE distinctive element and repeat it — rounded image frames, icons in colored circles, thick single-side borders. Carry it across every slide.
+- **先加载视觉账本的视图**: `docs/scaffolds/visual-quality-ledger.md` 的「二、视图」(8 行)——间距刻度 V1 / 层级表 V2 / 强调色锚点 V3 / 允许不对称 V4 / 版式变而视觉语言不变 V5 / 字号按场景 V6 / 红线 V7 V8。评审阶段同样按它对证;决策笔记写 `vq#V<n>`。
 
 ### Color Palettes
 
