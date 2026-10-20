@@ -15,7 +15,7 @@
 |---|---|---|
 | aigc-derate | 论文降重 / AIGC 降率:标色检测、往返翻译改写、字数偏差检查(配合 thesis-docx) | 未验收 |
 | drawio-export | JSON 描述生成 .drawio,本地 draw.io 导出 SVG/PNG(配合 thesis-docx 插图) | smoke |
-| essentials | 弱领域方法论:从外部来源提炼可复用的判断脚手架(essentials 文档) | teach-back |
+| essentials | 经验入籍审核:摩擦 → 候选 → 检验(判据来源定强度) → 晋升 / 退役;产物是账本 + 一屏视图,不是文档 | teach-back |
 | init-project-docs | 项目记忆协议:历史 / 当下 / 未来 + 三段式 × 4 层 + 多镜复核;seeding 子 skill | teach-back |
 | macro-market-radar | 全球宏观市场雷达:数据快照 → 收集 → 交叉验证 → 融合解读 | 未验收 |
 | pptx-delivery | PPTX 生成 / 编辑 / QA:可执行断言 C1–C9 + 负控套件 + 交付验收清单 | acceptance |

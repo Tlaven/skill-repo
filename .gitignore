@@ -11,6 +11,9 @@ desktop.ini
 # 本地校准物料（teach-back prompt 的基线与盲测草稿，不入库）
 init-project-docs/.calibration/
 
+# essentials 本地工作件（执行计划 / 草稿，不入库）
+essentials/.calibration/
+
 # 机器本地产物（taste / 会话设置；各目录通用，不入库）
 .commandcode/
 
