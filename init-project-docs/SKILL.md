@@ -5,22 +5,40 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 
 # Init Project Docs — 项目记忆协议
 
-> **关系定位:** 本 skill 是 `seeding-skills` 的子 skill——沿用其类型判型 / 验收 / 演化纪律;实践中的可泛化经验回灌 seeding(见 `RESEARCH-BACKLOG.md`)。
-> **主型:元型**(定义项目记忆方法论);**副型:流程型**(bootstrap 工作流)。类型定义见 `seeding-skills` 的 `references/skill-types.md`。
-> **本 skill 只做沉淀侧:** 对话内容如何进入历史 / 当下 / 未来;不规定"怎么提问、怎么质疑、怎么去模糊"这些对话技巧。
+> **关系定位:** 本 skill 是 `seeding-skills` 的子 skill——沿用其类型判型 / 验收 / 演化纪律;实践中的可泛化经验回灌 seeding(写回上游 skill;见 `RESEARCH-BACKLOG.md`)。
+> **主型:元型**(决定验收:定义项目记忆方法论);**副型:流程型**(只影响写法:bootstrap 工作流,不改验收)。类型定义见 `seeding-skills` 的 `references/skill-types.md`。
+> **本 skill 只做沉淀侧(把对话固化为项目记忆):** 对话内容如何进入历史 / 当下 / 未来;不规定"怎么提问、怎么质疑、怎么去模糊"这些对话技巧。
+
+## 术语速查(先读;完整表见 `references/skill-glossary.md`)
+
+本 skill 的常用词有专指,按通用义读会偏:
+
+- **历史 / 当下 / 未来** = 三个**时间桶**(决策记录 / 现状与约束 / 方向与开放问题),不是 git 历史 / 当前时刻 / 路线图。**文档层 L1–L4 是另一根轴**,别和时间桶混。
+- **沉淀侧 / 回灌** = 把对话固化为项目记忆 / 把可泛化经验写回上游 skill;不是对话技巧,也不是数据回填。
+- **契约 / 契约级变更** = 项目文档里的约束性陈述(不变量 / `[已定]` / 接口 / 术语定义)及其增删改;不是法律或 API 合同。
+- **对账 / 复核 / 验证 / 检查** = 文档-代码/记录的结构一致性核对(改代码前也做)/ 独立 agent 的语义复核 / 可执行验收 / 脚本结构检查;四者不互换。**「复核通过」只说明文档内部一致**,不证明断言为真。
+- **镜头 / 多镜 panel** = 一个独立复核视角 / 多个互不可见的视角各判一遍再合并去重;不是相机镜头或 UI 面板。
+- **未接入 / 未复跑** = `scripts/` 未拷入 / 脚本在但这次只列未执行;都不是"已通过"。
+- **待填件 / 就地读件** = 复制后填写的模板 / 留在 `docs-templates/` 直接引用的参考件;不是本项目当前维护的文档。
+- **基线 / 快照 / 冻结** = 先钉一个参照再比对 / 某一时刻的完整状态副本 / 把预期钉死;三者都必须带限定语:校准基线(已知答案对照)/ 文档基线(`last verified` SHA)/ 性能基线 / 分档基线;现状快照 / 历史快照 / 数据快照;冻结计数(文档固定数字)/ 冻结期望(已批准 golden fixture)/ 冻结画面(固定渲染状态)。
+- **指针 / 唯一正文归属(旧称"正典") / 拍板人(作者 / 用户)** = 指向代码或其他文档的引用 / 定义落在哪一段 / 谁做决定;不要用裸"归属"兼指后两者。
+- **主型 / 副型** = 主型决定验收;副型只影响写法,不改验收。
+- **档 / 层 / 桶** = 验收档或 novelty 档 / 文档层 L1–L4 / 时间桶;三根轴,不要互相借用。
+- **文件白名单 / 最小独立模拟器 / 校准探针** = 允许验证者读的文件清单 / 按文档规则从零写临时实现复现数字(不是替身环境)/ 每镜预埋的已知缺陷。
 
 ## 阅读坐标(先知道去哪找定义)
 
+- **术语:** `references/skill-glossary.md`(本 skill 自有词;与通用义冲突时以它为准)。
 - **三时间轴 / 四类路由 / 当下 DoD:** `references/temporal-model.md`(核心模型,先读)。
 - **三段式 / 4 层 / novelty / 铁律:** `templates/l1-memory.md`(随 L1 落地)。
 - **演化规则 E1–E7:** `references/evolution-rules.md`。
 - **多镜复核:** `references/review-panel.md`; **验证者 / 镜头校准:** `references/calibration-guide.md`; **工具:** `references/tooling.md`; **落点:** `references/layout.md`; **对话地图:** `references/conversation-map.md`。
 
-正文只讲流程;规则正文以对应文件为准,这里只留摘要。**归属:** 三段式 / 4 层 / novelty / 铁律在 L1 模板;三时间轴 / 四类路由 / 当下 DoD 在 `temporal-model.md`;E1–E7 在 `evolution-rules.md`。本 skill 不重述规则。
+正文只讲流程;规则正文以对应文件为准,这里只留摘要。**正文归属:** 三段式 / 4 层 / novelty / 铁律在 L1 模板;三时间轴 / 四类路由 / 当下 DoD 在 `temporal-model.md`;E1–E7 在 `evolution-rules.md`。本 skill 不重述规则。
 
 ## 定位
 
-项目记忆**协议**,不是文档模板生成器。不是文档内容的作者——内容靠和用户对话涌现。
+项目记忆**协议**(人-AI 的文档协作约定,不是网络 / API 协议),不是文档模板生成器。不是文档内容的作者——内容靠和用户对话涌现。
 
 > **目标工况:人至少给出功能与可验收行为**(连需求与验收都交给 AI 起草的项目不在范围内——见 Step 1)。
 
@@ -32,7 +50,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ## 宿主适配(先定:L1 文件叫什么?)
 
-宿主(Claude Code / Command Code / OpenCode / Cursor / Windsurf / Copilot…)决定 L1 文件名——映射唯一归属在 `templates/l1-memory.md` 顶部表,本 skill 不重述。不确定就问用户;判不出别硬默认 `AGENTS.md`。多宿主并存:选一个主文件,其余只放一行指针——两份规则必然漂移。
+宿主(Claude Code / Command Code / OpenCode / Cursor / Windsurf / Copilot…)决定 L1 文件名——映射唯一正文归属在 `templates/l1-memory.md` 顶部表,本 skill 不重述。不确定就问用户;判不出别硬默认 `AGENTS.md`。多宿主并存:选一个主文件,其余只放一行指针——两份规则必然漂移。
 
 ## 核心理念
 
@@ -80,7 +98,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
 2. 把整套 `docs-templates/` 落地(来源:6 件来自 `templates/`、6 件来自 `references/`;映射见 `references/layout.md` §二):`module-doc` / `adr-template` / `glossary` / `decisions-readme` / `core-code` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt`。
 3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(术语 → `docs/glossary.md`;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`;对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
-4. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`(含共享模块 `_doc_common.py`);若用户不接脚本,在 L1 标「scripts: 未接」,后续命令按「未复跑」处理。
+4. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`(含共享模块 `_doc_common.py`);若用户不接脚本,在 L1 标「scripts: 未接入」,后续命令按「未复跑」处理。
 
 ### Step 2B: 合并模式——已有 L1
 
@@ -94,7 +112,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 先映射,再落骨架;既有的"现状事实"文档 = 指针目标,不新造重复层。只要存在作者手写的 README / 设计文档 / docs,就不算空目录,走 2C。
 
-1. 通读既有文档,映射到 4 层:现状事实 → L2 事实源(新 `architecture.md` 只放指针 + 决策 + 不变量);设计动机 / 不变量 / 验收 → L1/L2/L4(用指针);存档 / 旧方案 → 考古层(legacy/archive;不是 L1–L4 的第 5 层;不迁、不删,标注边界,对账排除)。
+1. 通读既有文档,映射到 4 层:现状事实 → L2 事实源(新 `architecture.md` 只放指针 + 决策 + 不变量);设计动机 / 不变量 / 验收 → L1/L2/L4(用指针);存档 / 旧方案 → 存档层(legacy/archive;不是 L1–L4 的第 5 层;不迁、不删,标注边界,对账排除)。
 2. 落 L1 + 整套 `docs-templates/`(同 2A)。
 3. 填 L1 标清"内容从哪来":证据标来源;猜不到 → 开放问题,别硬填。
 4. 冲突时只在新骨架文件顶部加 banner 声明事实源,**不动作者原有文件**;定性冲突记开放问题,交作者拍板。
@@ -131,7 +149,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 **契约级变更定义:** 契约文件(L1 / L2 / L3 / L4 / glossary)中的不变量、`[已定]`、接口 / 数据结构 / 失败码、术语定义、契约级断言的增删改;纯措辞 / 链接 / 排版不算。**四信号是“跑不跑”的唯一裁决;`review-panel.md` §三只决定“跑哪几镜”。**
 
-**攒批:** 若已拷入 `scripts/`,先跑 `review-backlog`(零 token)列出自上次复核以来的契约 delta;未拷则人工列 delta 并标「未接 / 未复跑」。只把 delta 喂给独立 agent;每个被喂的单元要整节(定义段 + 验收段必须同在);结论记 `docs/reviews/`,覆盖提交写进 `docs/reviews/.last-review`。
+**攒批:** 若已拷入 `scripts/`,先跑 `review-backlog`(零 token)列出自上次复核以来的契约 delta;未拷则人工列 delta 并标「未接入 / 未复跑」。只把 delta 喂给独立 agent;每个被喂的单元要整节(定义段 + 验收段必须同在);结论记 `docs/reviews/`,覆盖提交写进 `docs/reviews/.last-review`。
 
 **派发:**
 - 派一个**看不到本会话**的全新 subagent;当前会话自评 = 自证,不算数。
@@ -151,11 +169,11 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ### Step 4: 收尾
 
-初轮(L1 + L2 主流程)完成后告诉用户:建模块前先填 L3;决策发生记 ADR;大改动前先更新对应层文档;**改代码前跑复核 / panel**;L4 默认不建;填完删模板注释;新术语登记 glossary;N2 补步骤 / 危险清单 / 例子 / 验收 / 失败语义;复核按需、可攒批,推荐在实现前完成;检查器能查的先跑,不能跑就标"未接 / 未复跑"。完整落点与脚本见 `references/layout.md` / `references/tooling.md`。
+初轮(L1 + L2 主流程)完成后告诉用户:建模块前先填 L3;决策发生记 ADR;大改动前先更新对应层文档;**改代码前跑复核 / panel**;L4 默认不建;填完删模板注释;新术语登记 glossary;N2 补步骤 / 危险清单 / 例子 / 验收 / 失败语义;复核按需、可攒批,推荐在实现前完成;检查器能查的先跑,不能跑就标"未接入 / 未复跑"。完整落点与脚本见 `references/layout.md` / `references/tooling.md`。
 
 ## 产出文件结构
 
-落点唯一归属在 `references/layout.md`(完整目录 + 模板清单 + 脚本清单)。要点:L1 在项目根;`docs/` 只放本项目当前维护的文档;`docs-templates/` 是待填件 / 就地读件,对账忽略;`docs/reviews/` 存对账 / 复核留档。
+落点唯一正文归属在 `references/layout.md`(完整目录 + 模板清单 + 脚本清单)。要点:L1 在项目根;`docs/` 只放本项目当前维护的文档;`docs-templates/` 是待填件 / 就地读件,对账忽略;`docs/reviews/` 存对账 / 复核留档。
 
 ## 反模式(checklist)
 
@@ -188,6 +206,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - **留档:** 结论与覆盖提交写入目标项目 `docs/reviews/YYYY-MM-DD-<主题>.md` + `.last-review`。
 - **判据:** 「通过」或「需人拍板」即达可交付态;「不通过(文档缺陷)」→ 先改文档,重跑附上轮阻断清单。**「通过」只说明文档内部一致,不证明断言为真。**
 - **工具自检:** `python -m unittest discover -s tests`(skill 侧);新脚本上线前必须有反向测试。
+- **术语自检:** 改 `SKILL.md` 的高频词 / 新增术语后,按 `references/skill-glossary.md` §五 跑一次「只给 SKILL.md」的无上下文理解测试;出现「猜的」或偏离就补限定。
 
 ## 参考来源(改版时借鉴)
 

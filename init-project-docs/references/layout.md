@@ -16,7 +16,7 @@
   └── decisions/
       ├── README.md         # ADR 索引 —— 首次记 ADR 时创建
       └── adr-XXX-*.md      # 真实 ADR
-./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接」,命令按「未复跑」处理
+./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接入」,命令按「未复跑」处理
 ./docs-templates/           # skill 提供的两类件(不是本项目当前维护的文档:对账忽略) —— Step 2A 整套落地
   ├── module-doc.md                   # 待填件:复制到 docs/modules/<name>.md 再填
   ├── adr-template.md                 # 待填件:复制成 adr-XXX-<短描述>.md 再填
@@ -33,6 +33,8 @@
 ```
 
 除 L1 与**整套 `docs-templates/`** 外,`docs/` 下本项目当前维护的文档**全部按需创建**。
+
+> **待填件** = 复制到 `docs/` 后再填写的模板;**就地读件** = 留在 `docs-templates/` 直接引用的规则正文;两者都不是本项目当前维护的文档,对账忽略。
 
 ## 二、模板文件清单
 
@@ -52,6 +54,7 @@
 | `references/verifying-nonfunctional.md` | 就地读件:非功能 / 主观需求怎么造验收 | **立即**(Step 2A) | `docs-templates/verifying-nonfunctional.md` |
 | `references/teach-back-verifier-prompt.md` | 就地读件:teach-back 验证者 prompt | **立即**(Step 2A) | `docs-templates/teach-back-verifier-prompt.md` |
 | `references/conversation-map.md` | 对话地图(问题清单) | skill 侧使用 | **不落地** |
+| `references/skill-glossary.md` | skill 自有术语表(历史 / 当下 / 未来、契约、对账 / 复核等) | skill 侧使用 | **不落地** |
 | `references/tooling.md` | 工具矩阵 / 用法 / 触发 | skill 侧使用 | **不落地** |
 | `references/calibration-guide.md` | 验证者 / 镜头校准手册 | 改判定措辞或换模型时 | **不落地** |
 | `references/wiring.md` | 接线指南(pre-commit / CI / 宿主钩子) | 初始化后接线时 | **不落地** |

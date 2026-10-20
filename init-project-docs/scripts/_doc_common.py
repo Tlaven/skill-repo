@@ -11,7 +11,7 @@ L1_NAMES = (
     ".github/copilot-instructions.md",
 )
 
-# 对账忽略:历史快照、考古层、待填件目录、记录类文档
+# 对账忽略:历史快照、存档层、待填件目录、记录类文档
 # decisions/ 与 reviews/ 同为记录(历史真相源,不与现状同步):扫"现状"的检查器一律不碰。
 DEFAULT_EXCLUDE = (
     "docs/reviews/",

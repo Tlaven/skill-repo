@@ -76,6 +76,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-ps1-bom.ps1  #
 
 ## 指针
 
-- 方法论本体 + teach-back 流程:`init-project-docs` skill(`references/evolution-rules.md` 是 E1–E7 唯一归属)。
+- 方法论本体 + teach-back 流程:`init-project-docs` skill(`references/evolution-rules.md` 是 E1–E7 唯一正文归属)。
+- 术语:`init-project-docs` 的自有词(历史 / 当下 / 未来、契约、对账 / 复核、镜头等)以 `init-project-docs/references/skill-glossary.md` 为准;与通用义冲突时按该表。
 - skill 设计范式:`seeding-skills`。
 - 各 skill 行为契约:对应 `SKILL.md`。

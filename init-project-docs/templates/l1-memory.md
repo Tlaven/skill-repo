@@ -1,6 +1,6 @@
 # L1 记忆文件(项目根)
 
-> **使用方式:** 把本文件复制到项目根,按宿主命名(见下表)。本文件是**核心方法论(三段式 / 4 层 / novelty / 铁律)的唯一归属**——skill 只负责把它 scaffold 进来;演化期规则 E1–E7 的归属见下(`docs-templates/evolution-rules.md`)。
+> **使用方式:** 把本文件复制到项目根,按宿主命名(见下表)。本文件是**核心方法论(三段式 / 4 层 / novelty / 铁律)的唯一正文归属**——skill 只负责把它 scaffold 进来;演化期规则 E1–E7 的正文归属见下(`docs-templates/evolution-rules.md`)。
 >
 > | 宿主 | 文件名 |
 > |---|---|
@@ -56,7 +56,7 @@
 ```
 -->
 
-<!-- 若未拷入 scripts/,在这里标:scripts: 未接(后续命令按「未复跑」处理) -->
+<!-- 若未拷入 scripts/,在这里标:scripts: 未接入(后续命令按「未复跑」处理) -->
 
 ## 架构
 
@@ -84,6 +84,8 @@
 
 ### 三时间轴(历史 / 当下 / 未来)
 
+> **三个时间桶,不是三个时间点:** 历史 = 决策记录桶,当下 = 现状与约束桶,未来 = 方向与开放问题桶;不是 git 历史 / 当前时刻 / 路线图。**文档层 L1–L4 是另一根轴**,不要和时间桶混。
+
 > 三段式是"内容性质";三时间轴是"内容该往哪去"。详见 `docs-templates/temporal-model.md`。
 
 - **历史只增不改**:ADR / reviews / git;只作方向,不作事实;被推翻标 `⚠️` 保留原文。
@@ -107,9 +109,9 @@
 
 - **术语表** `docs/glossary.md`:领域词的唯一定义处(受控词汇)。**术语先定义再使用**,文档别处只引用不重述。
 - **决策记录** `docs/decisions/`:ADR,记"为什么"和被拒方案。
-- **对账记录** `docs/reviews/`:teach-back 与"文档考古"的发现留档(E5 产出)。
-- **时间轴模型 / 复核协议**:`docs-templates/temporal-model.md` / `docs-templates/review-panel.md`(就地读件;L1 只留指针)。
-- **项目特有的跨层工件族**:在 L1 用**目录 + 归属规则**声明一次(例:"脚手架一律住 `docs/scaffolds/`"——若用 `essentials` skill,其默认落点就是这里),**不逐文件枚举**——新增文件不需要改 L1。
+- **对账记录** `docs/reviews/`:teach-back 与**全量文档对账**的发现留档(E5 产出)。
+- **时间轴模型 / 复核约定**:`docs-templates/temporal-model.md` / `docs-templates/review-panel.md`(就地读件;L1 只留指针)。
+- **项目特有的跨层工件族**:在 L1 用**目录 + 落点规则**声明一次(例:"脚手架一律住 `docs/scaffolds/`"——若用 `essentials` skill,其默认落点就是这里),**不逐文件枚举**——新增文件不需要改 L1。
 - **novelty 分档:** N0 通用模式 / N1 项目特有 / **N2 AI 未见**。N2 必须给"步骤级说明 + 危险实现清单 + 精确例子 + 可跑验收 + 失败语义"。
   - **N2 写在哪(路由):** 属**模块内**逻辑 → 该模块 L3 的 N2 栏(**若该模块还没有 `docs/modules/<name>.md`,先照 `docs-templates/module-doc.md` 补一份**);属**跨模块 / 架构骨架 / 高扇入**(判据:**加载闭包 ≥ 2**)→ 记到**公共处**:建了 L4 记 `docs/core-code.md`,没建 L4 记 L2 的 `[不变量]` 架构级约束(模块边界规则 / 跨模块通信方式)。所谓"L4 默认不写" = 不主动建文件,但命中收录标准的 N2 **必须有家**——**未建层 ≠ 无处可写。**
     - **跨模块逻辑只许一处成文:** 记在公共处(L4,或 L2 的架构级约束),该模块 L3 只留一行指针(E1);**不要两处各写一份**(必然漂移)。若**整个项目的核心就是那套表示 / 骨架**,它属 L2 / L3 正文,**不进 L4**——L4 只收骨架里**横切**的那几条。
@@ -134,10 +136,10 @@
 ### 日常入口(立项之后怎么用)
 
 - **建新模块**:从 `docs-templates/module-doc.md` 生成 `docs/modules/<name>.md`,先填三段式(标 novelty 档),再写代码 `[脚本可查]`
-- **改代码前(主战场)**:载入相关 L2/L3;按 `docs-templates/temporal-model.md` 的当下 DoD 自检;命中信号时跑 `docs-templates/review-panel.md` 的多镜复核(攒批:若已拷入 `scripts/`,先跑 `scripts/review-backlog` 取 delta;未拷则人工列 delta 并标「未接 / 未复跑」,复核完把起点写进 `docs/reviews/.last-review`)。**不需要每次改动都跑;推荐在对应实现之前完成** `[只能靠自觉]`。commit 时只跑轻量对账。
-- **改代码前 / commit(工具)**:若已拷入 `scripts/`(整目录拷贝,含共享模块 `_doc_common.py`):改代码前跑 `scripts/check-code-refs.py`(契约级变更加 `check-consistency.py`,N2 变更加 `run-n2-acceptance.py`);commit 轻量跑 `check-docs-sync` + `check-code-refs.py`;`lint-doc-structure.py` 只作警告。未拷则跳过并标「未接 / 未复跑」。
+- **改代码前(主战场)**:载入相关 L2/L3;按 `docs-templates/temporal-model.md` 的当下 DoD 自检;命中信号时跑 `docs-templates/review-panel.md` 的多镜复核(攒批:若已拷入 `scripts/`,先跑 `scripts/review-backlog` 取 delta;未拷则人工列 delta 并标「未接入 / 未复跑」,复核完把起点写进 `docs/reviews/.last-review`)。**不需要每次改动都跑;推荐在对应实现之前完成** `[只能靠自觉]`。commit 时只跑轻量对账。
+- **改代码前 / commit(工具)**:若已拷入 `scripts/`(整目录拷贝,含共享模块 `_doc_common.py`):改代码前跑 `scripts/check-code-refs.py`(契约级变更加 `check-consistency.py`,N2 变更加 `run-n2-acceptance.py`);commit 轻量跑 `check-docs-sync` + `check-code-refs.py`;`lint-doc-structure.py` 只作警告。未拷则跳过并标「未接入 / 未复跑」。
 - **做决策**:按 E4 判要不要记 ADR;要记就当场写 `[需独立复核]`
-- **收尾(可选)**:若已把 `scripts/` 拷进项目,跑 `scripts/check-docs-sync`(代码动过但文档没动)与 `scripts/check-doc-refs`(死链 / 占位符 / N2 缺 `**验收**` / N2 缺危险实现清单 / 模块缺失败语义 / 危险实现清单行未填 / 现状文档引记录（现状文档把 ADR / 评审记录当依据引用）)（均 `.sh` / `.ps1`）,可再接 pre-commit / CI `[脚本可查]`(Windows:先确保 `.sh` 为 LF——`*.sh text eol=lf`);未接入则跳过——**但文档里"已验证 / 全绿"这类声称要标"未接 / 未复跑":声称不是证据**
+- **收尾(可选)**:若已把 `scripts/` 拷进项目,跑 `scripts/check-docs-sync`(代码动过但文档没动)与 `scripts/check-doc-refs`(死链 / 占位符 / N2 缺 `**验收**` / N2 缺危险实现清单 / 模块缺失败语义 / 危险实现清单行未填 / 现状文档引记录（现状文档把 ADR / 评审记录当依据引用）)（均 `.sh` / `.ps1`）,可再接 pre-commit / CI `[脚本可查]`(Windows:先确保 `.sh` 为 LF——`*.sh text eol=lf`);未接入则跳过——**但文档里"已验证 / 全绿"这类声称要标"未接入 / 未复跑":声称不是证据**
 
 ### 铁律
 
@@ -173,7 +175,7 @@
 
 ### 演化期规则(立项之后,文档怎么不死)
 
-> **E1–E7 的唯一归属是 `docs-templates/evolution-rules.md`**(随项目落地)。本 L1 只留指针——**做文档演进 / 对账 / 大改动前加载它**。
+> **E1–E7 的唯一正文归属是 `docs-templates/evolution-rules.md`**(随项目落地)。本 L1 只留指针——**做文档演进 / 对账 / 大改动前加载它**。
 > (一句话:三段式是容器;每段里的陈述按**性质**——描述型 / 决策型 / 约束型 / 方向型——分四类,腐烂方式各异,维护动作见那七条。)
 
 ---

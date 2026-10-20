@@ -8,7 +8,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 # 按项目改:文档扩展名(含点)。默认同时认 .md 与 .markdown。
 $DocExt = @('.md', '.markdown')
 
-# 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:考古 / 存档层
+# 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:存档层
 # (如 docs/legacy/)、记录类(docs/decisions/、docs/reviews/——历史快照,引用退役术语/旧链接是常态,
 # 不是错误)与待填件目录(docs/templates/——有些项目把待填件放在 docs/ 内)。
 # 置空字符串则不过滤。
@@ -26,7 +26,7 @@ if (($docsMd | Measure-Object).Count -eq 0) {
   exit 0
 }
 
-# 排除考古 / 存档层(不是本项目当前维护的文档;见顶部 $DocExclude)
+# 排除存档层(不是本项目当前维护的文档;见顶部 $DocExclude)
 if ($DocExclude) {
   $docsMd = @($docsMd | Where-Object {
     $rel = $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/')

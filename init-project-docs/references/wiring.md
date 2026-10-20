@@ -26,7 +26,7 @@ DOC_GLOB='^docs/'
 L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md'
 ```
 
-> `check-doc-refs.sh` 顶部另有两项:`DOC_EXT`(文档扩展名,默认 `.md` + `.markdown`)与 `DOC_EXCLUDE`(对账要**排除**的路径,默认排除 `docs/legacy/`、`docs/archive/` 等**考古 / 存档层**、`docs/reviews/` **对账留档**(历史快照,引用退役术语/旧链是常态)、以及 `docs/templates/` 等**待填件目录**——它们不是本项目当前维护的文档,扫进来只会制造噪音)。
+> `check-doc-refs.sh` 顶部另有两项:`DOC_EXT`(文档扩展名,默认 `.md` + `.markdown`)与 `DOC_EXCLUDE`(对账要**排除**的路径,默认排除 `docs/legacy/`、`docs/archive/` 等**存档层**、`docs/reviews/` **对账留档**(历史快照,引用退役术语/旧链是常态)、以及 `docs/templates/` 等**待填件目录**——它们不是本项目当前维护的文档,扫进来只会制造噪音)。
 
 > **Windows 必读——先把换行符定死。**
 > Windows 默认 `core.autocrlf=true`，拷进项目的 `.sh` 会被检出成 CRLF；**Linux / WSL / CI 上这会直接语法错**（`$'\r': command not found`），若已接 pre-commit，会挡住**每一次**提交，报错还像"hook 坏了"——很容易被整个删掉。（Git Bash 多数版本能容忍 CRLF，但别赌。）落地一行防住（`.gitattributes` 不存在就新建，存在就追加）：
@@ -62,7 +62,7 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 若项目用的是**别的写法**——典型是**早期版本**的 L1(只有"N2 必须给步骤 / 例子 / 验收"这样的**文字规则**,文档里没有 `novelty=N2` 标记)——直接接上会:
 
 - **漏报**:没有 `novelty=N2` 字面量 → 对账永远看不到 N2 条目,这道门禁形同虚设;
-- **噪音**:`DOC_EXT` / `DOC_EXCLUDE` 没调好时,不该扫的文件(待填件 / 考古层)被当成对账对象扫。
+- **噪音**:`DOC_EXT` / `DOC_EXCLUDE` 没调好时,不该扫的文件(待填件 / 存档层)被当成对账对象扫。
 
 **对策(二选一):**
 
@@ -83,7 +83,7 @@ bash scripts/check-docs-sync.sh --staged --strict || {
 
 或写进 [pre-commit 框架] 的 `.pre-commit-config.yaml`，便于团队分发。
 
-> 建议 `check-docs-sync` 用 `--strict`（它是"动不动"检查，误报极低——纯重构提交只改代码、不碰文档时会命中，属已知例外，用 `git commit --no-verify` 放行）；`check-doc-refs` 初期先不加 `--strict`，当提醒用，等基线干净了再收紧。
+> 建议 `check-docs-sync` 用 `--strict`（它是"动不动"检查，误报极低——纯重构提交只改代码、不碰文档时会命中，属已知例外，用 `git commit --no-verify` 放行）；`check-doc-refs` 初期先不加 `--strict`，当提醒用，等**检查结果干净**了再收紧。
 
 ## 方式 B：CI（GitHub Actions）
 
@@ -113,7 +113,7 @@ jobs:
 | 脚本 | 查什么 | 误报 | 建议 |
 |---|---|---|---|
 | `check-docs-sync` | 代码动了但 `docs/` 与 L1 没动 | 极低（纯重构会命中，属例外） | pre-commit / CI 加 `--strict` |
-| `check-doc-refs` | 死链(含大小写错链) / 未填占位符 / N2 缺 `**验收**` / N2 缺危险实现清单 / 模块缺失败语义 / 危险实现清单行未填 / 现状文档引记录 | 低-中 | 先当提醒，基线干净后加 `--strict`;建议放 **编辑后 / CI(可选) / 收尾**,不挡每次提交 |
+| `check-doc-refs` | 死链(含大小写错链) / 未填占位符 / N2 缺 `**验收**` / N2 缺危险实现清单 / 模块缺失败语义 / 危险实现清单行未填 / 现状文档引记录 | 低-中 | 先当提醒，**检查结果干净**后加 `--strict`;建议放 **编辑后 / CI(可选) / 收尾**,不挡每次提交 |
 | `check-code-refs.py` | 内联代码引用(路径 / 文件)不存在 | 低 | 改代码前 + commit;可 `--strict` |
 | `run-n2-acceptance.py` | N2 验收命令执行结果;无 manifest 只列不跑 | 取决于项目 | 改代码前 / 批次;`--run` 才执行 |
 | `check-consistency.py` | 重复定义 / 同名数值冲突 | 中(启发式) | 只当警告,不进 pre-commit |

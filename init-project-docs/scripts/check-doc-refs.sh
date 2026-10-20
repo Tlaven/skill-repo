@@ -17,7 +17,7 @@ for a in "$@"; do [ "$a" = "--strict" ] && STRICT=1; done
 DOC_EXT="md markdown"
 
 # 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:
-# 考古 / 存档层(如 docs/legacy/ 里对已废文件的链接)、**记录类**(docs/decisions/、docs/reviews/——历史快照,
+# 存档层(如 docs/legacy/ 里对已废文件的链接)、**记录类**(docs/decisions/、docs/reviews/——历史快照,
 # 引用退役术语 / 旧链接是常态,不是错误)、与**待填件目录**(docs/templates/——
 # 有些项目把待填件放在 docs/ 内,待填件里的占位符不算本项目当前维护的文档内容)。置空则不过滤。
 DOC_EXCLUDE='^(docs/legacy/|docs/archive/|docs/decisions/|docs/templates/|docs/reviews/)'
