@@ -17,7 +17,7 @@ license: Proprietary. LICENSE.txt has complete terms
 | **Automated QA (executable)** | `python scripts/qa_check.py output.pptx --pdf render/output.pdf --strict` |
 | **Delivery acceptance checklist** | Read [acceptance-checklist.md](acceptance-checklist.md) |
 | **CJK typography** | Read [typography.md](typography.md) |
-| **Visual quality (judgment layer)** | Read [docs/scaffolds/visual-quality-essentials.md](docs/scaffolds/visual-quality-essentials.md) |
+| **Visual quality (judgment layer)** | Read [docs/scaffolds/visual-quality-ledger.md](docs/scaffolds/visual-quality-ledger.md)（条目 + 视图；旧 `visual-quality-essentials.md` 已冻结，仅追溯） |
 | **Layout patterns (richness)** | Read [docs/scaffolds/slide-patterns-essentials.md](docs/scaffolds/slide-patterns-essentials.md) |
 | **Reference example** | Open [examples/acceptance-sample/](examples/acceptance-sample/)(deck + 渲染 + 证据 + 检查指引) |
 | Render (COM / LibreOffice) | `scripts/render_slides.ps1 -Pptx deck.pptx -OutDir render/ -Pdf` |

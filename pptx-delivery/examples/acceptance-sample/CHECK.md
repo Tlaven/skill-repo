@@ -57,5 +57,5 @@ python scripts/qa_check.py examples/acceptance-sample/deck.pptx --pdf examples/a
 ## 附
 
 - 重新生成这份示例:`node make_sample.js`(需全局 pptxgenjs + sharp;`NODE_PATH`);
-- 版式判据:`../../docs/scaffolds/slide-patterns-essentials.md`(v0.1);观感判据:`../../docs/scaffolds/visual-quality-essentials.md`;
+- 版式判据:`../../docs/scaffolds/slide-patterns-essentials.md`(v0.1);观感判据:`../../docs/scaffolds/visual-quality-ledger.md`(视图;旧文已冻结);
 - 验收清单全文:`../../acceptance-checklist.md`;独立复核与证据档案:`../../docs/reviews/2026-10-19-cold-verification.md`。

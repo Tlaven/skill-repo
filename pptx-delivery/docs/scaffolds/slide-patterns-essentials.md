@@ -42,7 +42,7 @@
 3. **容量检查**:流程 ≤5 步;KPI ≤6 块;表格 ≤8 行(记分卡类可到 9–10);超限 → 拆页 / 附录。
 4. **三层检查**:信息层 / 图解层 / 氛围层是否分离;氛围层有无文字。
 5. **数据 / 引用页**:so-what 有没有;来源行有没有。
-6. **出图后**:先跑 `qa_check --strict`,再按 [visual-quality-essentials.md](visual-quality-essentials.md) 目检(焦点 / 对齐 / 留白节奏)。
+6. **出图后**:先跑 `qa_check --strict`,再按 [visual-quality-ledger.md](visual-quality-ledger.md) 的视图目检(焦点 / 对齐 / 留白节奏;旧文已冻结)。
 
 ## 四、失败模式(危险实现清单)
 
@@ -68,7 +68,7 @@
 - **Bento grid 综述(extendedframes / hawd-design)** — "尺寸即优先级"的模块化布局;营销类文章,`【估】` https://extendedframes.com/bento-grid-layouts-for-slides-how-modular-design-makes-presentations-easier-to-read/ ,https://hawd-design.com/en/blog/bento-grid-2026/
 - **"bento 提升 47% 留存"类引用** — 无法回溯到一手研究,`【待补证据】`,**不采信**。
 - **本项目触发与实证**:作者两轮判"不够丰富"(2026-10-19)【核】;低对比装饰文字会被 qa_check C5 拦截【核:tests/】。
-- **内部判据**:[typography.md](../../typography.md) 角色色表;[visual-quality-essentials.md](visual-quality-essentials.md) 间距 / 角色 / 构成。
+- **内部判据**:[typography.md](../../typography.md) 角色色表;[visual-quality-ledger.md](visual-quality-ledger.md) 间距 / 角色 / 构成(旧文已冻结)。
 
 ## 七、维护与版本
 
@@ -80,4 +80,4 @@
 |---|---|---|---|
 | v0 | 2026-10-19 | 初版:14 型版式库 + 丰富度判据(原型轮换 × 三层 × 尺度)+ 12 条通例 | 作者:"不够丰富,去学一学" + StrategyU / Deckary 调研 |
 | v0.1 | 2026-10-19 | 修订"丰富"定义:单页组件密度 × 信息具体度;新增通例 13(每页 ≥3 模块);注明"一页一信息"只管主线 | 作者二次指正:极简原型的轮换不算丰富——"不懂这个语境里'丰富'的含义" |
-| v0.2 | 2026-10-19 | 记录作者终评:密度已达标,观感仍"普通"——差距在**图形设计层**(构图语言 / 图形与图标设计 / 色彩层次),不是模块数量问题;留作下一修订触发 | 作者:"还行吧,很普通" |
+| v0.2 | 2026-10-19 | 记录作者终评:密度已达标,观感仍"普通"——差距在**图形设计层**(构图语言 / 图形与图标设计 / 色彩层次),不是模块数量问题;留作下一修订触发。结论已提升为 `visual-quality-ledger.md` 的 vq#V8,以账本为准 | 作者:"还行吧,很普通" |
