@@ -7,6 +7,7 @@ build/
 .DS_Store
 Thumbs.db
 desktop.ini
+.tmp-rubric-check/
 
 # 本地校准物料（teach-back prompt 的基线与盲测草稿，不入库）
 init-project-docs/.calibration/

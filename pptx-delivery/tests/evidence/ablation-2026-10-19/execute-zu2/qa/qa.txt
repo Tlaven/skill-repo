@@ -1,0 +1,23 @@
+﻿== qa_check: deck.pptx ==
+[C1-structure] info=1
+    info: slides=8, media=0, pictures=0
+[C2-placeholder] info=1
+    info: no placeholder pattern found
+[C3-min-font] info=1
+    info: below-min=0, inherited-size(not checked)=0
+[C4-color-hygiene] info=1
+    info: hex colors well-formed
+[C5-contrast] info=1
+    info: checked=210, below-threshold=0, unresolved(needs visual)=0
+[C6-image-aspect] info=1
+    info: all pictures within aspect tolerance
+[C7-pdf-bounds] info=1
+    info: no words outside slide bounds across 8 page(s)
+[C8-render-text] info=1
+    info: all paragraphs present in PDF text layer (8 page(s))
+[C9-editable] info=1
+    info: no full-page-image-only slides
+[I1-font-inventory] info=1
+    info: Microsoft YaHei x188; Consolas x19; Arial x3
+summary: errors=0, flags=0, info=10
+json: qa/qa.json
