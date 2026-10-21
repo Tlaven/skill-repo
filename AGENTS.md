@@ -72,6 +72,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-ps1-bom.ps1  #
 ## 开放问题
 
 - [x] **使用点覆盖(2026-10-19 核 / 同日处置)**:① `aigc-derate` 已补挂 OpenCode(与论文套件 thesis-docx / drawio-export 同宿主);② OpenCode 侧 `macro-market-radar` 已由副本改为 junction(改前核验:9 文件全同,仅 `.cache/index_history.json` 不同;旧副本备份留在会话沙盒)。当前:OpenCode 挂 7 个(pptx-delivery / drawio-export / thesis-docx / init-project-docs / video-decode / macro-market-radar / aigc-derate),CC 挂 5 个(essentials / init-project-docs / macro-market-radar / seeding-skills / video-decode),Claude 挂 2 个(init-project-docs / seeding-skills)。
+- [x] **2026-10-21 补挂**:`essentials` 已挂 OpenCode(`~/.config/opencode/skills/essentials` → 本仓库 junction),OpenCode 现 8 个;新会话生效。
 - [ ] 不变量 4 / 5 是否升格为全仓约定(现仅 pptx-delivery 一例)?
 
 ## 指针
