@@ -1,0 +1,57 @@
+### good.md
+── C:\Users\TL\skills-repo\essentials\tests\ledger-check\good.md
+
+合计: FAIL=0 WARN=0 文件=1
+exit=0
+
+### good-retire.md
+── C:\Users\TL\skills-repo\essentials\tests\ledger-check\good-retire.md
+
+合计: FAIL=0 WARN=0 文件=1
+exit=0
+
+### bad-missing-action.md
+── C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-missing-action.md
+[FAIL] L-FALSIFY-ACT C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-missing-action.md: L1 缺证伪动作
+
+合计: FAIL=1 WARN=0 文件=1
+红是裁决输入,不是自动状态变更:缺动作/缺判据先补人,不补模板。
+exit=1
+
+### bad-vocab.md
+── C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-vocab.md
+[FAIL] L-FALSIFY-ACT-VOCAB C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-vocab.md: L1 证伪动作不是四选一(复跑:/对照:/盲评:/人看:): 看看再说
+[FAIL] L-LAYER C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-vocab.md: L1 层必须是 [通用] 或 [本地]: 项目
+[FAIL] L-JUDGE-VOCAB C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-vocab.md: L1 判据未标来源(用户编码/用户确认/AI 自拟/用户裁决): 我觉得对
+[WARN] L-CARRIER C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-vocab.md: L1 载体为空
+
+合计: FAIL=3 WARN=1 文件=1
+红是裁决输入,不是自动状态变更:缺动作/缺判据先补人,不补模板。
+exit=1
+
+### bad-retire-unrecorded.md
+── C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-retire-unrecorded.md
+[FAIL] L-RETIRE-RECORD C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-retire-unrecorded.md: L1 状态是退役,但退役记录里没有它
+[FAIL] L-VIEW-RETIRED C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-retire-unrecorded.md: 视图里出现已退役条目 L1(退役行只留在账本,不进视图)
+
+合计: FAIL=2 WARN=0 文件=1
+红是裁决输入,不是自动状态变更:缺动作/缺判据先补人,不补模板。
+exit=1
+
+### bad-retire-incomplete.md
+── C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-retire-incomplete.md
+[FAIL] L-RETIRE-EVID C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-retire-incomplete.md: 退役记录 L1 缺证据(证伪现象 / 复评结论)
+[FAIL] L-RETIRE-ALT C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-retire-incomplete.md: 退役记录 L1 缺替代(写替代 ID 或「无替代」)
+[FAIL] L-VIEW-RETIRED C:\Users\TL\skills-repo\essentials\tests\ledger-check\bad-retire-incomplete.md: 视图里出现已退役条目 L1(退役行只留在账本,不进视图)
+
+合计: FAIL=3 WARN=0 文件=1
+红是裁决输入,不是自动状态变更:缺动作/缺判据先补人,不补模板。
+exit=1
+
+### view-overflow.md
+── C:\Users\TL\skills-repo\essentials\tests\ledger-check\view-overflow.md
+[WARN] L-VIEW C:\Users\TL\skills-repo\essentials\tests\ledger-check\view-overflow.md: 视图 6 条,超过上限 5
+
+合计: FAIL=0 WARN=1 文件=1
+exit=0
+
