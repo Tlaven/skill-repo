@@ -55,7 +55,7 @@ import sys
 from _doc_common import active_mask, iter_docs, read_lines, rel
 
 ID_RE = re.compile(r"\b([A-Za-z]{2,6}-\d{2,4})\b")
-HEADING_RE = re.compile(r"^#\s+([A-Za-z]{2,6}-\d{2,4})\s*:\s*(.*?)\s*$")
+HEADING_RE = re.compile(r"^#\s+([A-Za-z]{2,6}-\d{2,4})\s*[:：]\s*(.*?)\s*$")
 FILENAME_RE = re.compile(r"^(?:([A-Za-z]{2,6})[-_])?(\d{2,4})(?:[-_.]|$)")
 STATUS_HEAD_RE = re.compile(r"^##\s+(?:状态|status)\s*$", re.I)
 
@@ -127,17 +127,33 @@ def rel_ids(value):
 
 
 def normalize_status(raw):
-    """Return (canonical status, replacement id or None)."""
-    s = raw.strip().replace("（", "(").replace("）", ")")
-    s = re.sub(r"\s*\(\s*", "(", s)
-    s = re.sub(r"\s+", " ", s).strip().rstrip("。.")
-    m = re.match(r"^superseded\s+by\s+([A-Za-z]{2,6}-\d{2,4})$", s, re.I)
+    """Return (canonical status, replacement id or None).
+
+    The status is the leading token; whatever follows it (a date, 「已落地」, 「被 ADR-0xx
+    取代」) is prose, not part of the status. Only an unknown leading token is a finding.
+    """
+    s = raw.strip().replace("（", "(").replace("）", ")").replace("\ufeff", "")
+    s = re.sub(r"^[^0-9A-Za-z\u4e00-\u9fff]+", "", s).strip()
+
+    m = re.match(r"^superseded\s+by\s+([A-Za-z]{2,6}-\d{2,4})\b", s, re.I)
     if m:
         return "superseded", m.group(1).upper()
-    s = s.lower()
-    if s.startswith("superseded"):
-        return "superseded", None
-    return s, None
+
+    low = s.lower()
+    if low.startswith("accepted(修订)"):
+        return "accepted(修订)", None
+    for token in ("accepted", "proposed", "superseded", "deprecated", "rejected"):
+        if not low.startswith(token):
+            continue
+        rest = low[len(token):]
+        if rest and rest[0] not in "( \t:：,，.。;；-—)":
+            continue
+        target = None
+        if token == "superseded":
+            ids = rel_ids(s)
+            target = ids[0] if ids else None
+        return token, target
+    return re.split(r"[(（\s:：,，]", s, 1)[0].strip().lower(), None
 
 
 def status_of(lines, fm):
@@ -239,6 +255,33 @@ def collect(root, adr_dir, archived=False):
     return records
 
 
+def template_ids(adr_dir):
+    """IDs of `*template*` files: not records, but citing them is not a broken link."""
+    ids = set()
+    if not os.path.isdir(adr_dir):
+        return ids
+    for name in sorted(os.listdir(adr_dir)):
+        if "template" not in name.lower():
+            continue
+        path = os.path.join(adr_dir, name)
+        if not os.path.isfile(path):
+            continue
+        lines = read_lines(path)
+        _, body_start = parse_front_matter(lines)
+        rid, _ = heading_of(lines, body_start)
+        if rid:
+            ids.add(rid)
+    return ids
+
+
+def default_index_path(adr_dir):
+    for name in ("README.md", "README.markdown", "README.MD"):
+        candidate = os.path.join(adr_dir, name)
+        if os.path.isfile(candidate):
+            return candidate
+    return os.path.join(adr_dir, "README.md")
+
+
 def sort_key(record):
     return (record["num"] or 0, record["id"] or "")
 
@@ -277,7 +320,7 @@ def find_block(lines):
     return begin, end
 
 
-def validate(records, archived_ids):
+def validate(records, archived_ids, max_words=MAX_WORDS):
     findings, warnings = [], []
     by_id = {}
     for record in records:
@@ -355,23 +398,25 @@ def validate(records, archived_ids):
                 "superseded but still in the main dir; move it to archive/ so a directory listing does not surface it",
             ))
 
-        if record["words"] > MAX_WORDS:
+        if record["words"] > max_words:
             warnings.append(finding(
                 "adr-long",
                 where,
                 "{} words > {} — usually two decisions, or an implementation diary"
-                .format(record["words"], MAX_WORDS),
+                .format(record["words"], max_words),
             ))
 
     return findings, warnings
 
 
-def check_citations(root, records, archived_records, scan_extra):
+def check_citations(root, records, archived_records, scan_extra, extra_known=()):
     """ADR ids mentioned in the files an agent reads first must still stand."""
     known = {}
     for record in records + archived_records:
         if record["id"]:
             known[record["id"]] = record["status"]
+    for rid in extra_known:
+        known.setdefault(rid, "")
 
     paths = list(iter_docs(root))
     for extra in scan_extra:
@@ -500,7 +545,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".", help="project root (default: .)")
     ap.add_argument("--dir", default=DEFAULT_DIR, help="ADR directory relative to root (default: docs/decisions)")
-    ap.add_argument("--index", default="", help="index file relative to root (default: <dir>/README.md)")
+    ap.add_argument("--index", default="", help="index file relative to root (default: <dir>/README.md or README.markdown)")
     ap.add_argument("--write", action="store_true", help="regenerate the index block in place")
     ap.add_argument("--strict", action="store_true", help="exit 1 on findings (warnings never fail)")
     ap.add_argument("--citations", dest="citations", action="store_true", default=True,
@@ -512,12 +557,14 @@ def main():
     ap.add_argument("--immutable", action="store_true",
                     help="fail when a record body changed since --base (append-only)")
     ap.add_argument("--base", default="HEAD", help="git ref for --immutable (default: HEAD)")
+    ap.add_argument("--max-words", type=int, default=MAX_WORDS,
+                    help="warn above this many words per record (default: 800)")
     ap.add_argument("--json", help="write JSON report to this path")
     args = ap.parse_args()
 
     root = os.path.abspath(args.root)
     adr_dir = os.path.join(root, args.dir)
-    index_path = os.path.join(root, args.index) if args.index else os.path.join(adr_dir, "README.md")
+    index_path = os.path.join(root, args.index) if args.index else default_index_path(adr_dir)
 
     if not os.path.isdir(adr_dir):
         if args.json:
@@ -530,11 +577,12 @@ def main():
     archived_records = collect(root, os.path.join(adr_dir, "archive"), archived=True)
     archived_ids = {r["id"] for r in archived_records if r["id"]}
 
-    findings, warnings = validate(records, archived_ids)
+    findings, warnings = validate(records, archived_ids, args.max_words)
 
     if args.citations:
         cite_findings, cite_warnings = check_citations(
-            root, records, archived_records, list(DEFAULT_SCAN) + args.scan
+            root, records, archived_records, list(DEFAULT_SCAN) + args.scan,
+            extra_known=template_ids(adr_dir),
         )
         findings += cite_findings
         warnings += cite_warnings
@@ -596,8 +644,23 @@ def main():
 
     for item in findings:
         print("[{}] {}: {}".format(item["tag"], item["file"], item["message"]))
+
+    long_warnings = [w for w in warnings if w["tag"] == "adr-long"]
     for item in warnings:
-        print("[{}] {}: {}".format(item["tag"], item["file"], item["message"]))
+        if item["tag"] != "adr-long":
+            print("[{}] {}: {}".format(item["tag"], item["file"], item["message"]))
+    if 0 < len(long_warnings) <= 3:
+        for item in long_warnings:
+            print("[{}] {}: {}".format(item["tag"], item["file"], item["message"]))
+    elif long_warnings:
+        longest = sorted(
+            (r for r in records if r["id"] and r["words"] > args.max_words),
+            key=lambda r: r["words"], reverse=True,
+        )[:3]
+        print("[adr-long] {} of {} records exceed {} words (longest: {}); "
+              "raise --max-words if long records are the house style".format(
+                  len(long_warnings), len(records), args.max_words,
+                  ", ".join("{} {}".format(r["id"], r["words"]) for r in longest)))
 
     standing = sum(1 for r in records if r["id"] and r["status"] in STANDING)
     pending = sum(1 for r in records if r["id"] and r["status"] in PENDING)

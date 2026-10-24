@@ -345,6 +345,54 @@ class ScriptTests(unittest.TestCase):
             proc = run_script("adr-index.py", "--root", ".", "--strict", "--no-citations", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
 
+    def test_adr_legacy_format_tolerance(self):
+        """Real projects: prose statuses, fullwidth colon, README.markdown, template ids."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "docs" / "decisions"
+            write(d / "README.markdown", "# ADR\n\n<!-- adr-index:begin -->\n<!-- adr-index:end -->\n")
+            write(d / "adr-000-template.md", "# ADR-000: template\n\n## 状态\n\nproposed\n")
+            write(d / "adr-001-a.md",
+                  "# ADR-001：全角冒号\n\n## 状态\n\naccepted(2026-10-15)\n")
+            write(d / "adr-002-b.md",
+                  "# ADR-002: B\n\n## 状态\n\n⚠️ accepted(已落地：`x.html` 照它改了)\n")
+            write(d / "adr-003-c.md",
+                  "# ADR-003: C\n\n## 状态\n\nsuperseded(被 adr-002 取代)\n")
+            write(root / "AGENTS.md", "模板见 ADR-000。\n")
+
+            run_script("adr-index.py", "--root", ".", "--write", cwd=root)
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            for tag in ("adr-bad-status", "adr-heading-mismatch", "adr-superseded-no-target",
+                        "adr-index-missing", "adr-cite-missing"):
+                self.assertNotIn(tag, proc.stdout)
+            self.assertIn("[adr-archive]", proc.stdout)     # superseded, still in the main dir
+
+            write(d / "adr-004-d.md", "# ADR-004: D\n\n## 状态\n\n已定\n")
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[adr-bad-status] docs/decisions/adr-004-d.md", proc.stdout)
+            self.assertIn("'已定'", proc.stdout)
+
+    def test_adr_long_warnings_collapse(self):
+        body = "\n\n".join("段落 {}".format(i) for i in range(300))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "docs" / "decisions"
+            write(d / "README.md", "# ADR\n\n<!-- adr-index:begin -->\n<!-- adr-index:end -->\n")
+            for i in range(1, 6):
+                write(d / "adr-00{}-x.md".format(i),
+                      "---\nstatus: accepted\n---\n\n# ADR-00{}: X\n\n{}\n".format(i, body))
+            run_script("adr-index.py", "--root", ".", "--write", cwd=root)
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertEqual(proc.stdout.count("[adr-long]"), 1, proc.stdout)
+            self.assertIn("5 of 5 records exceed 800 words", proc.stdout)
+
+            proc = run_script("adr-index.py", "--root", ".", "--strict", "--max-words", "5000", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("[adr-long]", proc.stdout)
+
     def test_adr_immutable_append_only(self):
         def git(*args):
             return subprocess.run(
