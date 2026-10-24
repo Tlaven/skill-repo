@@ -249,5 +249,149 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
 
 
+    def test_adr_index_roundtrip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "docs" / "decisions"
+            write(d / "README.md", "# ADR\n\n<!-- adr-index:begin -->\n<!-- adr-index:end -->\n")
+            write(d / "adr-001-a.md", "---\nstatus: accepted\n---\n\n# ADR-001: Use A\n\nbody\n")
+            write(d / "adr-002-b.md", "---\nstatus: proposed\n---\n\n# ADR-002: Maybe B\n")
+            write(d / "adr-003-c.md",
+                  "---\nstatus: superseded\nsuperseded_by: ADR-001\n---\n\n# ADR-003: Old C\n")
+
+            proc = run_script("adr-index.py", "--root", ".", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("[adr-index-drift]", proc.stdout)
+
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+
+            proc = run_script("adr-index.py", "--root", ".", "--write", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("regenerated", proc.stdout)
+
+            index = (d / "README.md").read_text(encoding="utf-8")
+            self.assertIn("- ADR-001 · accepted · Use A", index)
+            self.assertIn("- ADR-002 · proposed · Maybe B", index)
+            self.assertNotIn("ADR-003", index)          # superseded never listed
+            self.assertNotIn("<!-- adr-index:begin -->", index)   # banner normalized
+
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("[adr-archive]", proc.stdout)  # warning only, not a failure
+
+    def test_adr_index_findings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "docs" / "decisions"
+            write(d / "adr-001-a.md", "---\nstatus: accepted\n---\n\n# ADR-001: A\n")
+            write(d / "adr-001-b.md", "---\nstatus: accepted\n---\n\n# ADR-001: B\n")
+            write(d / "adr-002-c.md", "---\nstatus: approved\n---\n\n# ADR-002: C\n")
+            write(d / "adr-003-d.md", "---\nstatus: superseded\n---\n\n# ADR-003: D\n")
+            write(d / "adr-004-e.md", "---\nstatus: accepted\nsuperseded_by: ADR-099\n---\n\n# ADR-004: E\n")
+            write(d / "adr-005-f.md", "---\nstatus: accepted\n---\n\n# ADR-006: F\n")
+            write(d / "adr-007-g.md", "# ADR-007: G\n\nno status\n")
+            write(d / "README.md", "# ADR\n\n<!-- adr-index:begin -->\n<!-- adr-index:end -->\n")
+
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[adr-id-duplicate] ADR-001", proc.stdout)
+            self.assertIn("[adr-bad-status] docs/decisions/adr-002-c.md", proc.stdout)
+            self.assertIn("[adr-superseded-no-target] docs/decisions/adr-003-d.md", proc.stdout)
+            self.assertIn("[adr-relation-missing] docs/decisions/adr-004-e.md", proc.stdout)
+            self.assertIn("[adr-name-mismatch] docs/decisions/adr-005-f.md", proc.stdout)
+            self.assertIn("[adr-bad-status] docs/decisions/adr-007-g.md", proc.stdout)
+
+    def test_adr_index_legacy_prose_status_and_create(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "docs" / "decisions"
+            write(d / "adr-001-a.md", "# ADR-001: A\n\n## 状态\n\naccepted(修订)\n\n## 背景\n\nlegacy\n")
+            write(d / "adr-002-b.md", "# ADR-002: B\n\n## 状态\n\nsuperseded by ADR-001\n")
+
+            proc = run_script("adr-index.py", "--root", ".", "--write", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("created", proc.stdout)
+            index = (d / "README.md").read_text(encoding="utf-8")
+            self.assertIn("- ADR-001 · accepted(修订) · A", index)
+            self.assertNotIn("ADR-002", index)
+
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+
+    def test_adr_citations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "docs" / "decisions"
+            write(d / "README.md", "# ADR\n\n<!-- adr-index:begin -->\n<!-- adr-index:end -->\n")
+            write(d / "adr-001-a.md", "---\nstatus: accepted\n---\n\n# ADR-001: A\n")
+            write(d / "adr-002-b.md",
+                  "---\nstatus: superseded\nsuperseded_by: ADR-001\n---\n\n# ADR-002: B\n")
+            write(root / "AGENTS.md", "See ADR-001, ADR-002 and ADR-099.\n\n```\nADR-404\n```\n")
+
+            run_script("adr-index.py", "--root", ".", "--write", cwd=root)
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[adr-cite-missing] AGENTS.md:1: ADR-099", proc.stdout)
+            self.assertIn("[adr-cite-retired] AGENTS.md:1: ADR-002", proc.stdout)
+            self.assertNotIn("ADR-404", proc.stdout)      # fenced block is not a citation
+
+            write(root / "AGENTS.md", "See ADR-001.\n")
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+            write(root / "AGENTS.md", "See ADR-099.\n")
+            proc = run_script("adr-index.py", "--root", ".", "--strict", "--no-citations", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+    def test_adr_immutable_append_only(self):
+        def git(*args):
+            return subprocess.run(
+                ["git", "-C", str(root)] + list(args),
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "docs" / "decisions"
+            write(d / "README.md", "# ADR\n\n<!-- adr-index:begin -->\n<!-- adr-index:end -->\n")
+            write(d / "adr-001-a.md",
+                  "---\nstatus: accepted\n---\n\n# ADR-001: A\n\n## 选择\n\nUse A.\n")
+            run_script("adr-index.py", "--root", ".", "--write", cwd=root)
+            git("init", "-q")
+            git("add", "-A")
+            git("-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "init")
+
+            proc = run_script("adr-index.py", "--root", ".", "--strict", "--immutable", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+            write(d / "adr-001-a.md",
+                  "---\nstatus: accepted\n---\n\n# ADR-001: A\n\n## 选择\n\nUse B.\n")
+            proc = run_script("adr-index.py", "--root", ".", "--strict", "--immutable", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[adr-immutable] docs/decisions/adr-001-a.md", proc.stdout)
+
+            write(d / "adr-001-a.md",
+                  "---\nstatus: accepted\n---\n\n# ADR-001: A\n\n## 选择\n\nUse A.\n\n## 补充 1\n\nmore\n")
+            proc = run_script("adr-index.py", "--root", ".", "--strict", "--immutable", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+            write(d / "archive" / "adr-001-a.md",
+                  "---\nstatus: superseded\nsuperseded_by: ADR-002\n---\n\n# ADR-001: A\n\n"
+                  "> Superseded by ADR-002 on 2026-10-24 - replaced.\n\n"
+                  "## 选择\n\nUse A.\n\n## 补充 1\n\nmore\n")
+            (d / "adr-001-a.md").unlink()
+            write(d / "adr-002-c.md", "---\nstatus: accepted\n---\n\n# ADR-002: C\n")
+            run_script("adr-index.py", "--root", ".", "--write", cwd=root)
+            proc = run_script("adr-index.py", "--root", ".", "--strict", "--immutable", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+            (d / "archive" / "adr-001-a.md").unlink()
+            proc = run_script("adr-index.py", "--root", ".", "--strict", "--immutable", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[adr-deleted] docs/decisions/adr-001-a.md", proc.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

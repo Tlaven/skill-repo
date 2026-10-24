@@ -14,8 +14,9 @@
   ├── core-code.md          # L4 —— 可选:被 ≥2 个工作场景共同加载的核心单元才建;不建时跨模块契约写进 architecture.md 的「架构级约束」
   ├── reviews/              # E5 对账 / 多镜复核产出 —— 首次对账时创建;含 .last-review(复核覆盖的提交);多镜 panel 的 dispatch/outputs 放 docs/reviews/<日期>-<主题>-panel/
   └── decisions/
-      ├── README.md         # ADR 索引 —— 首次记 ADR 时创建
-      └── adr-XXX-*.md      # 真实 ADR
+      ├── README.md         # ADR 索引(由 scripts/adr-index.py 生成) —— 首次记 ADR 时创建
+      ├── adr-XXX-*.md      # 现役 / 在议的真实 ADR
+      └── archive/          # 被取代 / 弃用的记录(不进索引、不进默认检索)
 ./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接入」,命令按「未复跑」处理
 ./docs-templates/           # skill 提供的两类件(不是本项目当前维护的文档:对账忽略) —— Step 2A 整套落地
   ├── module-doc.md                   # 待填件:复制到 docs/modules/<name>.md 再填
@@ -46,7 +47,8 @@
 | `templates/glossary.md` | 待填件:术语表(受控词汇) | **立即**(Step 2A) | `docs-templates/glossary.md`(按需复制到 `docs/glossary.md`) |
 | `templates/core-code.md` | 待填件:L4 核心代码(含 novelty 分档 / N2 附加栏) | **立即**(Step 2A) | `docs-templates/core-code.md`(按需复制到 `docs/core-code.md`) |
 | `templates/decisions-readme.md` | 待填件:ADR 索引 + 格式约定 | **立即**(Step 2A) | `docs-templates/decisions-readme.md` |
-| `templates/adr-template.md` | 待填件:单条 ADR 模板 | **立即**(Step 2A) | `docs-templates/adr-template.md` |
+| `templates/adr-template.md` | 待填件:单条 ADR 模板(frontmatter 状态 / 关系) | **立即**(Step 2A) | `docs-templates/adr-template.md` |
+| `references/adr-example.md` | 就地读件:填好的 ADR 示例(**不是决策**) | 写 ADR 时 | `docs-templates/adr-example.md` |
 | `references/evolution-rules.md` | 就地读件:E1–E7 | **立即**(Step 2A) | `docs-templates/evolution-rules.md` |
 | `references/temporal-model.md` | 就地读件:三时间轴 / 四类路由 / 当下 DoD | **立即**(Step 2A) | `docs-templates/temporal-model.md` |
 | `references/review-panel.md` | 就地读件:多镜复核(镜头 / 触发 / 回路) | **立即**(Step 2A) | `docs-templates/review-panel.md` |
@@ -62,6 +64,6 @@
 ## 三、脚本清单
 
 - 对账:`scripts/check-docs-sync.sh/.ps1`、`scripts/check-doc-refs.sh/.ps1`、`scripts/review-backlog.sh/.ps1`
-- 新增:`scripts/check-code-refs.py`、`scripts/run-n2-acceptance.py`、`scripts/check-consistency.py`、`scripts/lint-doc-structure.py`
-- 共享:`scripts/_doc_common.py`(4 个 Python 检查器必须同拷)
+- 新增:`scripts/check-code-refs.py`、`scripts/run-n2-acceptance.py`、`scripts/check-consistency.py`、`scripts/lint-doc-structure.py`、`scripts/adr-index.py`
+- 共享:`scripts/_doc_common.py`(5 个 Python 检查器必须同拷)
 - 用法与触发见 `references/tooling.md`;接线见 `references/wiring.md`。

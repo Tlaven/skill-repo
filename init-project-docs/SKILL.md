@@ -77,8 +77,8 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 | **只能靠自觉** | 无 | 明确承认无法保证 |
 
 **现有脚本:** `check-docs-sync`(代码动、文档没动)、`check-doc-refs`(死链 / 占位 / N2 缺验收 / 危险清单 / 失败语义 / 现状引记录)、`review-backlog`(复核 delta)。
-**新增脚本:** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(验收 runner)、`check-consistency.py`(重复定义 / 数值冲突)、`lint-doc-structure.py`(结构警告)。
-**共享:** `scripts/_doc_common.py`(4 个 Python 检查器必须同拷)。
+**新增脚本:** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(验收 runner)、`check-consistency.py`(重复定义 / 数值冲突)、`lint-doc-structure.py`(结构警告)、`adr-index.py`(ADR 索引生成 + 状态 / 关系 / 引用对账 + 追加式校验)。
+**共享:** `scripts/_doc_common.py`(5 个 Python 检查器必须同拷)。
 
 > 别给"约定型"规则硬配检查器——那只会制造噪音,让人开始无视所有提示。
 
@@ -96,7 +96,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 **关键:** `docs/` 下本项目当前维护的文档**不要预先建空骨架**(会被遗忘);但 `docs-templates/` 是"对账忽略"的两类件(待填件 / 就地读件),**应一次性放齐**——否则 L1 里的指针会悬空。
 
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
-2. 把整套 `docs-templates/` 落地(来源:6 件来自 `templates/`、6 件来自 `references/`;映射见 `references/layout.md` §二):`module-doc` / `adr-template` / `glossary` / `decisions-readme` / `core-code` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt`。
+2. 把整套 `docs-templates/` 落地(来源:6 件来自 `templates/`、7 件来自 `references/`;映射见 `references/layout.md` §二):`module-doc` / `adr-template` / `glossary` / `decisions-readme` / `core-code` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt` / `adr-example`。
 3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(术语 → `docs/glossary.md`;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`;对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
 4. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`(含共享模块 `_doc_common.py`);若用户不接脚本,在 L1 标「scripts: 未接入」,后续命令按「未复跑」处理。
 
@@ -138,7 +138,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 - **第一阶段(填 L1 主轴):** [是什么] → [为什么] → [不变量],每段问 1–2 个核心问题,答完立即写入。
 - **第二阶段(填 L2 主流程):** L1 有共识后才创建 `docs/architecture.md`,重点产出主流程叙述(10–20 行,入口到出口)。
-- **第三阶段(按需):** 模块出现 N2 或细节开始往 L2 堆 → 建 L3;决策发生 → 建 ADR;跨模块 N2 必须有家(建 L4 先问用户并记 ADR,或写进 L2 的架构级约束 + L3 留指针);N2 单元同时登记 `docs/n2-acceptance.json`(命令 + cwd),供 `run-n2-acceptance --run` 使用。
+- **第三阶段(按需):** 模块出现 N2 或细节开始往 L2 堆 → 建 L3;决策发生 → 建 ADR(索引用 `adr-index.py --write` 生成,不手写);跨模块 N2 必须有家(建 L4 先问用户并记 ADR,或写进 L2 的架构级约束 + L3 留指针);N2 单元同时登记 `docs/n2-acceptance.json`(命令 + cwd),供 `run-n2-acceptance --run` 使用。
 - **[是什么] 未收敛**(重立项 / 方向未定):L1 概述写双段(现状 / 方向草案)+ 开放问题,**别假装收敛**;方向草案是 `[是什么]` 里唯一允许的方向陈述,**只有方向半段的每行**带状态并显式标注方向草案,现状半段保持事实、不带方向状态,收敛后移出;复核会正确卡在「需人拍板」。
 
 ### Step 3.5: 改代码前的复核(teach-back + 多镜 panel)
@@ -197,6 +197,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - ❌ 多宿主各写一份规则
 - ❌ AI "顺手优化"掉人指定的接口 / 数据结构 / 失败码(`[已定]`)
 - ❌ 模板加了要求、却没写明由谁检查(脚本 / 独立复核 / 自觉)
+- ❌ 手写 ADR 索引;把 `superseded` 记录留在现役目录(读文件的人也会读到它)
 
 ## 验收(teach-back)
 
