@@ -15,6 +15,6 @@ python -m unittest discover -s tests -v
 - `adr-index.py` 引用对账:引用了不存在的 ID 必须报;引用 superseded 记录只警告;fenced block 里的编号不算引用;`--no-citations` 能关。
 - `adr-index.py --immutable`:正文改写必须报;文末追加补充、改 frontmatter、加 superseded 注记、移进 `archive/` 都必须放过;记录被删必须报。
 - `adr-index.py` 旧格式容忍:状态带注记(`accepted(2026-10-15)` / `⚠️ accepted(已落地：…)`)、标题用全角冒号、索引叫 `README.markdown`、引用 `ADR-000` 模板——都不得误报;真正未知的前导词(`已定`)仍必须报。超词警告超过 3 条时只打一行汇总,`--max-words` 能调阈值。
-- `adr-index.py` 检索面:`archive/` 有记录但 `docs/decisions/.ignore` 缺 `archive/` 必须报 `adr-no-ignore`(warning);补上后必须消失;`.ignore` 里的注释行不算条目。
+- `adr-index.py` 检索面:`archive/` 有记录但没有任何 `.ignore` 挡它时必须报 `adr-no-ignore`(warning);`docs/.ignore` 写 `decisions/` 或 `docs/decisions/.ignore` 写 `archive/` 两种放法都要认;只写 `reviews/` 不算数。
 
 **纪律:** 新增机器判据先写反向测试(必须能红),再确认它数的是什么,最后两平台各跑一遍。

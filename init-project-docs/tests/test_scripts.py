@@ -394,7 +394,7 @@ class ScriptTests(unittest.TestCase):
             self.assertNotIn("[adr-long]", proc.stdout)
 
     def test_adr_ignore_warning(self):
-        """archive/ is invisible to rg only when docs/decisions/.ignore says so."""
+        """archive/ is invisible to rg only when an .ignore says so — either level counts."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             d = root / "docs" / "decisions"
@@ -408,10 +408,24 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertIn("[adr-no-ignore]", proc.stdout)
 
+            # minimal scheme: only archive/ is out of the search surface
             write(d / ".ignore", "# rg: keep history out of keyword search\narchive/\n")
             proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertNotIn("[adr-no-ignore]", proc.stdout)
+
+            # preferred scheme: the whole decisions/ dir is out of the search surface
+            (d / ".ignore").unlink()
+            write(root / "docs" / ".ignore", "decisions/\nreviews/\n")
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("[adr-no-ignore]", proc.stdout)
+
+            # an unrelated entry does not count
+            write(root / "docs" / ".ignore", "reviews/\n")
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("[adr-no-ignore]", proc.stdout)
 
     def test_adr_immutable_append_only(self):
         def git(*args):

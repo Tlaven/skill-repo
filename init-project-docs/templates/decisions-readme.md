@@ -90,17 +90,14 @@ docs/decisions/
 
 归档是**移动,不是删除**:历史只增不改,`superseded_by` 仍要能解析到目标（脚本会同时查本目录与 `archive/`）。归档目录不进索引。
 
-**但 `archive/` 挡不住关键词搜索。** Agent 不读索引,它 `rg 关键词`;目录位置对内容搜索没有任何意义,移进 `archive/` 的文件照样命中。必须再配一层:
-
-`docs/decisions/.ignore`,内容一行:
+**整个 `docs/decisions/` 默认退出关键词检索面。** Agent 不读索引,它 `rg 关键词`;而 ADR 是日志——连现役记录也只是「当时的陈述」,命中它不是现行规则。所以在 `docs/.ignore` 排掉整目录:
 
 ```
-archive/
+decisions/
+reviews/
 ```
 
-- **必须放在 `docs/decisions/` 里**——放仓库根写 `docs/decisions/archive/`,在"从根目录搜 `docs`"时会漏(ripgrep 不读搜索根之外的祖先目录里的 `.ignore`)。
-- `.ignore` 不受版本控制,`archive/` 照常提交;考古用 `rg --no-ignore 关键词`。
+- 名字层由**索引**承担:问"有哪些决策"读本文件;搜索不是入口。
+- 考古:`rg --no-ignore 关键词`,或直接 `rg 关键词 docs/decisions`(指定目录时父级 `.ignore` 不生效,这是有意的)。
 - **已知的洞:** `git grep` 不认 `.ignore`,也没有排除开关;IDE 全局搜索要各自配 `search.exclude`。
-- 若 `docs/reviews/` 也是过程记录,同样处理(在 `docs/` 放 `.ignore` 写 `reviews/`)——这是"默认看不见过程记录",由项目拍板。
-
-> 消不掉的残留:现役 ADR 提到已退役的术语,搜那个词仍会命中一堆现役记录。那是现役记录的正确内容,只能靠记录自带状态 + L1 的解读规则兜。
+- **最小方案**(项目坚持现役 ADR 可搜):只排 `archive/`——在 `docs/decisions/.ignore` 写一行 `archive/`(必须放这个目录里,放仓库根会漏)。此时现役 ADR 提到退役术语仍会被搜到,只能靠记录自带状态兜。

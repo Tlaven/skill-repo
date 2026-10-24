@@ -409,6 +409,22 @@ def validate(records, archived_ids, max_words=MAX_WORDS):
     return findings, warnings
 
 
+def ignore_entries(path):
+    entries = set()
+    if not os.path.isfile(path):
+        return entries
+    with open(path, "r", encoding="utf-8-sig", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            line = line.strip("/").lower()
+            if line.endswith("/**"):
+                line = line[:-3].rstrip("/")
+            entries.add(line)
+    return entries
+
+
 def check_ignore(root, adr_dir):
     """A moved record is only invisible to rg if .ignore says so; the failure is silent."""
     archive = os.path.join(adr_dir, "archive")
@@ -417,24 +433,16 @@ def check_ignore(root, adr_dir):
     if not any(n.lower().endswith((".md", ".markdown")) for n in os.listdir(archive)):
         return []
 
-    entries = set()
-    ignore = os.path.join(adr_dir, ".ignore")
-    if os.path.isfile(ignore):
-        with open(ignore, "r", encoding="utf-8-sig", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                line = line.strip("/").lower()
-                if line.endswith("/**"):
-                    line = line[:-3].rstrip("/")
-                entries.add(line)
-    if "archive" in entries:
+    parent = os.path.dirname(adr_dir)
+    if os.path.basename(adr_dir).lower() in ignore_entries(os.path.join(parent, ".ignore")):
+        return []          # the whole decisions/ dir is already out of the search surface
+    if "archive" in ignore_entries(os.path.join(adr_dir, ".ignore")):
         return []
     return [finding(
         "adr-no-ignore",
         rel(root, archive),
-        "archive/ is still searched by rg; add `archive/` to {}/.ignore".format(rel(root, adr_dir)),
+        "archive/ is still searched by rg; put `{}/` in {}/.ignore, or `archive/` in {}/.ignore"
+        .format(os.path.basename(adr_dir), rel(root, parent) or ".", rel(root, adr_dir)),
     )]
 
 

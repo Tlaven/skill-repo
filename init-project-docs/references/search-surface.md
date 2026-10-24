@@ -6,7 +6,7 @@
 
 | 层 | 机制 | 覆盖 | 失效场合 |
 |---|---|---|---|
-| **检索** | `docs/decisions/.ignore` 写 `archive/`;`.vscode/settings.json` 的 `search.exclude` | rg / Claude Code / OpenCode / VS Code / Cursor | `git grep`、`grep -r`、任何不读这两个配置的工具 |
+| **检索** | `docs/.ignore` 写 `decisions/` 与 `reviews/`;`.vscode/settings.json` 的 `search.exclude` | rg / Claude Code / OpenCode / VS Code / Cursor | `git grep`、`grep -r`、任何不读这两个配置的工具 |
 | **命中** | 记录标题下的状态横幅 | 所有工具,前提是文件被打开 | 只读匹配行、不打开文件 |
 | **解释** | L1 一行:命中 `docs/decisions` / `docs/reviews` 时那是理由,不是规则 | 所有工具 | Agent 不读 L1 |
 
@@ -14,16 +14,27 @@
 
 ## 第一层怎么配
 
-`docs/decisions/.ignore`,内容一行:
+**默认:整个 `docs/decisions/` 退出检索面。** ADR 是日志,连现役记录也只是「当时的陈述」——关键词命中的 ADR 永远不是现行规则,而是某一年的理由。所以不区分现役 / 归档,整目录排除。
+
+`docs/.ignore`:
+
+```
+decisions/
+reviews/
+```
+
+- **名字层由索引承担**:问"有哪些决策",读 `docs/decisions/README.md`(生成的);搜索不是入口。
+- 考古两种:`rg --no-ignore 关键词`,或 `rg 关键词 docs/decisions`——指定目录时父级 `.ignore` 不生效,这是有意的(指定目录 = 故意查)。
+- `.ignore` 不受版本控制,`decisions/` 照常提交。
+
+**最小方案(项目坚持现役 ADR 可搜):只排除 `archive/`**,写在 `docs/decisions/.ignore`:
 
 ```
 archive/
 ```
 
-- **必须放在 `docs/decisions/` 里**,不能放仓库根写 `docs/decisions/archive/`。实测:放根目录时,从根目录搜 `docs` 会漏——ripgrep 不读"搜索根之外的祖先目录"里的 `.ignore`,而搜索根本身及其子树里的 `.ignore` 会被读到。
-- `.ignore` 不是 git 文件,`archive/` 照常被版本控制。
-- 考古用 `rg --no-ignore 关键词`。
-- 若 `docs/reviews/` 也是过程记录,在 `docs/` 放一个 `.ignore` 写 `reviews/` 即可——但这是"默认看不见过程记录",要项目自己拍板。
+- **必须放在 `docs/decisions/` 里**,不能放仓库根写 `docs/decisions/archive/`——实测放根目录时,从根目录搜 `docs` 会漏(ripgrep 不读搜索根之外的祖先目录里的 `.ignore`)。
+- 检查器两种放法都认。
 
 `.vscode/settings.json`(与已有配置合并,不要覆盖):
 
@@ -38,15 +49,16 @@ archive/
 
 ## 边界(别当成保证)
 
-- **`git grep` 不认 `.ignore`**,也没有排除开关——它照常搜到归档。这是本方案唯一的洞;Agent 默认用 rg,但用 `git grep` 的场合就会漏。
+- **`git grep` 不认 `.ignore`**,也没有排除开关——它照常搜到历史。这是本方案唯一的洞;Agent 默认用 rg,但用 `git grep` 的场合就会漏。
 - IDE 全局搜索只认 `search.exclude`;换编辑器要各自配。
+- 整目录排除后 `rg --files` 也列不出名字——按名字找用索引或 `ls`。这是有意的:名字层是索引,不是搜索。
 - 想 100% 只有一个办法:让字节不在工作区(稀疏检出 / 独立分支)。代价是**连文件名也看不见**,与"先看名、再看细节"的读法相反。
 
-## 消不掉的残留
+## 残留(只针对最小方案)
 
-现役 ADR 正文里提到已退役的术语 / 已废弃的方案——搜那个词,命中一堆**现役**记录。这些是现役记录的正确内容,不能压、不能藏,只能靠第二层(横幅)和第三层(L1 那句解读)。
+只排除 `archive/` 时,现役 ADR 正文里提到已退役的术语仍会被搜到——那是现役记录的正确内容,压不得,只能靠第二层(横幅)与第三层(L1 解读)兜。
 
-实测样本:一个 48 条 ADR 的项目搜已退役术语,17 个命中里 15 个在历史文件;只上 `.ignore` 之后,仍有 11 个现役 ADR 命中。
+整目录排除后这部分一并消失:实测一个 48 条 ADR 的项目,搜一个已退役术语从 17 个命中降到 2 个(只剩现行文档)。
 
 ## 检查器
 

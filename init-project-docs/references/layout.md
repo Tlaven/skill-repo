@@ -7,6 +7,7 @@
 ```
 ./AGENTS.md  (或 ./CLAUDE.md,按宿主)  # L1 主战场 —— Step 2A 立即创建
 ./docs/                     # 本项目当前维护的文档 —— 对账扫这里(排除 reviews/legacy/archive/templates)
+  ├── .ignore               # 让 decisions/ 与 reviews/ 退出 rg 的默认检索面(见 references/search-surface.md)
   ├── architecture.md       # L2 —— 进入 L2 讨论时创建
   ├── glossary.md           # 术语表 —— 出现领域名词时创建
   ├── scaffolds/            # 可选:项目自搭的跨领域脚手架(见 essentials skill);L1 用目录规则声明
@@ -14,10 +15,9 @@
   ├── core-code.md          # L4 —— 可选:被 ≥2 个工作场景共同加载的核心单元才建;不建时跨模块契约写进 architecture.md 的「架构级约束」
   ├── reviews/              # E5 对账 / 多镜复核产出 —— 首次对账时创建;含 .last-review(复核覆盖的提交);多镜 panel 的 dispatch/outputs 放 docs/reviews/<日期>-<主题>-panel/
   └── decisions/
-      ├── .ignore           # 让 archive/ 退出 rg 的默认检索面(内容一行 `archive/`;见 references/search-surface.md)
       ├── README.md         # ADR 索引(由 scripts/adr-index.py 生成) —— 首次记 ADR 时创建;项目若用 .markdown 也认
       ├── adr-XXX-*.md      # 现役 / 在议的真实 ADR
-      └── archive/          # 被取代 / 弃用的记录(不进索引;配 .ignore 后才不进 rg 的检索面)
+      └── archive/          # 被取代 / 弃用的记录(不进索引;整目录默认已退出检索面)
 ./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接入」,命令按「未复跑」处理
 ./docs-templates/           # skill 提供的两类件(不是本项目当前维护的文档:对账忽略) —— Step 2A 整套落地
   ├── module-doc.md                   # 待填件:复制到 docs/modules/<name>.md 再填

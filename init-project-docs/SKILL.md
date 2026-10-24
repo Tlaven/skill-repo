@@ -97,7 +97,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
 2. 把整套 `docs-templates/` 落地(来源:6 件来自 `templates/`、7 件来自 `references/`;映射见 `references/layout.md` §二):`module-doc` / `adr-template` / `glossary` / `decisions-readme` / `core-code` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt` / `adr-example`。
-3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(术语 → `docs/glossary.md`;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/` 并同时放 `.ignore`(内容 `archive/`,见 `decisions-readme` 模板);对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
+3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(术语 → `docs/glossary.md`;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`,并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`(见 `decisions-readme` 模板);对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
 4. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`(含共享模块 `_doc_common.py`);若用户不接脚本,在 L1 标「scripts: 未接入」,后续命令按「未复跑」处理。
 
 ### Step 2B: 合并模式——已有 L1
@@ -198,7 +198,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - ❌ AI "顺手优化"掉人指定的接口 / 数据结构 / 失败码(`[已定]`)
 - ❌ 模板加了要求、却没写明由谁检查(脚本 / 独立复核 / 自觉)
 - ❌ 手写 ADR 索引;把 `superseded` 记录留在现役目录(读文件的人也会读到它)
-- ❌ 只把 `superseded` 记录移进 `archive/` 就以为 Agent 搜不到了——目录对内容搜索无效,还要配 `docs/decisions/.ignore`(且 `git grep` 仍会漏,见 `references/search-surface.md`)
+- ❌ 只把 `superseded` 记录移进 `archive/` 就以为 Agent 搜不到了——目录对内容搜索无效;ADR 是日志,整个 `docs/decisions/` 都该在 `docs/.ignore` 里排掉(且 `git grep` 仍会漏,见 `references/search-surface.md`)
 
 ## 验收(teach-back)
 
