@@ -328,7 +328,10 @@ class ScriptTests(unittest.TestCase):
             write(d / "adr-001-a.md", "---\nstatus: accepted\n---\n\n# ADR-001: A\n")
             write(d / "adr-002-b.md",
                   "---\nstatus: superseded\nsuperseded_by: ADR-001\n---\n\n# ADR-002: B\n")
-            write(root / "AGENTS.md", "See ADR-001, ADR-002 and ADR-099.\n\n```\nADR-404\n```\n")
+            write(root / "AGENTS.md",
+                  "See ADR-001, ADR-002 and ADR-099.\n"
+                  "See `drafts/island-terrain-fusion-2026-10-24.md` and GDC-2012.\n"
+                  "\n```\nADR-404\n```\n")
 
             run_script("adr-index.py", "--root", ".", "--write", cwd=root)
             proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
@@ -336,6 +339,8 @@ class ScriptTests(unittest.TestCase):
             self.assertIn("[adr-cite-missing] AGENTS.md:1: ADR-099", proc.stdout)
             self.assertIn("[adr-cite-retired] AGENTS.md:1: ADR-002", proc.stdout)
             self.assertNotIn("ADR-404", proc.stdout)      # fenced block is not a citation
+            self.assertNotIn("FUSION-2026", proc.stdout)  # filename, not a decision id
+            self.assertNotIn("GDC-2012", proc.stdout)     # proper noun
 
             write(root / "AGENTS.md", "See ADR-001.\n")
             proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)

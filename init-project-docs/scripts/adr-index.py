@@ -446,14 +446,25 @@ def check_ignore(root, adr_dir):
     )]
 
 
+def citation_re(prefixes):
+    """Only IDs whose prefix is actually used by records; `fusion-2026` is a filename, not a decision."""
+    alt = "|".join(sorted(prefixes, key=len, reverse=True))
+    return re.compile(r"\b((?:{})-\d{{2,4}})\b".format(alt), re.I)
+
+
 def check_citations(root, records, archived_records, scan_extra, extra_known=()):
     """ADR ids mentioned in the files an agent reads first must still stand."""
     known = {}
+    prefixes = set()
     for record in records + archived_records:
         if record["id"]:
             known[record["id"]] = record["status"]
+            prefixes.add(record["id"].split("-")[0])
+        if record["prefix"]:
+            prefixes.add(record["prefix"])
     for rid in extra_known:
         known.setdefault(rid, "")
+    cite_re = citation_re(prefixes or {"ADR"})
 
     paths = list(iter_docs(root))
     for extra in scan_extra:
@@ -477,7 +488,7 @@ def check_citations(root, records, archived_records, scan_extra, extra_known=())
         for lineno, (line, skip) in enumerate(zip(lines, mask), 1):
             if skip:
                 continue
-            for match in ID_RE.finditer(line):
+            for match in cite_re.finditer(line):
                 rid = match.group(1).upper()
                 where = "{}:{}".format(rel(root, path), lineno)
                 if (where, rid) in seen:
