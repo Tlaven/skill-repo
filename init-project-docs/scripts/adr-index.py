@@ -409,6 +409,35 @@ def validate(records, archived_ids, max_words=MAX_WORDS):
     return findings, warnings
 
 
+def check_ignore(root, adr_dir):
+    """A moved record is only invisible to rg if .ignore says so; the failure is silent."""
+    archive = os.path.join(adr_dir, "archive")
+    if not os.path.isdir(archive):
+        return []
+    if not any(n.lower().endswith((".md", ".markdown")) for n in os.listdir(archive)):
+        return []
+
+    entries = set()
+    ignore = os.path.join(adr_dir, ".ignore")
+    if os.path.isfile(ignore):
+        with open(ignore, "r", encoding="utf-8-sig", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                line = line.strip("/").lower()
+                if line.endswith("/**"):
+                    line = line[:-3].rstrip("/")
+                entries.add(line)
+    if "archive" in entries:
+        return []
+    return [finding(
+        "adr-no-ignore",
+        rel(root, archive),
+        "archive/ is still searched by rg; add `archive/` to {}/.ignore".format(rel(root, adr_dir)),
+    )]
+
+
 def check_citations(root, records, archived_records, scan_extra, extra_known=()):
     """ADR ids mentioned in the files an agent reads first must still stand."""
     known = {}
@@ -586,6 +615,8 @@ def main():
         )
         findings += cite_findings
         warnings += cite_warnings
+
+    warnings += check_ignore(root, adr_dir)
 
     if args.immutable:
         immutable = check_immutability(root, args.dir, records, archived_records, args.base)

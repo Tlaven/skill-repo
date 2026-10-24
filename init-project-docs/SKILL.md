@@ -32,7 +32,7 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 - **三时间轴 / 四类路由 / 当下 DoD:** `references/temporal-model.md`(核心模型,先读)。
 - **三段式 / 4 层 / novelty / 铁律:** `templates/l1-memory.md`(随 L1 落地)。
 - **演化规则 E1–E7:** `references/evolution-rules.md`。
-- **多镜复核:** `references/review-panel.md`; **验证者 / 镜头校准:** `references/calibration-guide.md`; **工具:** `references/tooling.md`; **落点:** `references/layout.md`; **对话地图:** `references/conversation-map.md`。
+- **多镜复核:** `references/review-panel.md`; **验证者 / 镜头校准:** `references/calibration-guide.md`; **工具:** `references/tooling.md`; **落点:** `references/layout.md`; **对话地图:** `references/conversation-map.md`; **检索面:** `references/search-surface.md`(为什么历史会被 grep 撞见、`.ignore` 怎么放)。
 
 正文只讲流程;规则正文以对应文件为准,这里只留摘要。**正文归属:** 三段式 / 4 层 / novelty / 铁律在 L1 模板;三时间轴 / 四类路由 / 当下 DoD 在 `temporal-model.md`;E1–E7 在 `evolution-rules.md`。本 skill 不重述规则。
 
@@ -97,7 +97,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
 2. 把整套 `docs-templates/` 落地(来源:6 件来自 `templates/`、7 件来自 `references/`;映射见 `references/layout.md` §二):`module-doc` / `adr-template` / `glossary` / `decisions-readme` / `core-code` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt` / `adr-example`。
-3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(术语 → `docs/glossary.md`;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`;对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
+3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(术语 → `docs/glossary.md`;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/` 并同时放 `.ignore`(内容 `archive/`,见 `decisions-readme` 模板);对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
 4. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`(含共享模块 `_doc_common.py`);若用户不接脚本,在 L1 标「scripts: 未接入」,后续命令按「未复跑」处理。
 
 ### Step 2B: 合并模式——已有 L1
@@ -198,6 +198,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - ❌ AI "顺手优化"掉人指定的接口 / 数据结构 / 失败码(`[已定]`)
 - ❌ 模板加了要求、却没写明由谁检查(脚本 / 独立复核 / 自觉)
 - ❌ 手写 ADR 索引;把 `superseded` 记录留在现役目录(读文件的人也会读到它)
+- ❌ 只把 `superseded` 记录移进 `archive/` 就以为 Agent 搜不到了——目录对内容搜索无效,还要配 `docs/decisions/.ignore`(且 `git grep` 仍会漏,见 `references/search-surface.md`)
 
 ## 验收(teach-back)
 

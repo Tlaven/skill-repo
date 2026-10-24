@@ -393,6 +393,26 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertNotIn("[adr-long]", proc.stdout)
 
+    def test_adr_ignore_warning(self):
+        """archive/ is invisible to rg only when docs/decisions/.ignore says so."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "docs" / "decisions"
+            write(d / "README.md", "# ADR\n\n<!-- adr-index:begin -->\n<!-- adr-index:end -->\n")
+            write(d / "adr-001-a.md", "---\nstatus: accepted\n---\n\n# ADR-001: A\n")
+            write(d / "archive" / "adr-000-old.md",
+                  "---\nstatus: superseded\nsuperseded_by: ADR-001\n---\n\n# ADR-000: old\n")
+
+            run_script("adr-index.py", "--root", ".", "--write", cwd=root)
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("[adr-no-ignore]", proc.stdout)
+
+            write(d / ".ignore", "# rg: keep history out of keyword search\narchive/\n")
+            proc = run_script("adr-index.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("[adr-no-ignore]", proc.stdout)
+
     def test_adr_immutable_append_only(self):
         def git(*args):
             return subprocess.run(

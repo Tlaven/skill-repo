@@ -14,9 +14,10 @@
   ├── core-code.md          # L4 —— 可选:被 ≥2 个工作场景共同加载的核心单元才建;不建时跨模块契约写进 architecture.md 的「架构级约束」
   ├── reviews/              # E5 对账 / 多镜复核产出 —— 首次对账时创建;含 .last-review(复核覆盖的提交);多镜 panel 的 dispatch/outputs 放 docs/reviews/<日期>-<主题>-panel/
   └── decisions/
+      ├── .ignore           # 让 archive/ 退出 rg 的默认检索面(内容一行 `archive/`;见 references/search-surface.md)
       ├── README.md         # ADR 索引(由 scripts/adr-index.py 生成) —— 首次记 ADR 时创建;项目若用 .markdown 也认
       ├── adr-XXX-*.md      # 现役 / 在议的真实 ADR
-      └── archive/          # 被取代 / 弃用的记录(不进索引、不进默认检索)
+      └── archive/          # 被取代 / 弃用的记录(不进索引;配 .ignore 后才不进 rg 的检索面)
 ./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接入」,命令按「未复跑」处理
 ./docs-templates/           # skill 提供的两类件(不是本项目当前维护的文档:对账忽略) —— Step 2A 整套落地
   ├── module-doc.md                   # 待填件:复制到 docs/modules/<name>.md 再填
@@ -58,6 +59,7 @@
 | `references/conversation-map.md` | 对话地图(问题清单) | skill 侧使用 | **不落地** |
 | `references/skill-glossary.md` | skill 自有术语表(历史 / 当下 / 未来、契约、对账 / 复核等) | skill 侧使用 | **不落地** |
 | `references/tooling.md` | 工具矩阵 / 用法 / 触发 | skill 侧使用 | **不落地** |
+| `references/search-surface.md` | 检索面:为什么历史会被 grep 撞见、`.ignore` 怎么放、边界与残留 | 建 ADR 目录 / 发现 Agent 引用了废决策时 | **不落地**(机制已内联进 `decisions-readme` 模板) |
 | `references/calibration-guide.md` | 验证者 / 镜头校准手册 | 改判定措辞或换模型时 | **不落地** |
 | `references/wiring.md` | 接线指南(pre-commit / CI / 宿主钩子) | 初始化后接线时 | **不落地** |
 

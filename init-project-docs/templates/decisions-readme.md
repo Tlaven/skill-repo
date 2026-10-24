@@ -81,10 +81,26 @@ adr-XXX-[短描述].md
 
 ```
 docs/decisions/
+├── .ignore            # 让 archive/ 退出 rg 的默认检索面
 ├── README.md          # 索引（生成）
 ├── adr-001-...md      # 现役 / 在议
 └── archive/
     └── adr-000-...md  # superseded / deprecated / rejected
 ```
 
-归档是**移动,不是删除**:历史只增不改,`superseded_by` 仍要能解析到目标（脚本会同时查本目录与 `archive/`）。归档目录不进索引、不进默认检索范围——目的是让"顺手看一眼目录"不会撞上一条已经作废的规则。
+归档是**移动,不是删除**:历史只增不改,`superseded_by` 仍要能解析到目标（脚本会同时查本目录与 `archive/`）。归档目录不进索引。
+
+**但 `archive/` 挡不住关键词搜索。** Agent 不读索引,它 `rg 关键词`;目录位置对内容搜索没有任何意义,移进 `archive/` 的文件照样命中。必须再配一层:
+
+`docs/decisions/.ignore`,内容一行:
+
+```
+archive/
+```
+
+- **必须放在 `docs/decisions/` 里**——放仓库根写 `docs/decisions/archive/`,在"从根目录搜 `docs`"时会漏(ripgrep 不读搜索根之外的祖先目录里的 `.ignore`)。
+- `.ignore` 不受版本控制,`archive/` 照常提交;考古用 `rg --no-ignore 关键词`。
+- **已知的洞:** `git grep` 不认 `.ignore`,也没有排除开关;IDE 全局搜索要各自配 `search.exclude`。
+- 若 `docs/reviews/` 也是过程记录,同样处理(在 `docs/` 放 `.ignore` 写 `reviews/`)——这是"默认看不见过程记录",由项目拍板。
+
+> 消不掉的残留:现役 ADR 提到已退役的术语,搜那个词仍会命中一堆现役记录。那是现役记录的正确内容,只能靠记录自带状态 + L1 的解读规则兜。
