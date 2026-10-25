@@ -1,23 +1,37 @@
 #!/usr/bin/env python3
-"""check-consistency.py — heuristic warnings for duplicate definitions / numeric conflicts.
+"""check-consistency.py — heuristic warnings for copied or drifting docs.
 
-This is a WARNING tool: it does not decide truth, and should not be a hard gate.
+WARNING tool: it does not decide truth, and should not be a hard gate.
+
+Default checks:
 - Duplicate term definitions: a `- **term**: ...` definition in `docs/` that
   redefines a glossary term, or appears more than once.
 - Unregistered definitions: a `- **term**: ...` definition in `docs/`
   whose term is not in docs/glossary.md.
 - Numeric conflicts: the same key written with different values inside inline
   code or table cells (prose is ignored to keep noise low).
+- Duplicate literals: the same key:value inside inline code or table cells in
+  two or more live docs.
+- Duplicate aliases: a backticked glossary alias (e.g. `profCoast`) appears in
+  two or more live docs (README is included).
+- Over-budget: soft line caps (L1 250 / L2 150 / L3 400; see DEFAULT_BUDGETS).
+
+Opt-in:
+- Single-module terms (`--glossary-locality`): a glossary term mentioned
+  >= N times in exactly one module and < N times elsewhere. Candidate only;
+  review manually before demoting.
+
 Records (`docs/decisions/`, `docs/reviews/`) are history, not current docs:
 they are not scanned (ADR option names / rationale bullets are not terms).
 Definition scanning is limited to sections whose heading names a definition
 scope (`是什么 / 定义 / 术语 / 概念`) or to files with no heading at all —
 `[为什么]` / `[不变量]` bullets are rationale and never term definitions.
 L1 files are not scanned for `- **term**` definitions: emphasis bullets there
-are not term definitions.
+are not term definitions. Use `--ignore` / `--ignore-alias` for known noise.
 """
 
 import argparse
+import fnmatch
 import json
 import os
 import re
@@ -27,7 +41,19 @@ from collections import defaultdict
 from _doc_common import active_mask, iter_docs, read_lines, rel
 
 DEF_RE = re.compile(r"^\s*[-*]\s+\*\*([^*]+?)\*\*\s*[:：]\s*(.+)$")
-NUM_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_.]{2,})\s*[:=]\s*(\d+(?:\.\d+)?)\b")
+NUM_RE = re.compile(
+    r"\b([A-Za-z_][A-Za-z0-9_.]{2,})\s*[:=]\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\b"
+)
+
+
+def is_param_name(name):
+    """camelCase / snake_case / wl15-style names are likely parameters."""
+    return bool(re.fullmatch(
+        r"[a-z][A-Za-z0-9_]*[A-Z][A-Za-z0-9_]*"
+        r"|[a-z][a-z0-9_]*_[a-z0-9_]+"
+        r"|[a-z]+[0-9]+",
+        name,
+    ))
 BACKTICK_RE = re.compile(r"`([^`\n]+)`")
 HEADING_RE = re.compile(r"^#{1,6}\s+(.*)$")
 DEF_SCOPE_RE = re.compile(r"是什么|定义|术语|概念|glossary", re.I)
@@ -41,25 +67,59 @@ FIELD_LABELS = {
 }
 
 
+# 活文档软预算（行）。warning-only；--max-lines 覆盖，--no-budget 关闭。
+DEFAULT_BUDGETS = (
+    ("AGENTS.md", 250), ("CLAUDE.md", 250),
+    (".cursorrules", 250), (".windsurfrules", 250),
+    (".cursor/rules/project.mdc", 250),
+    (".github/copilot-instructions.md", 250),
+    ("docs/architecture.md", 150), ("docs/architecture.markdown", 150),
+    ("docs/core-code.md", 200), ("docs/core-code.markdown", 200),
+    ("docs/modules/*.md", 400), ("docs/modules/*.markdown", 400),
+)
+
+
+def budget_for(file_rel, override):
+    if override is not None:
+        return override
+    for pattern, budget in DEFAULT_BUDGETS:
+        if fnmatch.fnmatch(file_rel, pattern):
+            return budget
+    return None
+
+
+def term_key(term):
+    """Glossary cell -> primary label (drop ** and a backticked alias)."""
+    t = term.replace("**", "").strip()
+    if "`" in t:
+        t = t.split("`", 1)[0].strip()
+    return t
+
+
 def parse_glossary(root):
-    """Terms defined in docs/glossary.md (table rows; bullet terms if used)."""
-    path = os.path.join(root, "docs", "glossary.md")
+    """Terms defined in docs/glossary.md or docs/glossary.markdown."""
     terms = set()
-    if not os.path.isfile(path):
-        return terms
-    for line in read_lines(path):
-        s = line.strip()
-        if s.startswith("|"):
-            cells = [c.strip() for c in s.strip("|").split("|")]
-            if len(cells) < 2:
+    for name in ("docs/glossary.md", "docs/glossary.markdown"):
+        path = os.path.join(root, *name.split("/"))
+        if not os.path.isfile(path):
+            continue
+        lines = read_lines(path)
+        mask = active_mask(lines)
+        for line, inactive in zip(lines, mask):
+            if inactive:
                 continue
-            term = cells[0]
-            if not term or term.startswith("---") or term.startswith("<!--") or term == "术语":
-                continue
-            terms.add(term.strip("`"))
-        m = DEF_RE.match(line)
-        if m and m.group(1).strip() not in FIELD_LABELS:
-            terms.add(m.group(1).strip())
+            s = line.strip()
+            if s.startswith("|"):
+                cells = [c.strip() for c in s.strip("|").split("|")]
+                if len(cells) < 2:
+                    continue
+                term = cells[0]
+                if not term or term.startswith("---") or term.startswith("<!--") or term == "术语":
+                    continue
+                terms.add(term.strip("`"))
+            m = DEF_RE.match(line)
+            if m and m.group(1).strip() not in FIELD_LABELS:
+                terms.add(m.group(1).strip())
     return terms
 
 
@@ -70,14 +130,55 @@ def numeric_segments(line):
     return BACKTICK_RE.findall(line)
 
 
-def collect(root, ignore_keys):
+def parse_glossary_aliases(root):
+    """Backticked identifiers listed in glossary rows (e.g. `profCoast`)."""
+    aliases = set()
+    for name in ("docs/glossary.md", "docs/glossary.markdown"):
+        path = os.path.join(root, *name.split("/"))
+        if not os.path.isfile(path):
+            continue
+        lines = read_lines(path)
+        mask = active_mask(lines)
+        for line, inactive in zip(lines, mask):
+            if inactive:
+                continue
+            if not line.strip().startswith("|"):
+                continue
+            for span in re.findall(r"`([^`]+)`", line):
+                for token in re.split(r"[/,，、\s]+", span):
+                    if token:
+                        aliases.add(token)
+    return aliases
+
+
+def collect(root, ignore_keys, max_lines=None):
     glossary_terms = parse_glossary(root)
     definitions = defaultdict(list)
     numbers = defaultdict(list)
-    for path in iter_docs(root):
+    file_lines = {}
+    module_texts = {}
+    other_texts = {}
+    all_texts = {}
+    glossary_files = ("docs/glossary.md", "docs/glossary.markdown")
+
+    paths = list(iter_docs(root))
+    for name in ("README.md", "README.markdown"):
+        path = os.path.join(root, name)
+        if os.path.isfile(path) and path not in paths:
+            paths.append(path)
+
+    for path in paths:
         file_rel = rel(root, path)
-        in_docs = file_rel.startswith("docs/") and file_rel != "docs/glossary.md"
         lines = read_lines(path)
+        file_lines[file_rel] = len(lines)
+        text = "\n".join(lines)
+        if file_rel.startswith("docs/modules/"):
+            module_texts[file_rel] = text
+        elif file_rel not in glossary_files and not file_rel.startswith("README"):
+            other_texts[file_rel] = text
+        if file_rel not in glossary_files:
+            all_texts[file_rel] = text
+        in_docs = file_rel.startswith("docs/") and file_rel not in glossary_files
         mask = active_mask(lines)
         in_def_scope = True                     # 无小标题的文件按定义语境处理
         for lineno, (line, in_fence) in enumerate(zip(lines, mask), 1):
@@ -103,7 +204,8 @@ def collect(root, ignore_keys):
                     numbers[key].append(
                         {"file": file_rel, "line": lineno, "value": value}
                     )
-    return glossary_terms, definitions, numbers
+    return (glossary_terms, definitions, numbers, file_lines,
+            module_texts, other_texts, all_texts)
 
 
 def main():
@@ -112,11 +214,24 @@ def main():
     ap.add_argument("--strict", action="store_true", help="exit 1 on warnings")
     ap.add_argument("--json", help="write JSON report to this path")
     ap.add_argument("--ignore", default="", help="comma-separated numeric keys to ignore")
+    ap.add_argument("--ignore-alias", default="",
+                    help="comma-separated glossary aliases to ignore in duplicate-alias")
+    ap.add_argument("--max-lines", type=int, default=None,
+                    help="override the line budget for every scanned doc")
+    ap.add_argument("--no-budget", action="store_true",
+                    help="disable line-budget warnings")
+    ap.add_argument("--glossary-locality", action="store_true",
+                    help="show single-module glossary-term candidates (coarse; review manually)")
+    ap.add_argument("--min-term-mentions", type=int, default=3,
+                    help="minimum mentions in one module before a term-demote hint (default 3)")
     args = ap.parse_args()
 
     root = os.path.abspath(args.root)
     ignore_keys = {k.strip().lower() for k in args.ignore.split(",") if k.strip()}
-    glossary_terms, definitions, numbers = collect(root, ignore_keys)
+    ignore_aliases = {a.strip() for a in args.ignore_alias.split(",") if a.strip()}
+    glossary_terms, definitions, numbers, file_lines, module_texts, other_texts, all_texts = collect(
+        root, ignore_keys, None if args.no_budget else args.max_lines
+    )
 
     warnings = []
 
@@ -150,26 +265,113 @@ def main():
                 }
             )
 
+    # Same key=value (or key: value) in two or more live docs: a copy candidate.
+    by_pair = defaultdict(list)
+    for key, items in numbers.items():
+        for item in items:
+            by_pair[(key, item["value"])].append(item)
+    for (key, value), items in sorted(by_pair.items()):
+        files = sorted({item["file"] for item in items})
+        if len(files) > 1:
+            warnings.append(
+                {
+                    "kind": "duplicate-literal",
+                    "key": key,
+                    "value": value,
+                    "items": items,
+                }
+            )
+
+    # Glossary-listed parameter aliases in >=2 live docs: the same knob is
+    # specified in more than one place.
+    for alias in sorted(parse_glossary_aliases(root)):
+        if not is_param_name(alias) or alias in ignore_aliases:
+            continue
+        files = sorted(f for f, text in all_texts.items() if alias in text)
+        if len(files) > 1:
+            warnings.append(
+                {
+                    "kind": "duplicate-alias",
+                    "alias": alias,
+                    "files": files,
+                }
+            )
+
+    # Line budgets: always-loaded and per-module docs have soft caps.
+    if not args.no_budget:
+        for file_rel, count in sorted(file_lines.items()):
+            budget = budget_for(file_rel, args.max_lines)
+            if budget is not None and count > budget:
+                warnings.append(
+                    {
+                        "kind": "over-budget",
+                        "file": file_rel,
+                        "lines": count,
+                        "budget": budget,
+                    }
+                )
+
+    # A glossary term used in exactly one module is a demotion candidate.
+    if args.glossary_locality:
+        for term in sorted(glossary_terms):
+            key = term_key(term)
+            if not key:
+                continue
+            users = [m for m, text in module_texts.items()
+                     if text.count(key) >= args.min_term_mentions]
+            if len(users) != 1:
+                continue
+            module = users[0]
+            mentions = module_texts[module].count(key)
+            # A one-line pointer elsewhere does not make it cross-module.
+            if any(text.count(key) >= args.min_term_mentions
+                   for text in other_texts.values()):
+                continue
+            warnings.append(
+                {
+                    "kind": "term-demote",
+                    "term": key,
+                    "module": module,
+                    "mentions": mentions,
+                }
+            )
+
     for warning in warnings:
-        if warning["kind"] == "duplicate-definition":
+        kind = warning["kind"]
+        if kind == "duplicate-definition":
             print("[duplicate-definition] {}:".format(warning["term"]))
             for item in warning["items"]:
                 print("  {}:{}  {}".format(item["file"], item["line"], item["definition"]))
-        elif warning["kind"] == "unregistered-definition":
+        elif kind == "unregistered-definition":
             print("[unregistered-definition] {}:".format(warning["term"]))
             for item in warning["items"]:
                 print("  {}:{}  {}".format(item["file"], item["line"], item["definition"]))
-        else:
+        elif kind == "numeric-conflict":
             print("[numeric-conflict] {}: {}".format(warning["key"], ", ".join(warning["values"])))
             for item in warning["items"]:
                 print("  {}:{}  = {}".format(item["file"], item["line"], item["value"]))
+        elif kind == "duplicate-literal":
+            print("[duplicate-literal] {}={}:".format(warning["key"], warning["value"]))
+            for item in warning["items"]:
+                print("  {}:{}".format(item["file"], item["line"]))
+        elif kind == "duplicate-alias":
+            print("[duplicate-alias] {}: {}".format(
+                warning["alias"], ", ".join(warning["files"])))
+        elif kind == "over-budget":
+            print("[over-budget] {}: {} lines > budget {}".format(
+                warning["file"], warning["lines"], warning["budget"]))
+        elif kind == "term-demote":
+            print("[term-demote] {}: only in {} ({} mentions); "
+                  "move it to that module's term section unless a second module "
+                  "uses it as a rule/criterion".format(
+                      warning["term"], warning["module"], warning["mentions"]))
 
     if args.json:
         with open(args.json, "w", encoding="utf-8") as f:
             json.dump({"warnings": warnings}, f, ensure_ascii=False, indent=2)
 
     if not warnings:
-        print("[check-consistency] no duplicate definitions or numeric conflicts found.")
+        print("[check-consistency] no consistency warnings found.")
     else:
         print("[check-consistency] {} warning(s); heuristic only, confirm before editing.".format(len(warnings)))
 

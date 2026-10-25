@@ -58,7 +58,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ## 去模糊与可实现(对话时的三个动作)
 
-1. **术语先定义**:听到领域专有名词 / 易混词,追问并登记 `docs/glossary.md`(一个词只定义一次)。模糊词("优化 / 合理处理 / 相关逻辑")= 没有可判定指称物 → 追问"具体指什么?给出两个互斥解释让我选"。非功能 / 主观词也要落地(可测代理指标 / 钉住可观测不变);审美拿不到阈值时允许"代理指标 + 候选",但不许原样留形容词。详见 `templates/glossary.md` 与 `references/verifying-nonfunctional.md`。
+1. **术语先定义**:听到领域专有名词 / 易混词,追问并定义:跨模块的登记 `docs/glossary.md`,只在一个模块里用的写在该模块的术语小节(一个词只定义一次)。模糊词("优化 / 合理处理 / 相关逻辑")= 没有可判定指称物 → 追问"具体指什么?给出两个互斥解释让我选"。非功能 / 主观词也要落地(可测代理指标 / 钉住可观测不变);审美拿不到阈值时允许"代理指标 + 候选",但不许原样留形容词。详见 `templates/glossary.md` 与 `references/verifying-nonfunctional.md`。
 2. **给逻辑分档**:N0 通用 / N1 项目特有 / **N2 AI 未见**。N2 必须写到"步骤级说明 + 危险实现清单 + 精确例子 + 可跑验收 + 失败语义";N0 / N1 不必。详见 `references/verifying-n2.md`。
 3. **按需复核**:命中 Step 3.5 的信号时,派独立 agent 或跑多镜 panel;「不通过」→ 改文档;「需人拍板」→ 把未决问题交用户。
 
@@ -77,7 +77,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 | **只能靠自觉** | 无 | 明确承认无法保证 |
 
 **现有脚本:** `check-docs-sync`(代码动、文档没动)、`check-doc-refs`(死链 / 占位 / N2 缺验收 / 危险清单 / 失败语义 / 现状引记录)、`review-backlog`(复核 delta)。
-**新增脚本:** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(验收 runner)、`check-consistency.py`(重复定义 / 数值冲突)、`lint-doc-structure.py`(结构警告)、`adr-index.py`(ADR 索引生成 + 状态 / 关系 / 引用对账 + 追加式校验)。
+**新增脚本:** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(验收 runner)、`check-consistency.py`(重复定义 / 数值冲突 / 超预算 / 参数别名 / 术语下沉候选)、`lint-doc-structure.py`(结构警告)、`adr-index.py`(ADR 索引生成 + 状态 / 关系 / 引用对账 + 追加式校验)。
 **共享:** `scripts/_doc_common.py`(5 个 Python 检查器必须同拷)。
 
 > 别给"约定型"规则硬配检查器——那只会制造噪音,让人开始无视所有提示。
@@ -97,8 +97,10 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
 2. 把整套 `docs-templates/` 落地(来源:6 件来自 `templates/`、7 件来自 `references/`;映射见 `references/layout.md` §二):`module-doc` / `adr-template` / `glossary` / `decisions-readme` / `core-code` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt` / `adr-example`。
-3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(术语 → `docs/glossary.md`;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`,并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`(见 `decisions-readme` 模板);对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
+3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(跨模块术语 → `docs/glossary.md`,单模块 → 该模块的术语小节;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`,并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`(见 `decisions-readme` 模板);对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
 4. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`(含共享模块 `_doc_common.py`);若用户不接脚本,在 L1 标「scripts: 未接入」,后续命令按「未复跑」处理。
+
+> **模板铺齐 ≠ 完成:** Step 3 填完内容后,在 Step 4 做一次 prune pass;不要对空模板删栏位(会删掉检查器要求的节)。
 
 ### Step 2B: 合并模式——已有 L1
 
@@ -129,6 +131,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 3. 布局跟随项目;不擅自升级版本(用户的决定)。
 4. 默认不新增本项目当前维护的文档;要新增先列提问清单。
 5. 收尾只汇报"补了哪些缺口 / 还差什么待定"。
+6. **存量减重(可选 delta):** 触发 = 任一活文档超预算 / 活文档总量 > 代码总量 / 副本候选 ≥3。动作 = 量行数与体量比 → 找重复字面量 / 单模块术语 / 机器可判计数 → 出「合并 / 降为指针 / 下沉术语」清单 → 作者拍板后动手;不自动重写。reviews 无索引且 >10 份 → 建 `docs/reviews/README.md`。
 
 ### Step 3: 边对话边写入(核心步骤)
 
@@ -165,9 +168,11 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ### Step 3.6: 文档完成判据
 
-**完成判据 = L1「文档完成判据」四条**(复核 / 当下 DoD / 危险实现清单 / N2 验收);本 skill 不重述,按项目 L1 执行。**「需人拍板」不是失败,是正常终点**:交付态 = 骨架完成 + 拍板清单 + **若做过复核**的复核判定已留档。**初轮按 L1 + L2 交付即进 Step 4**;四条判据是全量完成线,不是收尾前置。退化路径的停笔条件见 Step 3.5。
+**完成判据 = L1「文档完成判据」五条**(复核 / 当下 DoD / 危险实现清单 / N2 验收 / 紧凑性);本 skill 不重述,按项目 L1 执行。**「需人拍板」不是失败,是正常终点**:交付态 = 骨架完成 + 拍板清单 + **若做过复核**的复核判定已留档。**初轮按 L1 + L2 交付即进 Step 4**;五条判据是全量完成线,不是收尾前置。退化路径的停笔条件见 Step 3.5。
 
 ### Step 4: 收尾
+
+**prune pass(收尾必做):** 找矛盾 → 只留必需 → 其余分组到按需加载的文件 → 建指针 → **flag for deletion**(冗余 / 太泛 / 显而易见的全删)。生成 ≠ 完成;不 prune 的初始化就是 Init Fossilization。
 
 初轮(L1 + L2 主流程)完成后告诉用户:建模块前先填 L3;决策发生记 ADR;大改动前先更新对应层文档;**改代码前跑复核 / panel**;L4 默认不建;填完删模板注释;新术语登记 glossary;N2 补步骤 / 危险清单 / 例子 / 验收 / 失败语义;复核按需、可攒批,推荐在实现前完成;检查器能查的先跑,不能跑就标"未接入 / 未复跑"。完整落点与脚本见 `references/layout.md` / `references/tooling.md`。
 
@@ -197,6 +202,8 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - ❌ 多宿主各写一份规则
 - ❌ AI "顺手优化"掉人指定的接口 / 数据结构 / 失败码(`[已定]`)
 - ❌ 模板加了要求、却没写明由谁检查(脚本 / 独立复核 / 自觉)
+- ❌ 让每层都"自足"(＝每层重写);别处只写指针,不写一句话摘要
+- ❌ 生成模板后不 prune(初始化 ≠ 完成;Init Fossilization)
 - ❌ 手写 ADR 索引;把 `superseded` 记录留在现役目录(读文件的人也会读到它)
 - ❌ 只把 `superseded` 记录移进 `archive/` 就以为 Agent 搜不到了——目录对内容搜索无效;ADR 是日志,整个 `docs/decisions/` 都该在 `docs/.ignore` 里排掉(且 `git grep` 仍会漏,见 `references/search-surface.md`)
 
@@ -216,3 +223,6 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - **锁定的评估面 / durable log**:`Agent-Skills-for-Context-Engineering` → `harness-engineering`。
 - **规范驱动开发整体流程**:GitHub Spec Kit。
 - **多镜 / 校准探针**:`pptx-delivery` 的冷启动复核(5 个子代理 + 校准探针)。
+- **Agent 上下文预算 / 配置异味:** AGENTS.md 配置异味研究(arXiv:2606.15828);Anthropic《How Claude remembers your project》(每份 CLAUDE.md <200 行、矛盾审计);HumanLayer《Writing a good CLAUDE.md》("prefer pointers to copies"、~150–200 条指令)。
+- **单一来源 / 文档分型:** Cyrille Martraire《Living Documentation》(每条知识只声明一次 + 对账工具);Single-sourcing / transclusion;Diátaxis(四类文档不要混)。
+- **决策记录:** Martin Fowler 的 ADR 条目;AWS ADR 最佳实践(不改已接受记录、supersede + 链接、索引可见状态)。

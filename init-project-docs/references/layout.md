@@ -13,7 +13,7 @@
   ├── scaffolds/            # 可选:项目自搭的跨领域脚手架(见 essentials skill);L1 用目录规则声明
   ├── modules/<name>.md     # L3 —— 每模块开发前
   ├── core-code.md          # L4 —— 可选:被 ≥2 个工作场景共同加载的核心单元才建;不建时跨模块契约写进 architecture.md 的「架构级约束」
-  ├── reviews/              # E5 对账 / 多镜复核产出 —— 首次对账时创建;含 .last-review(复核覆盖的提交);多镜 panel 的 dispatch/outputs 放 docs/reviews/<日期>-<主题>-panel/
+  ├── reviews/              # E5 对账 / 多镜复核产出 —— 首次对账时创建;含 .last-review(复核覆盖的提交);多镜 panel 的 dispatch/outputs 放 docs/reviews/<日期>-<主题>-panel/;超过 ~10 份时建 README.md(日期 / 主题 / 状态 / 后继)当入口——否则下一轮不会读它们
   └── decisions/
       ├── README.md         # ADR 索引(由 scripts/adr-index.py 生成) —— 首次记 ADR 时创建;项目若用 .markdown 也认
       ├── adr-XXX-*.md      # 现役 / 在议的真实 ADR

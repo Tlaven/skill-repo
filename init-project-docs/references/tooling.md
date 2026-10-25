@@ -14,7 +14,7 @@
 | 对标代码 | `scripts/check-docs-sync.sh/.ps1` | 脚本 | commit | 代码动了、文档没动 |
 | 对标代码 | `last verified` SHA(可选) | 约定 | 批次 / 里程碑 | 文档基线过期提醒 |
 | 自洽 | `scripts/check-doc-refs.sh/.ps1` | 脚本 | 编辑后 / CI(可选) / 收尾 | 死链 / 占位符 / N2 缺验收 / 危险清单未填 / 模块缺失败语义 / 现状文档引记录 |
-| 自洽 | `scripts/check-consistency.py` | 脚本(警告) | 契约级变更 | 重复定义 / 同名数值冲突 / 未登记术语定义 |
+| 自洽 | `scripts/check-consistency.py` | 脚本(警告) | 契约级变更 / 批次 | 重复定义 / 同名数值冲突 / 重复字面量 / 未登记术语定义 / 超行数预算 / 参数别名跨文档 / 单模块术语(可选) |
 | 核心逻辑 | `scripts/run-n2-acceptance.py` | 脚本 | 改代码前 / 批次 | 验收命令执行结果;无 manifest 只列不跑 |
 | 可读性 | `scripts/lint-doc-structure.py` | 脚本(警告) | 编辑后 / 批次 | 段落过长 / 缺小标题 / 缺示例 |
 | 历史边界 | `check-doc-refs` 的「现状文档引记录」 | 脚本代理 | 编辑后 / CI(可选) / 收尾 | 现状文档引记录 |
@@ -35,6 +35,7 @@
 - **`check-code-refs.py`** —— 扫 `docs/` + L1 里的反引号 token;**记录类文档(`docs/decisions/`、`docs/reviews/`)不扫**(历史可以引用已删文件,那不是漂移);只把**已知路径前缀或文件扩展名**当路径,无斜杠 token 还必须是 ASCII(`父.h`/`邻.h` 是标识符,不是文件名)。跳过 fenced code block、HTML 注释、URL、占位符(`<…>`/`…`)、glob、裸扩展名(`.sh`)与 L1 文件名(`AGENTS.md` / `CLAUDE.md` 等,避免把备选宿主名当缺失文件);按需创建的 `docs/architecture.md|.markdown` / `glossary.*` / `core-code.*` / `scaffolds/` / `modules/…` / `decisions/…` / `reviews/…` 与 `task_plan.md` 缺失时标 `pending-doc`,不算错误。
 - **`run-n2-acceptance.py`** —— 读 N2 验收 manifest,列出或执行验收命令。**默认只列不跑并标「未复跑」**;`--run` 才执行 manifest 里显式列出的命令;`--strict` 只在**无 manifest 的发现模式**下要求每条 N2 都有 `**验收**` 行。
 - **`check-consistency.py`** —— 启发式警告:同一术语在 `docs/` 多处定义、同名数值在**内联代码 / 表格**里出现不同值、非 glossary 的术语定义未登记。**记录类文档不扫**;定义只认"定义语境"小节(`是什么 / 定义 / 术语 / 概念`)或无小标题的文件——`[为什么]` / `[不变量]` 的粗体领起句是论述,不是定义。L1 的强调 bullet 不算术语定义;glossary 自己的唯一一条不算重复。只作警告,不进 pre-commit 门禁。
+  另有四项(2026-10-25 加):① **重复字面量**——同一 `key: value` / `key=value` 在 ≥2 个活文档(只扫内联代码 / 表格);② **超行数预算**——默认值见脚本 `DEFAULT_BUDGETS`;`--max-lines` 全局覆盖,`--no-budget` 关闭;只警告,默认不接 CI,`--strict` 下计入退出码;③ **参数别名跨文档**——术语表里反引号的别名(如 `profCoast`)出现在 ≥2 个活文档 → 提示唯一正文;`--ignore-alias` 排除;④ **单模块术语**(`--glossary-locality`,默认关)——术语表里的词只在一个模块出现 ≥N 次(`--min-term-mentions`,默认 3)→ 提示下沉;它是**候选清单**,粗判,必须人工复核。逐槽参数(`amp` / `wl`)的数值本来就会变,用 `--ignore` 排除。
 - **`lint-doc-structure.py`** —— 结构警告:段落过长(默认 >20 行)、没有小标题、没有示例 / 表格 / 代码块 / 列表。只作警告。
 - **`adr-index.py`** —— ADR 索引生成 + 元数据对账。**索引必须生成,不能手写**(手写的索引在第一个忙周就会漂);`--write` 重写 `README.md` / `README.markdown` 里 `<!-- adr-index:begin -->` / `<!-- adr-index:end -->` 之间的块,`--strict` 在有 finding 时退 1。查的是**确定性**部分:ID 唯一、标题 `# <ID>: <title>`（`:` 与 `：` 都认）与文件名一致、状态在规范集内（`superseded` 必须带 `superseded_by`）、关系目标存在（本目录或 `archive/`）、索引与记录一致。**只列现役（accepted / accepted(修订)）与在议（proposed）**;被取代 / 弃用 / 被拒的不进索引。警告（不失败）:superseded 仍留在主目录（应移进 `archive/`）、`archive/` 有记录但没有任何 `.ignore` 把它挡出检索面（`adr-no-ignore`——`docs/.ignore` 写 `decisions/`，或 `docs/decisions/.ignore` 写 `archive/`；机制失效是静默的,见 `references/search-surface.md`）、单条超词数上限（默认 800,`--max-words` 可调;超过 3 条时只打一行汇总 + 最长三条,免得淹没别的警告）。**状态取前导词**:`accepted(2026-10-15)`、`accepted(已落地：…照它改了)`、`⚠️ accepted(…)` 都算 `accepted`,括号与后面的散文是注记不是状态;只有前导词不在规范集内才报。状态优先读 frontmatter,没有则回退到旧格式的 `## 状态` 段——**按记录逐条迁移即可**,不需要一次性改写全部历史。
   - **引用对账（默认开）:** 扫 L1、`docs/`（记录类除外）、`SKILL.md`、`references/`;`--scan DIR|FILE` 可加路径（如代码目录）。**只认记录实际使用的前缀**（`ADR` 或项目自定义）——文件名里的 `fusion-2026`、会议名 `GDC-2012` 不算引用。引用了不存在的 ID → finding;引用了 `superseded` / `deprecated` / `rejected` 的记录 → warning（「改引现行记录，或删掉引用」）。**记录类文档不扫**——历史引用历史是常态。
@@ -64,6 +65,10 @@ python scripts/run-n2-acceptance.py --root . --manifest docs/n2-acceptance.json 
 
 # 4) 一致性警告(契约级变更 / 批次;--ignore 可忽略指定数值键)
 python scripts/check-consistency.py --root . --ignore localhost,http,https
+#    术语下沉候选(可选、粗判,人工复核)
+python scripts/check-consistency.py --root . --glossary-locality --ignore amp,wl
+#    只关心预算(--max-lines 全局覆盖默认预算;--no-budget 关闭)
+python scripts/check-consistency.py --root . --max-lines 400
 
 # 5) 结构警告(编辑后 / 批次;--max-paragraph-lines 默认 20)
 python scripts/lint-doc-structure.py --root .

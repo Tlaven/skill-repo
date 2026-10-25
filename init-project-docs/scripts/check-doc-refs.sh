@@ -153,7 +153,8 @@ for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md 
   [ -f "$f" ] || continue
   # 先剥 HTML 注释(引导注释里的示例引用不算正文;与 #3 同一套状态机,行号保真)
   # 含 ⚠ 的行是 E1 要求的"已被…推翻"状态标记(带不带变体选择符都算)——是状态,不是依据,跳过
-  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '!/⚠/ {printf "%d:%s\n", NR, $0}' | grep -iE "$REF_PAT" 2>/dev/null)
+  # `> 出处：…` 是 E1 的出处导航行(只写去哪儿读),不是依据,也跳过
+  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '!/⚠/ && !/^[[:space:]]*>[[:space:]]*出处[:：]/ {printf "%d:%s\n", NR, $0}' | grep -iE "$REF_PAT" 2>/dev/null)
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
       echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(历史只作方向,不作事实;现状陈述须自足)"

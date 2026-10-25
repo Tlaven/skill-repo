@@ -148,7 +148,7 @@ class ScriptTests(unittest.TestCase):
             write(root / "docs" / "a.md", "Prose localhost: 8080 and localhost: 8443.\n")
             proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-            self.assertIn("no duplicate definitions", proc.stdout)
+            self.assertIn("no consistency warnings found", proc.stdout)
 
     def test_check_consistency_unregistered_definition(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -196,6 +196,87 @@ class ScriptTests(unittest.TestCase):
             self.assertIn("Gadget", proc.stdout)
             self.assertNotIn("Widget", proc.stdout)
             self.assertNotIn("WhyThing", proc.stdout)
+
+    def test_check_consistency_over_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", "\n".join("line" for _ in range(260)) + "\n")
+            proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[over-budget] AGENTS.md", proc.stdout)
+
+    def test_check_consistency_no_budget_flag(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", "\n".join("line" for _ in range(260)) + "\n")
+            proc = run_script(
+                "check-consistency.py", "--root", ".", "--strict", "--no-budget", cwd=root
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("[over-budget]", proc.stdout)
+
+    def test_check_consistency_duplicate_literal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / "a.md", "Config `timeout: 30`.\n")
+            write(root / "docs" / "b.md", "Again `timeout: 30`.\n")
+            proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[duplicate-literal] timeout=30", proc.stdout)
+
+    def test_check_consistency_duplicate_alias(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "glossary.md",
+                "| 术语 | 定义 |\n|---|---|\n| 剖面 | 参数 `profCoast` |\n",
+            )
+            write(root / "docs" / "a.md", "profCoast=.6\n")
+            write(root / "docs" / "b.md", "profCoast=.35\n")
+            proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[duplicate-alias] profCoast", proc.stdout)
+
+    def test_check_consistency_ignore_alias(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "glossary.md",
+                "| 术语 | 定义 |\n|---|---|\n| 剖面 | 参数 `profCoast` |\n",
+            )
+            write(root / "docs" / "a.md", "profCoast=.6\n")
+            write(root / "docs" / "b.md", "profCoast=.35\n")
+            proc = run_script(
+                "check-consistency.py", "--root", ".", "--strict",
+                "--ignore-alias", "profCoast", cwd=root,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("[duplicate-alias]", proc.stdout)
+
+    def test_check_consistency_term_demote(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / "glossary.md", "| 术语 | 定义 |\n|---|---|\n| 槽 | container |\n")
+            write(root / "docs" / "modules" / "theme.md", "槽 槽 槽 槽\n")
+            proc = run_script(
+                "check-consistency.py", "--root", ".", "--strict",
+                "--glossary-locality", cwd=root,
+            )
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[term-demote] 槽", proc.stdout)
+
+    def test_check_consistency_term_in_l2_is_not_demoted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / "glossary.md", "| 术语 | 定义 |\n|---|---|\n| 槽 | container |\n")
+            write(root / "docs" / "modules" / "theme.md", "槽 槽 槽 槽\n")
+            write(root / "docs" / "architecture.md", "槽 槽 槽 是架构级容器\n")
+            proc = run_script(
+                "check-consistency.py", "--root", ".", "--strict",
+                "--glossary-locality", cwd=root,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("[term-demote] 槽", proc.stdout)
 
     def test_decisions_readme_template_is_clean(self):
         with tempfile.TemporaryDirectory() as tmp:

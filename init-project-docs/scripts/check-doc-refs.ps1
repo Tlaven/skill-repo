@@ -155,6 +155,7 @@ foreach ($f in $liveDocs) {
   foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释:引导注释里的示例引用不算正文
     $ln++
     if ($line -match '⚠') { continue }   # E1 的状态标记(带不带变体选择符都算),不是依据
+    if ($line -match '^\s*>\s*出处[:：]') { continue }   # E1 的出处导航行,不是依据
     if ($line -match $refPat) {
       Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(历史只作方向,不作事实;现状陈述须自足)"
       $found = $true
