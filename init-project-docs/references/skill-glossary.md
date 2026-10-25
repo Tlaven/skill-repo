@@ -23,9 +23,10 @@
 | 词 | 本 skill 所指 | 不指什么(易混) | 定义 / 展开 |
 |---|---|---|---|
 | **项目记忆协议** | 人 + AI 的文档协作约定 | 不是网络协议 / API 协议 | `SKILL.md` 定位 |
+| **协议 / 项目记忆** | 协议 = AI 操作规则（methodology，按需读）；项目记忆 = L1 / `docs/` / `task_plan.md` | 两者不是同一个时间桶；方法论不得冒充项目法律 | `templates/methodology.md`;`SKILL.md` Step 2A |
 | **契约 / 契约文件** | L1 / L2 / L3 / L4 / glossary 里**约束性陈述**的载体 | 不是法律合同,也不是对外 API 契约的同义词 | `review-panel.md` §三;`SKILL.md` Step 3.5 |
 | **契约级变更** | 上述文件里不变量 / `[已定]` / 接口 / 数据结构 / 失败码 / 术语定义 / 契约级断言的增删改 | 纯措辞 / 链接 / 排版不算 | `SKILL.md` Step 3.5 |
-| **铁律 / 不变量 / 规则 / 约束** | 四层同心词:铁律 = L1 常驻规则;不变量 = 必须保持的约束;规则 = 操作规则;约束 = 统称 | 不要把"规则"当成都可脚本检查;不要把"不变量"当成数学不变式 | `templates/l1-memory.md` |
+| **铁律 / 不变量 / 规则 / 约束** | 四层同心词:铁律 = methodology 常驻规则(不随 L1 自动加载);不变量 = 必须保持的约束;规则 = 操作规则;约束 = 统称 | 不要把"规则"当成都可脚本检查;不要把"不变量"当成数学不变式 | `templates/methodology.md` |
 | **待填件** | `docs-templates/` 里**复制到 `docs/` 后再填**的模板 | 不是本项目当前维护的文档;不能被对账扫成现状 | `layout.md` §一;`SKILL.md` Step 2A |
 | **就地读件** | 留在 `docs-templates/` **直接引用**的规则正文(如 `temporal-model.md`) | 不是待填模板;不是现状文档 | `layout.md` §一 |
 | **文档指针** | 指向代码 / 其他文档的引用,不抄内容 | 不是 C 语言指针;不是"没有内容"的占位 | E1 |
@@ -64,8 +65,10 @@
 |---|---|---|---|
 | **主型 / 副型** | 主型 = **决定验收**的 skill 类型;副型 = **只影响写法**,不改验收 | 不是同等重要的两个标签;不是"主要 / 次要功能" | `seeding-skills/references/skill-types.md` |
 | **元型 / 流程型 / 知识型 / 判断型 / 能力型** | seeding 的五种 skill 类型 | 不是文档层 / 时间桶 | 同上 |
-| **N0 / N1 / N2** | novelty 分档:N0 通用 / N1 项目特有 / N2 AI 未见 | 不是验收档;不是优先级 | `templates/l1-memory.md` |
-| **L1 / L2 / L3 / L4** | 文档层(按加载图切) | 不是时间桶;不是 skill 类型 | `templates/l1-memory.md` |
+| **N0 / N1 / N2** | novelty 分档:N0 通用 / N1 项目特有 / N2 AI 未见 | 不是验收档;不是优先级 | `templates/methodology.md` |
+| **L1 / L2 / L3 / L4** | 文档层(按加载图切);L1 = 项目记忆,方法论不在 L1 | 不是时间桶;不是 skill 类型 | `templates/methodology.md` |
+| **活文档白名单** | `docs/.live`:一行一个路径;只有列出的文档算“当前” | 不是安全 allowlist;不是“所有 docs 都活” | `layout.md` §三;`methodology.md` |
+| **文档版本 / 领域版本** | 文档版本 = 活文档自身的 `vX.Y`(禁止);领域版本 = save / API / schema 的当前契约(允许) | 不要把领域版本写成文档版本 | `methodology.md`「时间与版本纪律」 |
 | **DoD** | 完成标准(Definition of Done);本 skill 的当下 DoD 四条 | 不是"文档写完"的主观感觉 | `temporal-model.md` §六 |
 | **ADR** | 决策记录(Architecture Decision Record) | 不是现状文档;不是任务笔记 | E4 |
 | **teach-back** | 让独立验证者**复述 + 找缺口 + 判定**的复核 | 不是教学法;不是作者自评 | `teach-back-verifier-prompt.md` |

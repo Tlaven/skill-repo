@@ -14,7 +14,9 @@ Default checks:
   two or more live docs.
 - Duplicate aliases: a backticked glossary alias (e.g. `profCoast`) appears in
   two or more live docs (README is included).
-- Over-budget: soft line caps (L1 250 / L2 150 / L3 400; see DEFAULT_BUDGETS).
+- Over-budget: soft line caps (L1 100 / L2 80 / L3 400; see DEFAULT_BUDGETS).
+- Scope: docs/.live when present (only allowlisted docs count as current);
+  --all-docs ignores it and scans every docs/ file (migration / audit).
 
 Opt-in:
 - Single-module terms (`--glossary-locality`): a glossary term mentioned
@@ -38,7 +40,7 @@ import re
 import sys
 from collections import defaultdict
 
-from _doc_common import active_mask, iter_docs, read_lines, rel
+from _doc_common import active_mask, iter_docs, live_allowlist_missing, read_lines, rel
 
 DEF_RE = re.compile(r"^\s*[-*]\s+\*\*([^*]+?)\*\*\s*[:：]\s*(.+)$")
 NUM_RE = re.compile(
@@ -69,11 +71,11 @@ FIELD_LABELS = {
 
 # 活文档软预算（行）。warning-only；--max-lines 覆盖，--no-budget 关闭。
 DEFAULT_BUDGETS = (
-    ("AGENTS.md", 250), ("CLAUDE.md", 250),
-    (".cursorrules", 250), (".windsurfrules", 250),
-    (".cursor/rules/project.mdc", 250),
-    (".github/copilot-instructions.md", 250),
-    ("docs/architecture.md", 150), ("docs/architecture.markdown", 150),
+    ("AGENTS.md", 100), ("CLAUDE.md", 100),
+    (".cursorrules", 100), (".windsurfrules", 100),
+    (".cursor/rules/project.mdc", 100),
+    (".github/copilot-instructions.md", 100),
+    ("docs/architecture.md", 80), ("docs/architecture.markdown", 80),
     ("docs/core-code.md", 200), ("docs/core-code.markdown", 200),
     ("docs/modules/*.md", 400), ("docs/modules/*.markdown", 400),
 )
@@ -151,7 +153,7 @@ def parse_glossary_aliases(root):
     return aliases
 
 
-def collect(root, ignore_keys, max_lines=None):
+def collect(root, ignore_keys, max_lines=None, use_live=True):
     glossary_terms = parse_glossary(root)
     definitions = defaultdict(list)
     numbers = defaultdict(list)
@@ -161,7 +163,7 @@ def collect(root, ignore_keys, max_lines=None):
     all_texts = {}
     glossary_files = ("docs/glossary.md", "docs/glossary.markdown")
 
-    paths = list(iter_docs(root))
+    paths = list(iter_docs(root, use_live=use_live))
     for name in ("README.md", "README.markdown"):
         path = os.path.join(root, name)
         if os.path.isfile(path) and path not in paths:
@@ -224,16 +226,22 @@ def main():
                     help="show single-module glossary-term candidates (coarse; review manually)")
     ap.add_argument("--min-term-mentions", type=int, default=3,
                     help="minimum mentions in one module before a term-demote hint (default 3)")
+    ap.add_argument("--all-docs", action="store_true",
+                    help="ignore docs/.live and scan every docs/ file (migration / audit)")
     args = ap.parse_args()
 
     root = os.path.abspath(args.root)
     ignore_keys = {k.strip().lower() for k in args.ignore.split(",") if k.strip()}
     ignore_aliases = {a.strip() for a in args.ignore_alias.split(",") if a.strip()}
     glossary_terms, definitions, numbers, file_lines, module_texts, other_texts, all_texts = collect(
-        root, ignore_keys, None if args.no_budget else args.max_lines
+        root, ignore_keys, None if args.no_budget else args.max_lines,
+        use_live=not args.all_docs,
     )
 
     warnings = []
+    if not args.all_docs:
+        for entry in live_allowlist_missing(root):
+            warnings.append({"kind": "live-missing", "entry": entry})
 
     for term, items in sorted(definitions.items()):
         if term in glossary_terms or len(items) > 1:
@@ -365,6 +373,9 @@ def main():
                   "move it to that module's term section unless a second module "
                   "uses it as a rule/criterion".format(
                       warning["term"], warning["module"], warning["mentions"]))
+        elif kind == "live-missing":
+            print("[live-missing] docs/.live lists {} but the file does not exist".format(
+                warning["entry"]))
 
     if args.json:
         with open(args.json, "w", encoding="utf-8") as f:

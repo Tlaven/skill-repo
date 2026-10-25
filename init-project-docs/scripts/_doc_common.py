@@ -18,6 +18,8 @@ DEFAULT_EXCLUDE = (
     "docs/decisions/",
     "docs/legacy/",
     "docs/archive/",
+    "docs/experiment/",
+    "docs/scaffolds/",
     "docs/templates/",
     "docs-templates/",
 )
@@ -27,10 +29,71 @@ def _excluded(rel_dir):
     return any(rel_dir == ex.rstrip("/") or rel_dir.startswith(ex) for ex in DEFAULT_EXCLUDE)
 
 
-def iter_docs(root):
-    """Yield current, maintained markdown docs: docs/ (minus excluded) + L1 files."""
+def read_live_allowlist(root):
+    """Read docs/.live, or None when the project has no allowlist.
+
+    One path per line, relative to docs/; '#' comments and blank lines are
+    ignored. A leading './' or 'docs/' is tolerated. Parent traversal is
+    ignored (the allowlist is for docs/, not arbitrary files).
+    """
+    path = os.path.join(root, "docs", ".live")
+    if not os.path.isfile(path):
+        return None
+    entries = []
+    for line in read_lines(path):
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        s = s.replace("\\", "/")
+        if s.startswith("./"):
+            s = s[2:]
+        if s.startswith("docs/"):
+            s = s[5:]
+        if not s or s.startswith("..") or "/../" in s:
+            continue
+        entries.append(s)
+    return entries
+
+
+def live_allowlist_paths(root):
+    entries = read_live_allowlist(root)
+    if entries is None:
+        return None
     docs = os.path.join(root, "docs")
-    if os.path.isdir(docs):
+    paths = []
+    for entry in entries:
+        paths.append(os.path.normpath(os.path.join(docs, *entry.split("/"))))
+    return paths
+
+
+def live_allowlist_missing(root):
+    """Entries in docs/.live that do not point to a readable file."""
+    entries = read_live_allowlist(root)
+    if entries is None:
+        return []
+    docs = os.path.join(root, "docs")
+    missing = []
+    for entry in entries:
+        path = os.path.normpath(os.path.join(docs, *entry.split("/")))
+        if not os.path.isfile(path):
+            missing.append(entry)
+    return missing
+
+
+def iter_docs(root, use_live=True):
+    """Yield current docs: docs/.live when present, else docs/ minus excluded; + L1.
+
+    A project without docs/.live keeps the old behaviour, so existing projects
+    are not broken. With docs/.live, only the allowlisted docs count as
+    current; everything else is history/reference and is skipped.
+    """
+    docs = os.path.join(root, "docs")
+    allowed = live_allowlist_paths(root) if use_live else None
+    if allowed is not None:
+        for path in allowed:
+            if os.path.isfile(path) and path.endswith((".md", ".markdown")):
+                yield path
+    elif os.path.isdir(docs):
         for dirpath, dirnames, filenames in os.walk(docs):
             rel_dir = os.path.relpath(dirpath, root).replace("\\", "/")
             if _excluded(rel_dir):

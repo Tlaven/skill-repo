@@ -5,36 +5,38 @@
 ## 一、产出文件结构
 
 ```
-./AGENTS.md  (或 ./CLAUDE.md,按宿主)  # L1 主战场 —— Step 2A 立即创建
-./docs/                     # 本项目当前维护的文档 —— 对账扫这里(排除 reviews/legacy/archive/templates)
-  ├── .ignore               # 让 decisions/ 与 reviews/ 退出 rg 的默认检索面(见 references/search-surface.md)
-  ├── architecture.md       # L2 —— 进入 L2 讨论时创建
-  ├── glossary.md           # 术语表 —— 出现领域名词时创建
-  ├── scaffolds/            # 可选:项目自搭的跨领域脚手架(见 essentials skill);L1 用目录规则声明
-  ├── modules/<name>.md     # L3 —— 每模块开发前
-  ├── core-code.md          # L4 —— 可选:被 ≥2 个工作场景共同加载的核心单元才建;不建时跨模块契约写进 architecture.md 的「架构级约束」
-  ├── reviews/              # E5 对账 / 多镜复核产出 —— 首次对账时创建;含 .last-review(复核覆盖的提交);多镜 panel 的 dispatch/outputs 放 docs/reviews/<日期>-<主题>-panel/;超过 ~10 份时建 README.md(日期 / 主题 / 状态 / 后继)当入口——否则下一轮不会读它们
-  └── decisions/
-      ├── README.md         # ADR 索引(由 scripts/adr-index.py 生成) —— 首次记 ADR 时创建;项目若用 .markdown 也认
-      ├── adr-XXX-*.md      # 现役 / 在议的真实 ADR
-      └── archive/          # 被取代 / 弃用的记录(不进索引;整目录默认已退出检索面)
+./AGENTS.md  (或 ./CLAUDE.md,按宿主)  # L1:项目记忆,只指活文档
+./task_plan.md                  # 未来桶:唯一待办
+./docs/
+  ├── .live                    # 活文档白名单(一行一个路径,相对 docs/)
+  ├── .ignore                  # 让 decisions/、reviews/、archive/、experiment/ 退出 rg
+  ├── architecture.md          # L2:模块图 / 主流程 / 坐标,≤80 行
+  ├── design-contract.md       # 设计约束(若有),≤100 行
+  ├── glossary.md              # 跨模块术语,2 列,≤40 词
+  ├── modules/<name>.md        # L3:N1 一页 / N2 五件套
+  ├── core-code.md             # 跨模块 N2 的家(需要时才建)
+  ├── reviews/                 # 历史:对账 / 复核
+  ├── decisions/               # 历史:ADR
+  ├── archive/                 # 历史:退役文档(文件名带日期)
+  └── experiment/              # 实验:scaffolds / experiment-log,不进开发入口
 ./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接入」,命令按「未复跑」处理
-./docs-templates/           # skill 提供的两类件(不是本项目当前维护的文档:对账忽略) —— Step 2A 整套落地
-  ├── module-doc.md                   # 待填件:复制到 docs/modules/<name>.md 再填
-  ├── adr-template.md                 # 待填件:复制成 adr-XXX-<短描述>.md 再填
-  ├── glossary.md                     # 待填件:复制到 docs/glossary.md 再填
-  ├── decisions-readme.md             # 待填件:复制到 docs/decisions/README.md 再填
-  ├── core-code.md                    # 待填件:复制到 docs/core-code.md 再填
-  ├── architecture.md                 # 待填件:按需复制到 docs/architecture.md 再填
-  ├── evolution-rules.md              # 就地读件:演化期规则 E1–E7(L1 只留指针)
-  ├── temporal-model.md               # 就地读件:三时间轴 / 四类路由 / 当下 DoD
-  ├── review-panel.md                 # 就地读件:当下层多镜复核
-  ├── verifying-n2.md                 # 就地读件:怎么给 N2 造验收
-  ├── verifying-nonfunctional.md      # 就地读件:非功能 / 主观需求怎么造验收
-  └── teach-back-verifier-prompt.md   # 就地读件:teach-back 验证者 prompt
+./docs-templates/           # 协议 / 模板(不是本项目当前维护的文档:对账忽略)
+  ├── methodology.md                 # 协议正文(不自动加载;L1 只留指针)
+  ├── module-doc.md                  # 待填件:复制到 docs/modules/<name>.md 再填
+  ├── adr-template.md                # 待填件:复制成 adr-XXX-<短描述>.md 再填
+  ├── glossary.md                    # 待填件:复制到 docs/glossary.md 再填
+  ├── decisions-readme.md            # 待填件:复制到 docs/decisions/README.md 再填
+  ├── core-code.md                   # 待填件:复制到 docs/core-code.md 再填
+  ├── architecture.md                # 待填件:按需复制到 docs/architecture.md 再填
+  ├── evolution-rules.md             # 就地读件:E1–E7(项目 L1 只留指针)
+  ├── temporal-model.md              # 就地读件:三时间轴 / 四类路由 / 当下 DoD
+  ├── review-panel.md                # 就地读件:当下层多镜复核
+  ├── verifying-n2.md                # 就地读件:怎么给 N2 造验收
+  ├── verifying-nonfunctional.md     # 就地读件:非功能 / 主观需求怎么造验收
+  └── teach-back-verifier-prompt.md  # 就地读件:teach-back 验证者 prompt
 ```
 
-除 L1 与**整套 `docs-templates/`** 外,`docs/` 下本项目当前维护的文档**全部按需创建**。
+除 L1、`task_plan.md` 与**当前用到的 `docs-templates/`** 外,`docs/` 下当前维护的文档**全部按需创建**;`docs/.live` 是唯一活文档清单。
 
 > **待填件** = 复制到 `docs/` 后再填写的模板;**就地读件** = 留在 `docs-templates/` 直接引用的规则正文;两者都不是本项目当前维护的文档,对账忽略。
 
@@ -42,7 +44,8 @@
 
 | 文件 | 用途 | 何时用 | 落地到(项目内) |
 |---|---|---|---|
-| `templates/l1-memory.md` | 待填件:L1 记忆文件(三段式 / 4 层 / novelty / 铁律) | **立即**(Step 2A) | 项目根 `<AGENTS.md / CLAUDE.md>` |
+| `templates/l1-memory.md` | 待填件:L1 记忆文件(项目记忆;方法论只留指针) | **立即**(Step 2A) | 项目根 `<AGENTS.md / CLAUDE.md>` |
+| `templates/methodology.md` | 就地读件:三段式 / 4 层 / novelty / 铁律 / 加载表(不自动加载) | **立即**(Step 2A) | `docs-templates/methodology.md` |
 | `templates/architecture.md` | 待填件:L2 架构层 | **立即**(Step 2A) | `docs-templates/architecture.md`(按需复制到 `docs/architecture.md`) |
 | `templates/module-doc.md` | 待填件:L3 模块详细(含 novelty 标记) | **立即**(Step 2A) | `docs-templates/module-doc.md` |
 | `templates/glossary.md` | 待填件:术语表(受控词汇) | **立即**(Step 2A) | `docs-templates/glossary.md`(按需复制到 `docs/glossary.md`) |
@@ -63,7 +66,21 @@
 | `references/calibration-guide.md` | 验证者 / 镜头校准手册 | 改判定措辞或换模型时 | **不落地** |
 | `references/wiring.md` | 接线指南(pre-commit / CI / 宿主钩子) | 初始化后接线时 | **不落地** |
 
-## 三、脚本清单
+## 三、活文档白名单 `docs/.live`
+
+- 一行一个路径，相对 `docs/`；`#` 注释、空行忽略。
+- 只有列出的文档算“当前”；未列出的按历史 / 参考处理，不进日常加载。
+- Python 检查器默认只扫白名单 + L1；`check-consistency --all-docs` 才扫全库（迁移 / 对账用）。`check-doc-refs` 仍按目录排除（archive / experiment / decisions / reviews / templates 不扫）。
+- 新增活文档必须合并 / 替换 / 归档一个（net-negative）。
+
+```text
+# docs/.live
+design-contract.md
+architecture.md
+modules/run.md
+```
+
+## 四、脚本清单
 
 - 对账:`scripts/check-docs-sync.sh/.ps1`、`scripts/check-doc-refs.sh/.ps1`、`scripts/review-backlog.sh/.ps1`
 - 新增:`scripts/check-code-refs.py`、`scripts/run-n2-acceptance.py`、`scripts/check-consistency.py`、`scripts/lint-doc-structure.py`、`scripts/adr-index.py`

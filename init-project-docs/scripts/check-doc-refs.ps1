@@ -1,4 +1,4 @@
-﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、模块文档缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录。
+﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、N2 模块缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录。
 # 用法:
 #   powershell -File check-doc-refs.ps1
 #   powershell -File check-doc-refs.ps1 -Strict
@@ -9,10 +9,11 @@ $ErrorActionPreference = 'SilentlyContinue'
 $DocExt = @('.md', '.markdown')
 
 # 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:存档层
-# (如 docs/legacy/)、记录类(docs/decisions/、docs/reviews/——历史快照,引用退役术语/旧链接是常态,
-# 不是错误)与待填件目录(docs/templates/——有些项目把待填件放在 docs/ 内)。
+# (如 docs/legacy/、docs/archive/、docs/experiment/、docs/scaffolds/)、记录类(docs/decisions/、
+# docs/reviews/——历史快照,引用退役术语/旧链接是常态,不是错误)与待填件目录(docs/templates/——
+# 有些项目把待填件放在 docs/ 内)。
 # 置空字符串则不过滤。
-$DocExclude = '^(docs/legacy/|docs/archive/|docs/decisions/|docs/templates/|docs/reviews/)'
+$DocExclude = '^(docs/legacy/|docs/archive/|docs/experiment/|docs/scaffolds/|docs/decisions/|docs/templates/|docs/reviews/)'
 
 $root = (git rev-parse --show-toplevel 2>$null)
 if (-not $root) { $root = (Get-Location).Path }
@@ -130,9 +131,9 @@ foreach ($f in $targets) {
     Write-Host "[n2-missing-checklist] $($f): 标了 N2 却没有「危险实现清单」"
     $found = $true
   }
-  # 模块文档必须有「失败语义」一节(覆盖 N1;指针形除外)
-  if (($f -like 'docs/modules/*') -and (-not $pointer) -and ($body -notmatch '失败语义')) {
-    Write-Host "[module-missing-failure-semantics] $($f): 模块文档没有「失败语义」一节"
+  # N2 模块文档必须有「失败语义」一节(仅 N2;指针形除外)
+  if (($f -like 'docs/modules/*') -and ($body -match 'novelty=N2') -and (-not $pointer) -and ($body -notmatch '失败语义')) {
+    Write-Host "[module-missing-failure-semantics] $($f): N2 模块文档没有「失败语义」一节"
     $found = $true
   }
 }

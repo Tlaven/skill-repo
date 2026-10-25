@@ -1,6 +1,6 @@
 ---
 name: init-project-docs
-description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs/):把对话沉淀为历史 / 当下 / 未来,保持当下自洽、可读、与代码对标。用于新项目 / 立项 / 写 CLAUDE.md / AGENTS.md / 术语表 / N2 核心逻辑 / 多镜复核。TRIGGER: 新项目, 项目初始化, 立项, 写 CLAUDE.md, 写 AGENTS.md, init docs, bootstrap docs, 初始化文档骨架, 补 L1 记忆文件, 术语表骨架, 新领域核心逻辑, N2, teach-back(独立复述), 多镜复核, 三时间轴。不适用: 已有完善文档且无改动诉求; 只要一份代码速查(改用内置 init); 单次任务 / 一次性脚本。"
+description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs/):把对话沉淀为历史 / 当下 / 未来,保持当下自洽、可读、与代码对标。用于新项目 / 立项 / 写 CLAUDE.md / AGENTS.md / 术语表 / N2 核心逻辑 / 多镜复核。TRIGGER: 新项目, 项目初始化, 立项, 写 CLAUDE.md, 写 AGENTS.md, init docs, bootstrap docs, 初始化文档骨架, 补 L1 记忆文件, 术语表骨架, 新领域核心逻辑, N2, teach-back(独立复述), 多镜复核, 三时间轴, 文档减重, docs reset, reset docs。不适用: 已有完善文档且无改动诉求; 只要一份代码速查(改用内置 init); 单次任务 / 一次性脚本。"
 ---
 
 # Init Project Docs — 项目记忆协议
@@ -30,11 +30,11 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 
 - **术语:** `references/skill-glossary.md`(本 skill 自有词;与通用义冲突时以它为准)。
 - **三时间轴 / 四类路由 / 当下 DoD:** `references/temporal-model.md`(核心模型,先读)。
-- **三段式 / 4 层 / novelty / 铁律:** `templates/l1-memory.md`(随 L1 落地)。
+- **三段式 / 4 层 / novelty / 铁律:** `templates/methodology.md`(项目内 `docs-templates/methodology.md`,**不随 L1 自动加载**)。
 - **演化规则 E1–E7:** `references/evolution-rules.md`。
 - **多镜复核:** `references/review-panel.md`; **验证者 / 镜头校准:** `references/calibration-guide.md`; **工具:** `references/tooling.md`; **落点:** `references/layout.md`; **对话地图:** `references/conversation-map.md`; **检索面:** `references/search-surface.md`(为什么历史会被 grep 撞见、`.ignore` 怎么放)。
 
-正文只讲流程;规则正文以对应文件为准,这里只留摘要。**正文归属:** 三段式 / 4 层 / novelty / 铁律在 L1 模板;三时间轴 / 四类路由 / 当下 DoD 在 `temporal-model.md`;E1–E7 在 `evolution-rules.md`。本 skill 不重述规则。
+正文只讲流程;规则正文以对应文件为准,这里只留摘要。**正文归属:** 三段式 / 4 层 / novelty / 铁律在 `templates/methodology.md`(项目 L1 只留指针);三时间轴 / 四类路由 / 当下 DoD 在 `temporal-model.md`;E1–E7 在 `evolution-rules.md`。本 skill 不重述规则。
 
 ## 定位
 
@@ -50,7 +50,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ## 宿主适配(先定:L1 文件叫什么?)
 
-宿主(Claude Code / Command Code / OpenCode / Cursor / Windsurf / Copilot…)决定 L1 文件名——映射唯一正文归属在 `templates/l1-memory.md` 顶部表,本 skill 不重述。不确定就问用户;判不出别硬默认 `AGENTS.md`。多宿主并存:选一个主文件,其余只放一行指针——两份规则必然漂移。
+宿主(Claude Code / Command Code / OpenCode / Cursor / Windsurf / Copilot…)决定 L1 文件名——宿主映射在 `templates/l1-memory.md` 顶部表,本 skill 不重述。不确定就问用户;判不出别硬默认 `AGENTS.md`。多宿主并存:选一个主文件,其余只放一行指针——两份规则必然漂移。
 
 ## 核心理念
 
@@ -86,27 +86,32 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ### Step 1: 检查环境 + 决定模式 + 定宿主
 
-- 有无 L1? 无 L1 + **基本空目录**(除 `.git` / skill 模板外,没有作者手写文件)→ **2A**;无 L1 + 有任何作者手写文件(README / 设计文档 / docs,哪怕只有一份)→ **2C 嫁接**;有 L1 + 已写着方法论 → **2D delta**;有 L1 + 想引入方法论 → **2B 合并**;有 L1 + 用户没说要改 → 不推销。
+- 有无 L1? 无 L1 + **基本空目录**(除 `.git` / skill 模板外,没有作者手写文件)→ **2A**;无 L1 + 有任何作者手写文件(README / 设计文档 / docs,哪怕只有一份)→ **2C 嫁接**;有 L1 + 文档过写 / 用户说“看不懂 / 干扰 / 想变少” → **2R reset**;有 L1 + 已写着方法论 → **2D delta**;有 L1 + 想引入方法论 → **2B 合并**;有 L1 + 用户没说要改 → 不推销。
 - 是否 git?(非 git:delta / SHA 不可用,退化为人工清单)
 - 用哪个宿主?→ 决定 L1 文件名。
 - **目标工况:人至少给出功能与可验收行为**;人指定项标 `[已定]`,AI 不得"顺手优化"。若连功能与验收都由 AI 起草,本 skill 不适用。
 
-### Step 2A: 全新模式——落 L1 + 整套 `docs-templates/`
+### Step 2A: 全新模式——先 lite，再按需 full
 
-**关键:** `docs/` 下本项目当前维护的文档**不要预先建空骨架**(会被遗忘);但 `docs-templates/` 是"对账忽略"的两类件(待填件 / 就地读件),**应一次性放齐**——否则 L1 里的指针会悬空。
+**默认 lite：** 只落 L1 + `task_plan.md` + `docs/.live`（可空）；`docs/` 先不建。L1 只放项目记忆；方法论复制到 `docs-templates/methodology.md`（就地读件），**不要写进 L1**。
+
+**full：** 只有出现 N2 / 跨模块 N2 / 多模块并行，才加 `docs/architecture.md` / `docs/modules/` / `docs/glossary.md` / `docs/decisions/`。**不要一次铺 13 份模板。**
+
+**关键：** `docs/` 下本项目当前维护的文档**不要预先建空骨架**（会被遗忘）；`docs-templates/` 只放**当前会用到的**就地读件，不要“先铺齐再说”——铺齐会把模板变成义务。
 
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
-2. 把整套 `docs-templates/` 落地(来源:6 件来自 `templates/`、7 件来自 `references/`;映射见 `references/layout.md` §二):`module-doc` / `adr-template` / `glossary` / `decisions-readme` / `core-code` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt` / `adr-example`。
-3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(跨模块术语 → `docs/glossary.md`,单模块 → 该模块的术语小节;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`,并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`(见 `decisions-readme` 模板);对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
-4. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`(含共享模块 `_doc_common.py`);若用户不接脚本,在 L1 标「scripts: 未接入」,后续命令按「未复跑」处理。
+2. 复制 `templates/methodology.md` → `docs-templates/methodology.md`；再按需复制 `module-doc` / `adr-template` / `glossary` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt`（映射见 `references/layout.md` §二）。
+3. 建 `task_plan.md`（未来桶）；第一个活文档出现时写 `docs/.live`（一行一个路径，相对 `docs/`）。
+4. 然后进入 Step 3 对话；`docs/` 下当前维护的文档按需创建（跨模块术语 → `docs/glossary.md`；L2 → `docs/architecture.md`；模块 → `docs/modules/<name>.md`；ADR → `docs/decisions/`，并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`；对账 → `docs/reviews/`；跨模块 N2 → `docs/core-code.md` 或 `docs/specs/`）。
+5. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`（含共享模块 `_doc_common.py`）；若用户不接脚本，在 L1 标「scripts: 未接入」，后续命令按「未复跑」处理。
 
-> **模板铺齐 ≠ 完成:** 2A 在 Step 3 填完内容后、Step 4 做一次 prune pass;不要对空模板删栏位(会删掉检查器要求的节)。**2B/2C 不动作者原有文件,不做全局 prune;2D 走 Step 2D 第 6 步(作者拍板)。**
+> **模板铺齐 ≠ 完成：** 2A 在 Step 3 填完内容后、Step 4 做一次 prune pass；不要对空模板删栏位（会删掉检查器要求的节）。**2B/2C 不动作者原有文件；2D 只补 delta；想变少走 2R。**
 
 ### Step 2B: 合并模式——已有 L1
 
-不破坏现有内容,只补方法论 + 缺失层:读现有 L1 → 插入"文档方法论"整段(通常在项目概述后、架构前)→ 不动用户原有内容 → 检查散落的不变量,提示归并但**让用户决定** → `docs/` 按需创建(先问)→ Step 3 从"补缺"开始。
+不破坏现有内容,只补指针 + 缺失层:读现有 L1 → **不要把方法论插入 L1**;确保 `docs-templates/methodology.md` 在位,L1 只加一行指针 → 不动用户原有内容 → 检查散落的不变量,提示归并但**让用户决定** → `docs/` 按需创建(先问)→ Step 3 从"补缺"开始。
 
-> **合并后核对四节在位:铁律 / 分层加载 / 文档完成判据 / E1–E7 索引。** 整段合并最容易整节丢——实践案例里一个项目运行数周后审计才发现「完成判据」缺失(模板本来有)。
+> **合并后核对:** `docs-templates/methodology.md` 在位 + L1 只有指针;铁律 / 加载表 / 完成判据 / E1–E7 不再常驻 L1。若旧 L1 已有方法论正文,移到 methodology 并留指针。
 
 > **布局跟随项目:** 已有 `docs/templates/` 就跟随,不强行改成 `docs-templates/`——两套并存 = E4 违例。要统一 → ADR + 用户决定。项目自定义模板目录必须同步进检查器的 `DOC_EXCLUDE` / `DEFAULT_EXCLUDE`,否则模板会被当成现状文档扫。
 
@@ -115,7 +120,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 先映射,再落骨架;既有的"现状事实"文档 = 指针目标,不新造重复层。只要存在作者手写的 README / 设计文档 / docs,就不算空目录,走 2C。
 
 1. 通读既有文档,映射到 4 层:现状事实 → L2 事实源(新 `architecture.md` 只放指针 + 决策 + 不变量);设计动机 / 不变量 / 验收 → L1/L2/L4(用指针);存档 / 旧方案 → 存档层(legacy/archive;不是 L1–L4 的第 5 层;不迁、不删,标注边界,对账排除)。
-2. 落 L1 + 整套 `docs-templates/`(同 2A)。
+2. 落 L1 + `docs-templates/methodology.md`;其余按 2A lite/full 按需,不要一次铺齐。
 3. 填 L1 标清"内容从哪来":证据标来源;猜不到 → 开放问题,别硬填。
 4. 冲突时只在新骨架文件顶部加 banner 声明事实源,**不动作者原有文件**;定性冲突记开放问题,交作者拍板。
 5. Step 3 从"补既有文档缺的那部分"开始;`architecture.md` 可先作证据草稿(标 `推断,待确认`)。
@@ -126,12 +131,26 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 不要重造、不要重写 / 升级版本。动作 = 补 delta + 对账(≈ E5):
 
-1. 先对账:通读 L1 + `docs/`,列"方法论要求 vs 项目现状"缺口,标是否需要用户拍板。
+1. 先对账:通读 L1 + `docs/.live` + `docs/`,列"方法论要求 vs 项目现状"缺口,标是否需要用户拍板。
 2. 只补无争议缺口(死链、缺的就地读件);不改 L1 已成文措辞。
 3. 布局跟随项目;不擅自升级版本(用户的决定)。
 4. 默认不新增本项目当前维护的文档;要新增先列提问清单。
 5. 收尾只汇报"补了哪些缺口 / 还差什么待定"。
 6. **存量减重(可选 delta):** 触发 = 任一活文档超预算 / 活文档总量 > 代码总量 / 副本候选 ≥3。动作 = 量行数与体量比 → 找重复字面量 / 单模块术语 / 机器可判计数 → 出「合并 / 降为指针 / 下沉术语」清单 → 作者拍板后动手;不自动重写。reviews 无索引且 >10 份 → 建 `docs/reviews/README.md`。
+
+### Step 2R: reset 模式——已有文档过写 / AI 生成 / 想变少
+
+**触发:** 活文档 >10 / 文档总量 > 代码量 / 同一事实多处定义 / 用户说“看不懂 / 一直干扰 / 想变少”。
+**门槛:** 作者点头；不删除，只归档；可回滚。
+
+1. **冻结:** 先提交现状（或建分支 / `git stash`），确保可回滚。
+2. **清点:** 列 `docs/` + 根文件；每份标 `作者写 / AI 写 / 历史`。作者写的改动需确认；AI 写的可直接归档。
+3. **选活集:** 按加载频率选 3–6 份（每会话：L1 / `task_plan` / 当前构建手册 / 设计约束；按任务：architecture 一页 / 2–3 个模块 / 术语表）。写 `docs/.live`。
+4. **归档:** 其余移到 `docs/archive/`（保留日期在文件名）或 `docs/experiment/`（脚手架 / 实验日志）；不删除。
+5. **改指针:** L1 只指活文档；历史只在“历史”段出现；活文档不拿 ADR / review 当依据；`docs/scaffolds/` 从游戏 README / glossary / L1 入口删掉。
+6. **去时间 / 版本:** 活文档里的日期 / 文档版本号删掉或移进归档；只留顶部 `Last verified: <SHA>`；领域版本保留。
+7. **量 before / after:** 文件数 / 行数 / 字节 / 日期数 / `check-consistency` 警告；跑项目验收证明只动文档。
+8. **留档:** 一条 review 或 notes 记结论；两周后复量，涨 >20% 说明生成器没改完。
 
 ### Step 3: 边对话边写入(核心步骤)
 
@@ -141,7 +160,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 - **第一阶段(填 L1 主轴):** [是什么] → [为什么] → [不变量],每段问 1–2 个核心问题,答完立即写入。
 - **第二阶段(填 L2 主流程):** L1 有共识后才创建 `docs/architecture.md`,重点产出主流程叙述(10–20 行,入口到出口)。
-- **第三阶段(按需):** 模块出现 N2 或细节开始往 L2 堆 → 建 L3;决策发生 → 建 ADR(索引用 `adr-index.py --write` 生成,不手写);跨模块 N2 必须有家(建 L4 先问用户并记 ADR,或写进 L2 的架构级约束 + L3 留指针);N2 单元同时登记 `docs/n2-acceptance.json`(命令 + cwd),供 `run-n2-acceptance --run` 使用。
+- **第三阶段(按需):** 模块出现 N2 或细节开始往 L2 堆 → 建 L3;决策发生 → 建 ADR(索引用 `adr-index.py --write` 生成,不手写);跨模块 N2 必须有家(先建 `docs/core-code.md` 或 `docs/specs/`,**不要塞进 L2**;L3 留指针);N2 单元同时登记 `docs/n2-acceptance.json`(命令 + cwd),供 `run-n2-acceptance --run` 使用。
 - **[是什么] 未收敛**(重立项 / 方向未定):L1 概述写双段(现状 / 方向草案)+ 开放问题,**别假装收敛**;方向草案是 `[是什么]` 里唯一允许的方向陈述,**只有方向半段的每行**带状态并显式标注方向草案,现状半段保持事实、不带方向状态,收敛后移出;复核会正确卡在「需人拍板」。
 
 ### Step 3.5: 改代码前的复核(teach-back + 多镜 panel)
@@ -168,26 +187,28 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ### Step 3.6: 文档完成判据
 
-**完成判据 = L1「文档完成判据」五条**(复核 / 当下 DoD / 危险实现清单 / N2 验收 / 紧凑性);本 skill 不重述,按项目 L1 执行。**「需人拍板」不是失败,是正常终点**:交付态 = 骨架完成 + 拍板清单 + **若做过复核**的复核判定已留档。**初轮按 L1 + L2 交付即进 Step 4**;五条判据是全量完成线,不是收尾前置。退化路径的停笔条件见 Step 3.5。
+**完成判据 = methodology「文档完成判据」五条**(复核 / 当下 DoD / 危险实现清单 / N2 验收 / 紧凑性);本 skill 不重述,按 `docs-templates/methodology.md` 执行。**「需人拍板」不是失败,是正常终点**:交付态 = 骨架完成 + 拍板清单 + **若做过复核**的复核判定已留档。**初轮按 L1 + L2 交付即进 Step 4**;五条判据是全量完成线,不是收尾前置。退化路径的停笔条件见 Step 3.5。
 
 ### Step 4: 收尾
 
 **prune pass(仅 2A;2B/2C 不动作者内容,2D 走存量减重):** 找矛盾 → 只留必需 → 其余分组到按需加载的文件 → 建指针 → **flag for deletion**(冗余 / 太泛 / 显而易见的全删)。生成 ≠ 完成;不 prune 的初始化就是 Init Fossilization。
 
-初轮(L1 + L2 主流程)完成后告诉用户:建模块前先填 L3;决策发生记 ADR;大改动前先更新对应层文档;**改代码前跑复核 / panel**;L4 默认不建;填完删模板注释;新术语登记 glossary;N2 补步骤 / 危险清单 / 例子 / 验收 / 失败语义;复核按需、可攒批,推荐在实现前完成;检查器能查的先跑,不能跑就标"未接入 / 未复跑"。完整落点与脚本见 `references/layout.md` / `references/tooling.md`。
+初轮(L1 + L2 主流程)完成后告诉用户:建模块前先填 L3;决策发生记 ADR;大改动前先更新对应层文档;**改代码前跑复核 / panel**;L4 默认不建,跨模块 N2 才建 `core-code` / `specs`;填完删模板注释;新术语登记 glossary;N2 补步骤 / 危险清单 / 例子 / 验收 / 失败语义;复核按需、可攒批,推荐在实现前完成;检查器能查的先跑,不能跑就标"未接入 / 未复跑"。完整落点与脚本见 `references/layout.md` / `references/tooling.md`。
 
 ## 产出文件结构
 
-落点唯一正文归属在 `references/layout.md`(完整目录 + 模板清单 + 脚本清单)。要点:L1 在项目根;`docs/` 只放本项目当前维护的文档;`docs-templates/` 是待填件 / 就地读件,对账忽略;`docs/reviews/` 存对账 / 复核留档。
+落点唯一正文归属在 `references/layout.md`(完整目录 + 模板清单 + 脚本清单)。要点:L1 在项目根,只放项目记忆;`docs/.live` 是活文档清单;`docs/` 只放白名单活文档 + 历史;`docs-templates/methodology.md` 是协议正文(不自动加载);`docs-templates/` 是待填件 / 就地读件,对账忽略;`docs/reviews/` 存对账 / 复核留档;`docs/archive/` 与 `docs/experiment/` 不进日常加载。
 
 ## 反模式(checklist)
 
 - ❌ 凭空编造 L1 内容(允许证据推断草稿 + 标来源;禁止猜)
+- ❌ 把方法论塞回 L1，或让 L1 写日期 / 文档版本号
+- ❌ 新增活文档不做 net-negative（合并 / 替换 / 归档一个）
 - ❌ 跳过对话直接生成"看起来完整"的文档
 - ❌ 一次性把 `docs/` 当前维护文档都建成空骨架(但 `docs-templates/` 应一次放齐)
 - ❌ 在已有 L1 的项目静默覆盖(走 2B)
 - ❌ 一次问完所有问题 / 囤积对话产出
-- ❌ 主动生成 L4(默认不要;要建先问,并记 ADR)
+- ❌ 主动生成 L4(跨模块 N2 除外;要建先问,并记 ADR)
 - ❌ 把 skill 硬套到已有完善文档的项目(2C / 不推销)
 - ❌ `[是什么]` 新旧陈述并存;`[为什么]` 被推翻不标 `⚠️`
 - ❌ 把**历史**当现状事实;**未来**计划裸留 `[是什么]`

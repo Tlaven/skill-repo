@@ -216,6 +216,35 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertNotIn("[over-budget]", proc.stdout)
 
+    def test_check_consistency_live_allowlist(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / "a.md", "clean\n")
+            write(root / "docs" / "b.md", "\n".join("line" for _ in range(20)) + "\n")
+            write(root / "docs" / ".live", "a.md\n")
+            proc = run_script(
+                "check-consistency.py", "--root", ".", "--strict", "--max-lines", "5",
+                cwd=root,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("docs/b.md", proc.stdout)
+
+            proc = run_script(
+                "check-consistency.py", "--root", ".", "--strict", "--max-lines", "5",
+                "--all-docs", cwd=root,
+            )
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[over-budget] docs/b.md", proc.stdout)
+
+    def test_check_consistency_live_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / ".live", "missing.md\n")
+            proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[live-missing]", proc.stdout)
+            self.assertIn("missing.md", proc.stdout)
+
     def test_check_consistency_duplicate_literal(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -279,6 +308,33 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertNotIn("[term-demote] 槽", proc.stdout)
 
+    def test_check_doc_refs_failure_semantics_only_n2(self):
+        ps = shutil.which("pwsh") or shutil.which("powershell")
+        if not ps:
+            self.skipTest("PowerShell not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", "# L1\n")
+            write(
+                root / "docs" / "modules" / "n1.md",
+                "# N1\n\nnovelty=N1\n\n## [不变量]\n\n- x\n",
+            )
+            write(
+                root / "docs" / "modules" / "n2.md",
+                "# N2\n\nnovelty=N2\n\n### 危险实现清单\n\n"
+                "| # | 最可能被写成的样子 | 为什么错 | 由谁挡住 |\n"
+                "|---|---|---|---|\n| 1 | x | y | z |\n",
+            )
+            proc = subprocess.run(
+                [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(SCRIPTS / "check-doc-refs.ps1")],
+                cwd=str(root), capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+            self.assertNotIn("n1.md", proc.stdout)
+            self.assertIn("n2.md", proc.stdout)
+            self.assertIn("module-missing-failure-semantics", proc.stdout)
+
     def test_check_doc_refs_provenance_marker_ps1(self):
         ps = shutil.which("pwsh") or shutil.which("powershell")
         if not ps:
@@ -303,6 +359,18 @@ class ScriptTests(unittest.TestCase):
             )
             self.assertNotIn("m.md:1", proc.stdout)
             self.assertIn("m.md:2", proc.stdout)
+
+    def test_l1_template_is_project_memory_only(self):
+        text = (ROOT / "templates" / "l1-memory.md").read_text(encoding="utf-8")
+        self.assertLessEqual(len(text.splitlines()), 70)
+        self.assertNotIn("## 文档方法论", text)
+        self.assertNotIn("### 铁律", text)
+        self.assertIn("methodology.md", text)
+
+        methodology = (ROOT / "templates" / "methodology.md").read_text(encoding="utf-8")
+        self.assertIn("三段式", methodology)
+        self.assertIn("三时间轴", methodology)
+        self.assertIn("铁律", methodology)
 
     def test_decisions_readme_template_is_clean(self):
         with tempfile.TemporaryDirectory() as tmp:

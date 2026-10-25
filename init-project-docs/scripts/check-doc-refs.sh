@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、模块文档缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录。
+# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、N2 模块缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录。
 # Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 在 Linux / WSL / CI 上会直接语法错(Git Bash 多数版本能容忍,但别赌)。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
@@ -17,10 +17,11 @@ for a in "$@"; do [ "$a" = "--strict" ] && STRICT=1; done
 DOC_EXT="md markdown"
 
 # 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:
-# 存档层(如 docs/legacy/ 里对已废文件的链接)、**记录类**(docs/decisions/、docs/reviews/——历史快照,
-# 引用退役术语 / 旧链接是常态,不是错误)、与**待填件目录**(docs/templates/——
-# 有些项目把待填件放在 docs/ 内,待填件里的占位符不算本项目当前维护的文档内容)。置空则不过滤。
-DOC_EXCLUDE='^(docs/legacy/|docs/archive/|docs/decisions/|docs/templates/|docs/reviews/)'
+# 存档层(如 docs/legacy/、docs/archive/、docs/experiment/、docs/scaffolds/)、**记录类**
+# (docs/decisions/、docs/reviews/——历史快照,引用退役术语 / 旧链接是常态,不是错误)、与
+# **待填件目录**(docs/templates/——有些项目把待填件放在 docs/ 内,待填件里的占位符不算本项目
+# 当前维护的文档内容)。置空则不过滤。
+DOC_EXCLUDE='^(docs/legacy/|docs/archive/|docs/experiment/|docs/scaffolds/|docs/decisions/|docs/templates/|docs/reviews/)'
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$ROOT" || exit 0
@@ -104,7 +105,7 @@ if [ -n "$PH" ]; then
   found=1
 fi
 
-# 3) 标了 N2 却缺 `**验收**` / 没有「危险实现清单」;模块文档缺「失败语义」(共用同一批文件与剥注释后的 body)
+# 3) 标了 N2 却缺 `**验收**` / 没有「危险实现清单」;N2 模块缺「失败语义」(共用同一批文件与剥注释后的 body)
 #    先剥掉 HTML 注释——模板里的引导文字本身含这些词,不剥会把计数算花(假阴性)。
 #    「危险实现清单」这条要求出自 module-doc 模板(N2 必须给"步骤级说明 + 危险实现清单 + 例子 + 验收 + 失败语义")。
 #    指针形豁免只给"必须有那一节"的两条(危险实现清单 / 失败语义):模板允许"N2 正文记在公共处、
@@ -133,11 +134,11 @@ for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/arc
     echo "[n2-missing-checklist] $f: 标了 N2 却没有「危险实现清单」"
     found=1
   fi
-  # 模块文档必须有「失败语义」一节(覆盖 N1;指针形除外)
+  # N2 模块文档必须有「失败语义」一节(仅 N2;指针形除外)
   case "$f" in
     docs/modules/*)
-      if [ "$pointer" -eq 0 ] && ! printf '%s\n' "$body" | grep -q '失败语义'; then
-        echo "[module-missing-failure-semantics] $f: 模块文档没有「失败语义」一节"
+      if [ "$pointer" -eq 0 ] && [ "$n2" -gt 0 ] && ! printf '%s\n' "$body" | grep -q '失败语义'; then
+        echo "[module-missing-failure-semantics] $f: N2 模块文档没有「失败语义」一节"
         found=1
       fi ;;
   esac

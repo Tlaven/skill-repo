@@ -77,6 +77,16 @@
 - **阻断已修:** ① `check-doc-refs` 现豁免 `> 出处：…` 行(`.ps1` / `.sh`);② 单模块术语规则已同步到 L1 铁律 7 / E7 / SKILL;③ 预算明确为预警线,不是完成判据(默认不接 CI,`--strict` 下计入退出码);④ `duplicate-literal` 已补进 docstring / tooling,`--ignore-alias` 可压噪。
 - **未修 / 已知限制:** `term-demote` 按提及次数粗判,不是"当作规则使用";`duplicate-alias` 以术语表反引号为源,术语下沉后会失去信号(应从模块术语小节取别名,待做);改写式副本仍逃过机器检查;"自足 / 指针"的措辞仍散在 L1 / E1 / module-doc / glossary 多处,下一步以 E1 为唯一正文收口。
 
+### P0 实现(2026-10-25)
+
+- **拆 L1:** `templates/l1-memory.md` 210 → 56 行,只留项目记忆;方法论移到 `templates/methodology.md`(156 行,不自动加载)。测试断言 L1 不再含方法论。
+- **活文档白名单:** `scripts/_doc_common.py` 支持 `docs/.live`;`check-consistency` 默认只扫白名单 + L1,`--all-docs` 扫全库;白名单缺文件报 `live-missing`。
+- **模式:** Step 2A 默认 lite / 按需 full;新增 Step 2R reset;新增 `docs/experiment/`、`docs/archive/` 落点。
+- **N1/N2:** 模块模板注明 N1 一页、N2 五件套;`check-doc-refs` 的失败语义只查 N2 模块。
+- **预算:** L1 100 / L2 80(原 250 / 150);L1 模板自身 56。
+- **验证:** 32 tests pass;`check-doc-refs` 在 hoverster 上 14 个活文档、0 结构发现。
+- **未验证:** 2R 尚未在 hoverster 实跑;R-4 结案条件③仍要等两个样本(清理后两周不回长)。
+
 ## 实践来源候选(已落,待验证)
 
 > 以下改动来自 hoverster 实践案例(2026-10-19),已以「候选」形式落进对应模板 / 规则。若下个案例证明无效:回滚,并把原因记到本文件。
