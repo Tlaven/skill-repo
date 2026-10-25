@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -277,6 +278,31 @@ class ScriptTests(unittest.TestCase):
             )
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertNotIn("[term-demote] 槽", proc.stdout)
+
+    def test_check_doc_refs_provenance_marker_ps1(self):
+        ps = shutil.which("pwsh") or shutil.which("powershell")
+        if not ps:
+            self.skipTest("PowerShell not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", "# L1\n")
+            write(
+                root / "docs" / "decisions" / "adr-001-x.md",
+                "---\nstatus: accepted\n---\n\n# ADR-001: X\n",
+            )
+            write(
+                root / "docs" / "modules" / "m.md",
+                "> 出处：被拒方案见 docs/decisions/ADR-001\n"
+                "因为 docs/decisions/ADR-001 规定，所以这样做。\n",
+            )
+            proc = subprocess.run(
+                [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(SCRIPTS / "check-doc-refs.ps1")],
+                cwd=str(root), capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+            self.assertNotIn("m.md:1", proc.stdout)
+            self.assertIn("m.md:2", proc.stdout)
 
     def test_decisions_readme_template_is_clean(self):
         with tempfile.TemporaryDirectory() as tmp:

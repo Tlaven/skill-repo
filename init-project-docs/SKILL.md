@@ -100,7 +100,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 3. 然后立即进入 Step 3 对话;`docs/` 下本项目当前维护的文档按需创建(跨模块术语 → `docs/glossary.md`,单模块 → 该模块的术语小节;L2 → 从 `docs-templates/architecture.md` 复制到 `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`,并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`(见 `decisions-readme` 模板);对账 → `docs/reviews/`;L4 → `docs/core-code.md`)。
 4. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`(含共享模块 `_doc_common.py`);若用户不接脚本,在 L1 标「scripts: 未接入」,后续命令按「未复跑」处理。
 
-> **模板铺齐 ≠ 完成:** Step 3 填完内容后,在 Step 4 做一次 prune pass;不要对空模板删栏位(会删掉检查器要求的节)。
+> **模板铺齐 ≠ 完成:** 2A 在 Step 3 填完内容后、Step 4 做一次 prune pass;不要对空模板删栏位(会删掉检查器要求的节)。**2B/2C 不动作者原有文件,不做全局 prune;2D 走 Step 2D 第 6 步(作者拍板)。**
 
 ### Step 2B: 合并模式——已有 L1
 
@@ -172,7 +172,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ### Step 4: 收尾
 
-**prune pass(收尾必做):** 找矛盾 → 只留必需 → 其余分组到按需加载的文件 → 建指针 → **flag for deletion**(冗余 / 太泛 / 显而易见的全删)。生成 ≠ 完成;不 prune 的初始化就是 Init Fossilization。
+**prune pass(仅 2A;2B/2C 不动作者内容,2D 走存量减重):** 找矛盾 → 只留必需 → 其余分组到按需加载的文件 → 建指针 → **flag for deletion**(冗余 / 太泛 / 显而易见的全删)。生成 ≠ 完成;不 prune 的初始化就是 Init Fossilization。
 
 初轮(L1 + L2 主流程)完成后告诉用户:建模块前先填 L3;决策发生记 ADR;大改动前先更新对应层文档;**改代码前跑复核 / panel**;L4 默认不建;填完删模板注释;新术语登记 glossary;N2 补步骤 / 危险清单 / 例子 / 验收 / 失败语义;复核按需、可攒批,推荐在实现前完成;检查器能查的先跑,不能跑就标"未接入 / 未复跑"。完整落点与脚本见 `references/layout.md` / `references/tooling.md`。
 
