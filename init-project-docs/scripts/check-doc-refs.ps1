@@ -1,4 +1,4 @@
-﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、N2 模块缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录。
+﻿# check-doc-refs.ps1 — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、N2 模块缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录、入口文档点具体 ADR 条目。
 # 用法:
 #   powershell -File check-doc-refs.ps1
 #   powershell -File check-doc-refs.ps1 -Strict
@@ -123,24 +123,24 @@ foreach ($f in $targets) {
     Write-Host "[n2-missing-verification] $($f): N2 条目 $n2 个,「**验收**」仅 $acc 处"
     $found = $true
   }
-  # 指针形(模块按 N2 路由把正文记在公共处、只留一行指针)
-  $pointer = ($body -match '\*\*验收\*\*[^\r]*见 *`?docs/')
-  # 标了 N2 却没有「危险实现清单」(指针形除外)
+  # 标了 N2 却没有「危险实现清单」
+  #    没有"指针形"豁免:跨模块 N2 的正文与 `novelty=N2` 只写在承载它的那份里;
+  #    模块文档不声明、也不写"验收见 docs/…"的指针行——所以"只声明、不写正文"的形态不该存在。
   $dan = ([regex]::Matches($body, '危险实现清单')).Count
-  if (($n2 -gt 0) -and ($dan -eq 0) -and (-not $pointer)) {
+  if (($n2 -gt 0) -and ($dan -eq 0)) {
     Write-Host "[n2-missing-checklist] $($f): 标了 N2 却没有「危险实现清单」"
     $found = $true
   }
-  # N2 模块文档必须有「失败语义」一节(仅 N2;指针形除外)
-  if (($f -like 'docs/modules/*') -and ($body -match 'novelty=N2') -and (-not $pointer) -and ($body -notmatch '失败语义')) {
+  # N2 模块文档必须有「失败语义」一节(仅 N2)
+  if (($f -like 'docs/modules/*') -and ($body -match 'novelty=N2') -and ($body -notmatch '失败语义')) {
     Write-Host "[module-missing-failure-semantics] $($f): N2 模块文档没有「失败语义」一节"
     $found = $true
   }
 }
 
 # 4) 现状文档里出现指向"记录类文档"的引用
-#    规则(E1):现状 / 规则陈述必须**自足**,不许挂到记录类文档上当依据;
-#    "要理由 / 被拒方案 / 来由时去哪读"的引用只许写在**入口类文档的导航位**(那类不扫)。
+#    规则(E1):指针只解释文档,不解释句子。活文档里唯一允许出现记录类目录的地方,是入口文档的
+#    「活文档索引」那一张表(不在本扫描面);正文里零容忍——依据、`> 出处：` 行、编号都算。
 #    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
 $liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/glossary.md','docs/glossary.markdown')
 foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
@@ -155,11 +155,30 @@ foreach ($f in $liveDocs) {
   $ln = 0
   foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释:引导注释里的示例引用不算正文
     $ln++
-    if ($line -match '⚠') { continue }   # E1 的状态标记(带不带变体选择符都算),不是依据
-    if ($line -match '^\s*>\s*出处[:：]') { continue }   # E1 的出处导航行,不是依据
     if ($line -match $refPat) {
-      Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(历史只作方向,不作事实;现状陈述须自足)"
+      Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(指针只解释文档、不解释句子;要理由/被拒方案,从 L1 的活文档索引进)"
       $found = $true
+    }
+  }
+}
+
+# 4b) 入口文档(L1)里出现指向**具体** ADR 条目的引用
+#    规则(E1):L1 的活文档索引可以写"为什么这么定 / 被拒方案 → docs/decisions/"(目录级),但不得点条目。
+#    例外只有一个:`adr-000-template` 这类模板文件名不是决策(enumerate 时跳过 000)。
+#    按项目改:L1 的宿主文件名(全部存在才查)。
+$l1Files = @('AGENTS.md','CLAUDE.md','.cursor/rules/project.mdc','.windsurfrules','.github/copilot-instructions.md')
+foreach ($f in $l1Files) {
+  if (-not (Test-Path -LiteralPath $f)) { continue }
+  $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
+  if ($null -eq $raw) { continue }
+  $ln = 0
+  foreach ($line in ($raw -split "`n")) {
+    $ln++
+    foreach ($m in [regex]::Matches($line, '(?i)(?:ADR-|adr-)(\d{3})')) {
+      if ($m.Groups[1].Value -eq '000') { continue }   # 模板文件名,不是决策
+      Write-Host "[l1-entry-ref] ${f}:${ln}:${line}: 入口文档点了具体 ADR 条目(索引只写『哪份文档管什么』,不点条目)"
+      $found = $true
+      break
     }
   }
 }

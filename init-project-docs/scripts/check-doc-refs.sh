@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、N2 模块缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录。
+# check-doc-refs.sh — 结构性对账:docs/ 里的死链(含大小写错链:目标存在但大小写不一致,大小写敏感系统上会断)、未填占位符、标了 N2 却缺 `**验收**` / 没有「危险实现清单」、N2 模块缺「失败语义」、危险实现清单行未填(空/占位符)、现状文档引记录、入口文档点具体 ADR 条目。
 # Windows:本文件必须以 LF 检出(项目根 `.gitattributes` 加 `*.sh text eol=lf`)——CRLF 在 Linux / WSL / CI 上会直接语法错(Git Bash 多数版本能容忍,但别赌)。
 # 只做能机器判定的部分;语义一致性交给 teach-back 验证者(docs-templates/teach-back-verifier-prompt.md)。
 #
@@ -108,8 +108,8 @@ fi
 # 3) 标了 N2 却缺 `**验收**` / 没有「危险实现清单」;N2 模块缺「失败语义」(共用同一批文件与剥注释后的 body)
 #    先剥掉 HTML 注释——模板里的引导文字本身含这些词,不剥会把计数算花(假阴性)。
 #    「危险实现清单」这条要求出自 module-doc 模板(N2 必须给"步骤级说明 + 危险实现清单 + 例子 + 验收 + 失败语义")。
-#    指针形豁免只给"必须有那一节"的两条(危险实现清单 / 失败语义):模板允许"N2 正文记在公共处、
-#    本模块只留一行 `**验收**: 见 docs/<…>`"——那一行即指针形凭据。"缺验收"那条不吃豁免。
+#    没有"指针形"豁免:跨模块 N2 的正文与 novelty=N2 只写在承载它的那份里;模块文档不声明、也不写
+#    "验收见 docs/…"的指针行——所以"只声明、不写正文"的形态不该存在。
 #    边界(如实说):它数的是**短语出现**,不是"那一节在不在一句话之上"——短语出现在正文别处会漏报。
 # 按项目改:L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这一行
 for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
@@ -124,20 +124,17 @@ for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/arc
     echo "[n2-missing-verification] $f: N2 条目 $n2 个,「**验收**」仅 $acc 处"
     found=1
   fi
-  # 指针形(模块按 N2 路由把正文记在公共处、只留一行指针)
-  pointer=0
-  printf '%s\n' "$body" | grep -qE '\*\*验收\*\*[^\r]*见 *`?docs/' && pointer=1
-  # 标了 N2 却没有「危险实现清单」(指针形除外)
+  # 标了 N2 却没有「危险实现清单」(没有指针形豁免)
   dan=$(printf '%s\n' "$body" | grep -o '危险实现清单' 2>/dev/null | wc -l | tr -d ' ')
   : "${dan:=0}"
-  if [ "$n2" -gt 0 ] && [ "$dan" -eq 0 ] && [ "$pointer" -eq 0 ]; then
+  if [ "$n2" -gt 0 ] && [ "$dan" -eq 0 ]; then
     echo "[n2-missing-checklist] $f: 标了 N2 却没有「危险实现清单」"
     found=1
   fi
-  # N2 模块文档必须有「失败语义」一节(仅 N2;指针形除外)
+  # N2 模块文档必须有「失败语义」一节(仅 N2)
   case "$f" in
     docs/modules/*)
-      if [ "$pointer" -eq 0 ] && [ "$n2" -gt 0 ] && ! printf '%s\n' "$body" | grep -q '失败语义'; then
+      if [ "$n2" -gt 0 ] && ! printf '%s\n' "$body" | grep -q '失败语义'; then
         echo "[module-missing-failure-semantics] $f: N2 模块文档没有「失败语义」一节"
         found=1
       fi ;;
@@ -145,20 +142,34 @@ for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/arc
 done
 
 # 4) 现状文档里出现指向"记录类文档"的引用
-#    规则(E1):现状 / 规则陈述必须**自足**,不许挂到记录类文档上当依据;
-#    "要理由 / 被拒方案 / 来由时去哪读"的引用只许写在**入口类文档的导航位**(那类不扫)。
+#    规则(E1):指针只解释文档,不解释句子。活文档里唯一允许出现记录类目录的地方,是入口文档的
+#    「活文档索引」那一张表(不在本扫描面);正文里零容忍——依据、`> 出处：` 行、编号都算。
 #    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
 LIVE_DOCS="docs/architecture.md docs/architecture.markdown docs/glossary.md docs/glossary.markdown"
 REF_PAT='docs/decisions/|docs/reviews/|ADR-[0-9]{3}|adr-[0-9]{3}-'
 for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
-  # 先剥 HTML 注释(引导注释里的示例引用不算正文;与 #3 同一套状态机,行号保真)
-  # 含 ⚠ 的行是 E1 要求的"已被…推翻"状态标记(带不带变体选择符都算)——是状态,不是依据,跳过
-  # `> 出处：…` 是 E1 的出处导航行(只写去哪儿读),不是依据,也跳过
-  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '!/⚠/ && !/^[[:space:]]*>[[:space:]]*出处[:：]/ {printf "%d:%s\n", NR, $0}' | grep -iE "$REF_PAT" 2>/dev/null)
+  # 先剥 HTML 注释(引导注释里的示例引用不算正文;与 #3 同一套状态机,行号保真)。
+  # 不再跳过 `⚠` 行 / `> 出处：` 行——那两种写法已退役,命中即报。
+  LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '{printf "%d:%s\n", NR, $0}' | grep -iE "$REF_PAT" 2>/dev/null)
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
-      echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(历史只作方向,不作事实;现状陈述须自足)"
+      echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(指针只解释文档、不解释句子;要理由/被拒方案,从 L1 的活文档索引进)"
+    done
+    found=1
+  fi
+done
+
+# 4b) 入口文档(L1)里出现指向**具体** ADR 条目的引用
+#    规则(E1):L1 的活文档索引可以写"为什么这么定 / 被拒方案 → docs/decisions/"(目录级),但不得点条目。
+#    例外只有一个:`adr-000-template` 这类模板文件名不是决策(跳过 000)。
+#    按项目改:L1 的宿主文件名(存在的才查)。
+for f in AGENTS.md CLAUDE.md .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md; do
+  [ -f "$f" ] || continue
+  L1REF=$(grep -inE 'ADR-[0-9]{3}|adr-[0-9]{3}' "$f" 2>/dev/null | grep -vE 'ADR-000|adr-000')
+  if [ -n "$L1REF" ]; then
+    printf '%s\n' "$L1REF" | while IFS= read -r l; do
+      echo "[l1-entry-ref] $f:$l: 入口文档点了具体 ADR 条目(索引只写『哪份文档管什么』,不点条目)"
     done
     found=1
   fi

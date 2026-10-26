@@ -21,7 +21,7 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 - **未接入 / 未复跑** = `scripts/` 未拷入 / 脚本在但这次只列未执行;都不是"已通过"。
 - **待填件 / 就地读件** = 复制后填写的模板 / 留在 `docs-templates/` 直接引用的参考件;不是本项目当前维护的文档。
 - **基线 / 快照 / 冻结** = 先钉一个参照再比对 / 某一时刻的完整状态副本 / 把预期钉死;三者都必须带限定语:校准基线(已知答案对照)/ 文档基线(`last verified` SHA)/ 性能基线 / 分档基线;现状快照 / 历史快照 / 数据快照;冻结计数(文档固定数字)/ 冻结期望(已批准 golden fixture)/ 冻结画面(固定渲染状态)。
-- **指针 / 唯一正文归属(旧称"正典") / 拍板人(作者 / 用户)** = 指向代码或其他文档的引用 / 定义落在哪一段 / 谁做决定;不要用裸"归属"兼指后两者。
+- **指针 / 唯一正文归属(旧称"正典") / 拍板人(作者 / 用户)** = **只指向文档并说明它管什么**的目录条目(只出现在入口文档的活文档索引里;句子级的"见 ADR-0NN""出处"行不算指针、不许写)/ 定义落在哪一段 / 谁做决定;不要用裸"归属"兼指后两者。
 - **主型 / 副型** = 主型决定验收;副型只影响写法,不改验收。
 - **档 / 层 / 桶** = 验收档或 novelty 档 / 文档层 L1–L4 / 时间桶;三根轴,不要互相借用。
 - **文件白名单 / 最小独立模拟器 / 校准探针** = 允许验证者读的文件清单 / 按文档规则从零写临时实现复现数字(不是替身环境)/ 每镜预埋的已知缺陷。
@@ -34,7 +34,7 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 - **演化规则 E1–E7:** `references/evolution-rules.md`。
 - **多镜复核:** `references/review-panel.md`; **验证者 / 镜头校准:** `references/calibration-guide.md`; **工具:** `references/tooling.md`; **落点:** `references/layout.md`; **对话地图:** `references/conversation-map.md`; **检索面:** `references/search-surface.md`(为什么历史会被 grep 撞见、`.ignore` 怎么放)。
 
-正文只讲流程;规则正文以对应文件为准,这里只留摘要。**正文归属:** 三段式 / 4 层 / novelty / 铁律在 `templates/methodology.md`(项目 L1 只留指针);三时间轴 / 四类路由 / 当下 DoD 在 `temporal-model.md`;E1–E7 在 `evolution-rules.md`。本 skill 不重述规则。
+正文只讲流程;规则正文以对应文件为准,这里只留摘要。**正文归属:** 三段式 / 4 层 / novelty / 铁律在 `templates/methodology.md`(项目 L1 的活文档索引里列一行);三时间轴 / 四类路由 / 当下 DoD 在 `temporal-model.md`;E1–E7 在 `evolution-rules.md`。本 skill 不重述规则。
 
 ## 定位
 
@@ -100,7 +100,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 **关键：** `docs/` 下本项目当前维护的文档**不要预先建空骨架**（会被遗忘）；`docs-templates/` 只放**当前会用到的**就地读件，不要“先铺齐再说”——铺齐会把模板变成义务。
 
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
-2. 复制 `templates/methodology.md` → `docs-templates/methodology.md`；再按需复制 `module-doc` / `adr-template` / `glossary` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt`（映射见 `references/layout.md` §二）。
+2. 复制 `templates/methodology.md` → `docs-templates/methodology.md`；再按需复制 `module-doc` / `adr-template` / `glossary` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt`（映射见 `references/layout.md`）。
 3. 建 `task_plan.md`（未来桶）；第一个活文档出现时写 `docs/.live`（一行一个路径，相对 `docs/`）。
 4. 然后进入 Step 3 对话；`docs/` 下当前维护的文档按需创建（跨模块术语 → `docs/glossary.md`；L2 → `docs/architecture.md`；模块 → `docs/modules/<name>.md`；ADR → `docs/decisions/`，并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`；对账 → `docs/reviews/`；跨模块 N2 → `docs/core-code.md` 或 `docs/specs/`）。
 5. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`（含共享模块 `_doc_common.py`）；若用户不接脚本，在 L1 标「scripts: 未接入」，后续命令按「未复跑」处理。
@@ -119,7 +119,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 先映射,再落骨架;既有的"现状事实"文档 = 指针目标,不新造重复层。只要存在作者手写的 README / 设计文档 / docs,就不算空目录,走 2C。
 
-1. 通读既有文档,映射到 4 层:现状事实 → L2 事实源(新 `architecture.md` 只放指针 + 决策 + 不变量);设计动机 / 不变量 / 验收 → L1/L2/L4(用指针);存档 / 旧方案 → 存档层(legacy/archive;不是 L1–L4 的第 5 层;不迁、不删,标注边界,对账排除)。
+1. 通读既有文档,映射到 4 层:现状事实 → L2 事实源(新 `architecture.md` 只写决策 + 不变量,不搬既有正文);设计动机 / 不变量 / 验收 → L1/L2/L4;**去处由 L1 的活文档索引交代,正文里不嵌"见 …"**;存档 / 旧方案 → 存档层(legacy/archive;不是 L1–L4 的第 5 层;不迁、不删,标注边界,对账排除)。
 2. 落 L1 + `docs-templates/methodology.md`;其余按 2A lite/full 按需,不要一次铺齐。
 3. 填 L1 标清"内容从哪来":证据标来源;猜不到 → 开放问题,别硬填。
 4. 冲突时只在新骨架文件顶部加 banner 声明事实源,**不动作者原有文件**;定性冲突记开放问题,交作者拍板。
@@ -136,7 +136,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 3. 布局跟随项目;不擅自升级版本(用户的决定)。
 4. 默认不新增本项目当前维护的文档;要新增先列提问清单。
 5. 收尾只汇报"补了哪些缺口 / 还差什么待定"。
-6. **存量减重(可选 delta):** 触发 = 任一活文档超预算 / 活文档总量 > 代码总量 / 副本候选 ≥3。动作 = 量行数与体量比 → 找重复字面量 / 单模块术语 / 机器可判计数 → 出「合并 / 降为指针 / 下沉术语」清单 → 作者拍板后动手;不自动重写。reviews 无索引且 >10 份 → 建 `docs/reviews/README.md`。
+6. **存量减重(可选 delta):** 触发 = 任一活文档超预算 / 活文档总量 > 代码总量 / 副本候选 ≥3。动作 = 量行数与体量比 → 找重复字面量 / 单模块术语 / 机器可判计数 → 出「合并 / 下沉术语 / 归档」清单(不要用"转成指针"减行数) → 作者拍板后动手;不自动重写。reviews 无索引且 >10 份 → 建 `docs/reviews/README.md`。
 
 ### Step 2R: reset 模式——已有文档过写 / AI 生成 / 想变少
 
@@ -154,9 +154,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 ### Step 3: 边对话边写入(核心步骤)
 
-**硬性要求:每段对话产出立即写入对应文档段落,让用户看到进度。** 不要囤积——用户说完一段,马上写入,再问下一段。
-
-**四类路由(摘要;完整定义见 `references/temporal-model.md`):** 决策 / 被拒 → 历史;事实 / 不变量 / 术语 → 当下;计划 / 开放问题 → 未来;未决且决策级 → 请人拍板。
+**硬性要求:每段对话产出立即写入对应文档段落,让用户看到进度。** 不要囤积——用户说完一段,马上写入,再问下一段。落哪个桶由三时间轴决定,别把计划写成事实。
 
 - **第一阶段(填 L1 主轴):** [是什么] → [为什么] → [不变量],每段问 1–2 个核心问题,答完立即写入。
 - **第二阶段(填 L2 主流程):** L1 有共识后才创建 `docs/architecture.md`,重点产出主流程叙述(10–20 行,入口到出口)。
@@ -169,7 +167,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 **何时值得做(信号):** ① 单元标记 N2;② 改了不变量;③ 术语还没有可判定定义;④ 跨层大改。都不占就跳过;纯 N1 且验收写得出来也跳过。
 
-**契约级变更定义:** 契约文件(L1 / L2 / L3 / L4 / glossary)中的不变量、`[已定]`、接口 / 数据结构 / 失败码、术语定义、契约级断言的增删改;纯措辞 / 链接 / 排版不算。**四信号是“跑不跑”的唯一裁决;`review-panel.md` §三只决定“跑哪几镜”。**
+**契约级变更定义:** 契约文件(L1 / L2 / L3 / L4 / glossary)中的不变量、`[已定]`、接口 / 数据结构 / 失败码、术语定义、契约级断言的增删改;纯措辞 / 链接 / 排版不算。**四信号是“跑不跑”的唯一裁决;`review-panel.md`只决定“跑哪几镜”。**
 
 **攒批:** 若已拷入 `scripts/`,先跑 `review-backlog`(零 token)列出自上次复核以来的契约 delta;未拷则人工列 delta 并标「未接入 / 未复跑」。只把 delta 喂给独立 agent;每个被喂的单元要整节(定义段 + 验收段必须同在);结论记 `docs/reviews/`,覆盖提交写进 `docs/reviews/.last-review`。
 
@@ -210,7 +208,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - ❌ 一次问完所有问题 / 囤积对话产出
 - ❌ 主动生成 L4(跨模块 N2 除外;要建先问,并记 ADR)
 - ❌ 把 skill 硬套到已有完善文档的项目(2C / 不推销)
-- ❌ `[是什么]` 新旧陈述并存;`[为什么]` 被推翻不标 `⚠️`
+- ❌ `[是什么]` 新旧陈述并存;`[为什么]` 留着已被推翻的论述(该直接改写或删除,不标"已推翻")
 - ❌ 把**历史**当现状事实;**未来**计划裸留 `[是什么]`
 - ❌ 改代码绕过不变量;代码注释写版本变更史
 - ❌ 完成 / 放弃的计划留在活跃清单(done 移出;dropped 升格 ADR)
@@ -223,7 +221,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - ❌ 多宿主各写一份规则
 - ❌ AI "顺手优化"掉人指定的接口 / 数据结构 / 失败码(`[已定]`)
 - ❌ 模板加了要求、却没写明由谁检查(脚本 / 独立复核 / 自觉)
-- ❌ 让每层都"自足"(＝每层重写);别处只写指针,不写一句话摘要
+- ❌ 让每层都"自足"(＝每层重写);也别用指针兜:摘要、`> 出处：…` 行、"见 ADR-0NN"都会变成第二处出处——别处就该不写(读者要知道去哪份文档,看 L1 的活文档索引)
 - ❌ 生成模板后不 prune(初始化 ≠ 完成;Init Fossilization)
 - ❌ 手写 ADR 索引;把 `superseded` 记录留在现役目录(读文件的人也会读到它)
 - ❌ 只把 `superseded` 记录移进 `archive/` 就以为 Agent 搜不到了——目录对内容搜索无效;ADR 是日志,整个 `docs/decisions/` 都该在 `docs/.ignore` 里排掉(且 `git grep` 仍会漏,见 `references/search-surface.md`)
@@ -232,11 +230,11 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 - **档位:** teach-back(无确定性产物;验收 = 独立复核)。
 - **流程:** 按 `references/teach-back-verifier-prompt.md` 派一个**看不到本会话**的独立 agent,只喂待验证文档 + 派发参数;产出三段:复述 / 缺口清单 / 判定(通过 / 不通过 / 需人拍板)。
-- **多镜 panel:** 命中 Step 3.5 信号(四信号)时,按 `references/review-panel.md` 跑四镜(必跑;N2 变更时加 N2 镜;可读性可选);每镜配校准探针;协调者合并去重;第 2 轮附上轮阻断清单。派发包格式见该文件 §九。
+- **多镜 panel:** 命中 Step 3.5 信号(四信号)时,按 `references/review-panel.md` 跑四镜(必跑;N2 变更时加 N2 镜;可读性可选);每镜配校准探针;协调者合并去重;第 2 轮附上轮阻断清单。派发包格式见该文件。
 - **留档:** 结论与覆盖提交写入目标项目 `docs/reviews/YYYY-MM-DD-<主题>.md` + `.last-review`。
 - **判据:** 「通过」或「需人拍板」即达可交付态;「不通过(文档缺陷)」→ 先改文档,重跑附上轮阻断清单。**「通过」只说明文档内部一致,不证明断言为真。**
 - **工具自检:** `python -m unittest discover -s tests`(skill 侧);新脚本上线前必须有反向测试。
-- **术语自检:** 改 `SKILL.md` 的高频词 / 新增术语后,按 `references/skill-glossary.md` §五 跑一次「只给 SKILL.md」的无上下文理解测试;出现「猜的」或偏离就补限定。
+- **术语自检:** 改 `SKILL.md` 的高频词 / 新增术语后,按 `references/skill-glossary.md` 跑一次「只给 SKILL.md」的无上下文理解测试;出现「猜的」或偏离就补限定。
 
 ## 参考来源(改版时借鉴)
 

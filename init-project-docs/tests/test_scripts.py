@@ -335,7 +335,7 @@ class ScriptTests(unittest.TestCase):
             self.assertIn("n2.md", proc.stdout)
             self.assertIn("module-missing-failure-semantics", proc.stdout)
 
-    def test_check_doc_refs_provenance_marker_ps1(self):
+    def test_check_doc_refs_provenance_line_is_flagged_ps1(self):
         ps = shutil.which("pwsh") or shutil.which("powershell")
         if not ps:
             self.skipTest("PowerShell not available")
@@ -357,8 +357,34 @@ class ScriptTests(unittest.TestCase):
                 cwd=str(root), capture_output=True, text=True,
                 encoding="utf-8", errors="replace",
             )
-            self.assertNotIn("m.md:1", proc.stdout)
+            # `> 出处：…` 行已退役:它和普通引用一样是"现状文档引记录"
+            self.assertIn("m.md:1", proc.stdout)
             self.assertIn("m.md:2", proc.stdout)
+
+    def test_check_doc_refs_l1_entry_ref_ps1(self):
+        ps = shutil.which("pwsh") or shutil.which("powershell")
+        if not ps:
+            self.skipTest("PowerShell not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / "architecture.md", "# L2\n")
+            write(
+                root / "AGENTS.md",
+                "| 为什么这么定 / 被拒方案 | `docs/decisions/`(ADR 索引与单条) |\n"
+                "加载顺序固定为 内核 → 主题 → UI(ADR-037)。\n"
+                "模板见 `docs/decisions/adr-000-template.md`。\n",
+            )
+            proc = subprocess.run(
+                [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(SCRIPTS / "check-doc-refs.ps1")],
+                cwd=str(root), capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+            # 目录级索引行(含 docs/decisions/)允许;具体条目编号不允许;adr-000 是模板,放行
+            self.assertNotIn("AGENTS.md:1", proc.stdout)
+            self.assertIn("AGENTS.md:2", proc.stdout)
+            self.assertIn("l1-entry-ref", proc.stdout)
+            self.assertNotIn("AGENTS.md:3", proc.stdout)
 
     def test_l1_template_is_project_memory_only(self):
         text = (ROOT / "templates" / "l1-memory.md").read_text(encoding="utf-8")

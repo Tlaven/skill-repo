@@ -21,14 +21,14 @@
   └── experiment/              # 实验:scaffolds / experiment-log,不进开发入口
 ./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接入」,命令按「未复跑」处理
 ./docs-templates/           # 协议 / 模板(不是本项目当前维护的文档:对账忽略)
-  ├── methodology.md                 # 协议正文(不自动加载;L1 只留指针)
+  ├── methodology.md                 # 协议正文(不自动加载;L1 的活文档索引里列出)
   ├── module-doc.md                  # 待填件:复制到 docs/modules/<name>.md 再填
   ├── adr-template.md                # 待填件:复制成 adr-XXX-<短描述>.md 再填
   ├── glossary.md                    # 待填件:复制到 docs/glossary.md 再填
   ├── decisions-readme.md            # 待填件:复制到 docs/decisions/README.md 再填
   ├── core-code.md                   # 待填件:复制到 docs/core-code.md 再填
   ├── architecture.md                # 待填件:按需复制到 docs/architecture.md 再填
-  ├── evolution-rules.md             # 就地读件:E1–E7(项目 L1 只留指针)
+  ├── evolution-rules.md             # 就地读件:E1–E7(项目 L1 的活文档索引里列出)
   ├── temporal-model.md              # 就地读件:三时间轴 / 四类路由 / 当下 DoD
   ├── review-panel.md                # 就地读件:当下层多镜复核
   ├── verifying-n2.md                # 就地读件:怎么给 N2 造验收
@@ -44,7 +44,7 @@
 
 | 文件 | 用途 | 何时用 | 落地到(项目内) |
 |---|---|---|---|
-| `templates/l1-memory.md` | 待填件:L1 记忆文件(项目记忆;方法论只留指针) | **立即**(Step 2A) | 项目根 `<AGENTS.md / CLAUDE.md>` |
+| `templates/l1-memory.md` | 待填件:L1 记忆文件(项目记忆;方法论只在活文档索引里列一行) | **立即**(Step 2A) | 项目根 `<AGENTS.md / CLAUDE.md>` |
 | `templates/methodology.md` | 就地读件:三段式 / 4 层 / novelty / 铁律 / 加载表(不自动加载) | **立即**(Step 2A) | `docs-templates/methodology.md` |
 | `templates/architecture.md` | 待填件:L2 架构层 | **立即**(Step 2A) | `docs-templates/architecture.md`(按需复制到 `docs/architecture.md`) |
 | `templates/module-doc.md` | 待填件:L3 模块详细(含 novelty 标记) | **立即**(Step 2A) | `docs-templates/module-doc.md` |

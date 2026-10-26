@@ -83,6 +83,6 @@ N0 / N1 的代码，模型见过大量同类测试；**N2 没有**——而且**
 - 或断言（property 形式的不变量）；
 - 并注明用的是上面哪 1~2 种手段。
 
-> 写成什么样（`novelty=N2` 字面量 / 一行 `**验收**:…` / 指针形）见 `docs-templates/module-doc.md` 的 N2 说明；检查器只做**字面 / 形式**粗检（清单与边界见 skill 侧 `references/wiring.md`）。
+> 写成什么样（`novelty=N2` 字面量 / 一行 `**验收**:…`）见 `docs-templates/module-doc.md` 的 N2 说明；**跨模块 N2 的正文与 `novelty=N2` 只写在承载它的那份，模块文档不声明、也不留"验收见 docs/…"的指针行**。检查器只做**字面 / 形式**粗检（清单与边界见 skill 侧 `references/wiring.md`）。
 > **批量执行:** 若已拷入 `scripts/`,可用 `scripts/run-n2-acceptance.py --manifest <file> --run` 跑 manifest 里显式列出的验收命令;没有 manifest 只列不跑,并标"未复跑"。
 > **它只查形式、判不了语义**：凑一个 `**验收**` 字样就能骗过它，验收是否真有意义、错法是否真被挡住，仍归 teach-back 验证者。**"检查器过了"≠"验收对了"。**
