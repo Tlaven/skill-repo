@@ -140,3 +140,24 @@
 **已落:** `references/evolution-rules.md`(E1/E3/E4/E5)、`references/temporal-model.md`(映射表 / 三问 / DoD)、`templates/methodology.md`(三时间轴 / 归属表去列 / 铁律 6 / 紧凑性)、`templates/module-doc.md`、`templates/architecture.md`、`templates/core-code.md`、`templates/glossary.md`、`templates/l1-memory.md`、`templates/decisions-readme.md`、`references/search-surface.md`、`references/wiring.md`、`references/verifying-n2.md`、`references/review-panel.md`、`SKILL.md`(术语 / 反模式 / Step 2C)、`scripts/check-doc-refs.ps1` + `.sh`(删两处豁免与指针形豁免,新增「入口文档点具体 ADR 条目」检查)、`tests/test_scripts.py`(出处行改为必须报红 + 新增 L1 编号用例)。
 
 **未做 / 待观察:** 三份方法论副本的合并(刻意不做——先看这套规则在下一案例是否空转);Cellwork 侧的 11 处删除(项目侧另行处理)。
+
+### 同轮追加(2026-10-26):口径去重,不写"见 X"
+
+上一段的"三份方法论副本"判断**不成立**,先更正:那句是从多文件 `rg -c` 的输出里读出来的,而 `rg -c` 对 0 命中的文件**不输出行**——按位置对齐文件名,就把 A 的计数安到了 B 头上。实测后:三段式只在 `methodology`、铁律只在 `methodology`、E1–E7 只在 `evolution-rules`,SKILL 里那两处都是"见 X"式的指针,**不是副本**。
+
+真正的重复只有一条:**三时间轴**。它被写了四遍——`methodology` 两处(概念段 + 铁律前的总则)、`temporal-model` 一处、`evolution-rules` 一处,外加 SKILL Step 3 的摘要。
+
+处置(不写"见 X",直接删到一处):
+
+- **概念**("三个桶 ≠ 三个时间点";文档层 L1–L4 是另一根轴)归 `templates/methodology.md`;
+- **维护律**(只增不改 / 不保留旧陈述 / 必须带状态)归 `references/temporal-model.md`;
+- `methodology` 的"详见 `temporal-model`"、"四类路由 / 当下 DoD:见 …"、铁律前的总则、完成判据里的"(细则见 …)"——全删;
+- `evolution-rules` 的"时间轴总则(先于 E1–E7)… 见 `temporal-model`"整行删;
+- `SKILL.md` Step 3 的"四类路由(摘要;完整定义见 …)"整行删;
+- 索引位保留不动:`methodology` 的分层加载表 / 跨层工件条、`layout.md` 文件树、`SKILL.md` 阅读坐标。
+
+**去小节号引用:** `rg "§"` 在 skill 内 26 处(glossary 20 / SKILL 4 / review-panel 1 / wiring 1)全删——E1 明令"不按小节引",而小节号必位移(本轮 `temporal-model` §一 的内容就刚换过一半)。
+
+**`⚠` 的含义写死:** E1 补一句"`⚠` 只表示注意,不表示已被推翻"。
+
+**方法教训(下次别再犯):** 用 `rg -c` 比较多文件时**必带 `--with-filename` 或逐文件跑**;只拿到一列数字就按顺序认领文件,会把结论安错地方。本次据此把一个不存在的"四份副本"问题写进了报告,还提了"合并副本"的整改建议。
