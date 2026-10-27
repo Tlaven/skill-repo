@@ -78,7 +78,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 **现有脚本:** `check-docs-sync`(代码动、文档没动)、`check-doc-refs`(死链 / 占位 / N2 缺验收 / 危险清单 / 失败语义 / 现状引记录)、`review-backlog`(复核 delta)。
 **新增脚本:** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(验收 runner)、`check-consistency.py`(重复定义 / 数值冲突 / 超预算 / 参数别名 / 术语下沉候选)、`lint-doc-structure.py`(结构警告)。
-**共享:** `scripts/_doc_common.py`(4 个 Python 检查器必须同拷)。
+**共享:** `scripts/_doc_common.py`(与上面这些 Python 检查器同拷)。
 
 > 别给"约定型"规则硬配检查器——那只会制造噪音,让人开始无视所有提示。
 

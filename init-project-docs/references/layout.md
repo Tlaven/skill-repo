@@ -84,5 +84,5 @@ modules/run.md
 
 - 对账:`scripts/check-docs-sync.sh/.ps1`、`scripts/check-doc-refs.sh/.ps1`、`scripts/review-backlog.sh/.ps1`
 - 新增:`scripts/check-code-refs.py`、`scripts/run-n2-acceptance.py`、`scripts/check-consistency.py`、`scripts/lint-doc-structure.py`
-- 共享:`scripts/_doc_common.py`(4 个 Python 检查器必须同拷)
+- 共享:`scripts/_doc_common.py`(与上面这些 Python 检查器同拷)
 - 用法与触发见 `references/tooling.md`;接线见 `references/wiring.md`。
