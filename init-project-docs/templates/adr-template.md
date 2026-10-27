@@ -9,8 +9,7 @@ date: YYYY-MM-DD
 <!-- 使用方式（填完删掉本注释）:
 1. 复制为 docs/decisions/adr-XXX-[短描述].md（XXX = 下一个递增编号），再填写。
 2. 状态与关系只写在 frontmatter，正文不要复述状态。
-3. 索引由 `scripts/adr-index.py --write` 从 frontmatter 生成，不要手写。
-4. 本文件本身不是真实决策，只是模板。
+3. 本文件本身不是真实决策，只是模板。
 -->
 
 <!-- 写作纪律（填完删掉本注释）:

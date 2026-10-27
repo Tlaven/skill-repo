@@ -11,11 +11,6 @@ python -m unittest discover -s tests -v
 - `run-n2-acceptance.py`:无 manifest 只列不跑;`--run` 下 PASS / FAIL 都正确。
 - `check-consistency.py`:重复定义 / 同名数值冲突必须报。
 - `lint-doc-structure.py`:长段落警告;`--strict` 才会退 1。
-- `adr-index.py`:索引漂移必须报;`--write` 后必须绿;重复 ID / 非规范状态 / `superseded` 缺目标 / 关系悬空 / 文件名与标题不符都要报;旧格式 `## 状态` 要能回退解析;`adr-archive` / `adr-long` 只警告不退 1。
-- `adr-index.py` 引用对账:引用了不存在的 ID 必须报;引用 superseded 记录只警告;fenced block 里的编号不算引用;`--no-citations` 能关;只认记录实际使用的前缀——`drafts/foo-fusion-2026-10-24.md` 里的 `fusion-2026`、`GDC-2012` 不算。
-- `adr-index.py --immutable`:正文改写必须报;文末追加补充、改 frontmatter、加 superseded 注记、移进 `archive/` 都必须放过;记录被删必须报。
-- `adr-index.py` 旧格式容忍:状态带注记(`accepted(2026-10-15)` / `⚠️ accepted(已落地：…)`)、标题用全角冒号、索引叫 `README.markdown`、引用 `ADR-000` 模板——都不得误报;真正未知的前导词(`已定`)仍必须报。超词警告超过 3 条时只打一行汇总,`--max-words` 能调阈值。
-- `adr-index.py` 检索面:`archive/` 有记录但没有任何 `.ignore` 挡它时必须报 `adr-no-ignore`(warning);`docs/.ignore` 写 `decisions/` 或 `docs/decisions/.ignore` 写 `archive/` 两种放法都要认;只写 `reviews/` 不算数。
-- `check-doc-refs.ps1`:N2 缺「失败语义」只对 N2 模块文档报;`> 出处：…` 行与普通引用一样必须报(该写法已退役);入口文档点具体 ADR 条目要报 `l1-entry-ref`,目录级索引行(含 `docs/decisions/`)与 `adr-000` 模板名放行。
+- `check-doc-refs.ps1`:N2 缺「失败语义」只对 N2 模块文档报;`> 出处：…` 行与普通引用一样必须报(该写法已退役);入口文档点具体 ADR 条目要报 `l1-entry-ref`,L1 活文档索引里的目录级行(含 `docs/decisions/`)与 `adr-000` 模板名放行。
 
 **纪律:** 新增机器判据先写反向测试(必须能红),再确认它数的是什么,最后两平台各跑一遍。

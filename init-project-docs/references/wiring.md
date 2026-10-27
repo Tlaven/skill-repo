@@ -7,12 +7,12 @@
 >
 > 另有 `scripts/review-backlog` —— **辅助脚本,不属于本页的接线面**:不判定、不拦截(退出码恒 0),复核前手动跑,列出"自上次复核以来的契约 delta"。不上 pre-commit / CI。
 >
-> **新增(Python 3.8+,仅标准库):** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(N2 验收 runner)、`check-consistency.py`(重复定义 / 数值冲突)、`lint-doc-structure.py`(结构警告)、`adr-index.py`(ADR 索引生成 + 状态 / 关系对账);共享模块 `_doc_common.py` 必须与它们同拷。用法见 `references/tooling.md`。
+> **新增(Python 3.8+,仅标准库):** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(N2 验收 runner)、`check-consistency.py`(重复定义 / 数值冲突)、`lint-doc-structure.py`(结构警告);共享模块 `_doc_common.py` 必须与它们同拷。用法见 `references/tooling.md`。
 
 ## 先分清两个时机
 
 - **改代码前(主战场):** `check-code-refs` + 契约变更时 `check-consistency` + N2 变更时 `run-n2-acceptance` + 相关镜头的 review panel。文档是实现的契约,这一步才是"提前拦截"。
-- **commit(轻):** `check-docs-sync` + `check-code-refs` + `adr-index --strict --immutable`。只做事后漂移提醒;不跑完整 panel。
+- **commit(轻):** `check-docs-sync` + `check-code-refs`。只做事后漂移提醒;不跑完整 panel。
 
 ## 先拷进项目
 
@@ -79,7 +79,6 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 bash scripts/check-docs-sync.sh --staged --strict || {
   echo "改代码但没同步文档。要跳过：git commit --no-verify"; exit 1; }
 [ -f scripts/check-code-refs.py ] && python scripts/check-code-refs.py --root . || true
-[ -f scripts/adr-index.py ] && python scripts/adr-index.py --root . --strict --immutable || true
 # check-doc-refs 建议放 CI / 收尾;不要挡每次提交(见 tooling.md)
 ```
 
@@ -120,7 +119,6 @@ jobs:
 | `run-n2-acceptance.py` | N2 验收命令执行结果;无 manifest 只列不跑 | 取决于项目 | 改代码前 / 批次;`--run` 才执行 |
 | `check-consistency.py` | 重复定义 / 同名数值冲突 | 中(启发式) | 只当警告,不进 pre-commit |
 | `lint-doc-structure.py` | 段落过长 / 缺小标题 / 缺示例 | 中(启发式) | 只当警告,不进门禁 |
-| `adr-index.py` | ADR 索引漂移 / 状态非法 / 关系悬空 / 引用悬空 / `superseded` 缺目标 / 追加式违例 | 极低(确定性) | 记 ADR 后 `--write`;commit / CI 加 `--strict --immutable` |
 
 ## 记住边界
 

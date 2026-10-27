@@ -77,8 +77,8 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 | **只能靠自觉** | 无 | 明确承认无法保证 |
 
 **现有脚本:** `check-docs-sync`(代码动、文档没动)、`check-doc-refs`(死链 / 占位 / N2 缺验收 / 危险清单 / 失败语义 / 现状引记录)、`review-backlog`(复核 delta)。
-**新增脚本:** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(验收 runner)、`check-consistency.py`(重复定义 / 数值冲突 / 超预算 / 参数别名 / 术语下沉候选)、`lint-doc-structure.py`(结构警告)、`adr-index.py`(ADR 索引生成 + 状态 / 关系 / 引用对账 + 追加式校验)。
-**共享:** `scripts/_doc_common.py`(5 个 Python 检查器必须同拷)。
+**新增脚本:** `check-code-refs.py`(内联代码引用)、`run-n2-acceptance.py`(验收 runner)、`check-consistency.py`(重复定义 / 数值冲突 / 超预算 / 参数别名 / 术语下沉候选)、`lint-doc-structure.py`(结构警告)。
+**共享:** `scripts/_doc_common.py`(4 个 Python 检查器必须同拷)。
 
 > 别给"约定型"规则硬配检查器——那只会制造噪音,让人开始无视所有提示。
 
@@ -136,7 +136,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 3. 布局跟随项目;不擅自升级版本(用户的决定)。
 4. 默认不新增本项目当前维护的文档;要新增先列提问清单。
 5. 收尾只汇报"补了哪些缺口 / 还差什么待定"。
-6. **存量减重(可选 delta):** 触发 = 任一活文档超预算 / 活文档总量 > 代码总量 / 副本候选 ≥3。动作 = 量行数与体量比 → 找重复字面量 / 单模块术语 / 机器可判计数 → 出「合并 / 下沉术语 / 归档」清单(不要用"转成指针"减行数) → 作者拍板后动手;不自动重写。reviews 无索引且 >10 份 → 建 `docs/reviews/README.md`。
+6. **存量减重(可选 delta):** 触发 = 任一活文档超预算 / 活文档总量 > 代码总量 / 副本候选 ≥3。动作 = 量行数与体量比 → 找重复字面量 / 单模块术语 / 机器可判计数 → 出「合并 / 下沉术语 / 归档」清单(不要用"转成指针"减行数) → 作者拍板后动手;不自动重写。reviews 文件名带日期 + 主题,`ls` 即列表——不要给它另建索引。
 
 ### Step 2R: reset 模式——已有文档过写 / AI 生成 / 想变少
 
@@ -158,7 +158,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 - **第一阶段(填 L1 主轴):** [是什么] → [为什么] → [不变量],每段问 1–2 个核心问题,答完立即写入。
 - **第二阶段(填 L2 主流程):** L1 有共识后才创建 `docs/architecture.md`,重点产出主流程叙述(10–20 行,入口到出口)。
-- **第三阶段(按需):** 模块出现 N2 或细节开始往 L2 堆 → 建 L3;决策发生 → 建 ADR(索引用 `adr-index.py --write` 生成,不手写);跨模块 N2 必须有家(先建 `docs/core-code.md` 或 `docs/specs/`,**不要塞进 L2**;L3 留指针);N2 单元同时登记 `docs/n2-acceptance.json`(命令 + cwd),供 `run-n2-acceptance --run` 使用。
+- **第三阶段(按需):** 模块出现 N2 或细节开始往 L2 堆 → 建 L3;决策发生 → 建 ADR(`docs/decisions/` 下一个决策一个文件,主目录即现役名单;**不另写索引**——同目录 `ls` 就是索引);跨模块 N2 必须有家(先建 `docs/core-code.md` 或 `docs/specs/`,**不要塞进 L2**;L3 留指针);N2 单元同时登记 `docs/n2-acceptance.json`(命令 + cwd),供 `run-n2-acceptance --run` 使用。
 - **[是什么] 未收敛**(重立项 / 方向未定):L1 概述写双段(现状 / 方向草案)+ 开放问题,**别假装收敛**;方向草案是 `[是什么]` 里唯一允许的方向陈述,**只有方向半段的每行**带状态并显式标注方向草案,现状半段保持事实、不带方向状态,收敛后移出;复核会正确卡在「需人拍板」。
 
 ### Step 3.5: 改代码前的复核(teach-back + 多镜 panel)
@@ -223,7 +223,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - ❌ 模板加了要求、却没写明由谁检查(脚本 / 独立复核 / 自觉)
 - ❌ 让每层都"自足"(＝每层重写);也别用指针兜:摘要、`> 出处：…` 行、"见 ADR-0NN"都会变成第二处出处——别处就该不写(读者要知道去哪份文档,看 L1 的活文档索引)
 - ❌ 生成模板后不 prune(初始化 ≠ 完成;Init Fossilization)
-- ❌ 手写 ADR 索引;把 `superseded` 记录留在现役目录(读文件的人也会读到它)
+- ❌ 给同目录的 ADR 再写一份索引(`ls` 就是名单,多一份清单只多一处会漂);把 `superseded` 记录留在现役目录(读文件的人也会读到它)
 - ❌ 只把 `superseded` 记录移进 `archive/` 就以为 Agent 搜不到了——目录对内容搜索无效;ADR 是日志,整个 `docs/decisions/` 都该在 `docs/.ignore` 里排掉(且 `git grep` 仍会漏,见 `references/search-surface.md`)
 
 ## 验收(teach-back)
@@ -244,4 +244,4 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - **多镜 / 校准探针**:`pptx-delivery` 的冷启动复核(5 个子代理 + 校准探针)。
 - **Agent 上下文预算 / 配置异味:** AGENTS.md 配置异味研究(arXiv:2606.15828);Anthropic《How Claude remembers your project》(每份 CLAUDE.md <200 行、矛盾审计);HumanLayer《Writing a good CLAUDE.md》("prefer pointers to copies"、~150–200 条指令)。
 - **单一来源 / 文档分型:** Cyrille Martraire《Living Documentation》(每条知识只声明一次 + 对账工具);Single-sourcing / transclusion;Diátaxis(四类文档不要混)。
-- **决策记录:** Martin Fowler 的 ADR 条目;AWS ADR 最佳实践(不改已接受记录、supersede + 链接、索引可见状态)。
+- **决策记录:** Martin Fowler 的 ADR 条目;AWS ADR 最佳实践(不改已接受记录、supersede + 链接)。

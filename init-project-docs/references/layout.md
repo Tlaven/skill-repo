@@ -50,7 +50,7 @@
 | `templates/module-doc.md` | 待填件:L3 模块详细(含 novelty 标记) | **立即**(Step 2A) | `docs-templates/module-doc.md` |
 | `templates/glossary.md` | 待填件:术语表(受控词汇) | **立即**(Step 2A) | `docs-templates/glossary.md`(按需复制到 `docs/glossary.md`) |
 | `templates/core-code.md` | 待填件:L4 核心代码(含 novelty 分档 / N2 附加栏) | **立即**(Step 2A) | `docs-templates/core-code.md`(按需复制到 `docs/core-code.md`) |
-| `templates/decisions-readme.md` | 待填件:ADR 索引 + 格式约定 | **立即**(Step 2A) | `docs-templates/decisions-readme.md` |
+| `templates/decisions-readme.md` | 待填件:ADR 读法与格式约定 | **立即**(Step 2A) | `docs-templates/decisions-readme.md` |
 | `templates/adr-template.md` | 待填件:单条 ADR 模板(frontmatter 状态 / 关系) | **立即**(Step 2A) | `docs-templates/adr-template.md` |
 | `references/adr-example.md` | 就地读件:填好的 ADR 示例(**不是决策**) | 写 ADR 时 | `docs-templates/adr-example.md` |
 | `references/evolution-rules.md` | 就地读件:E1–E7 | **立即**(Step 2A) | `docs-templates/evolution-rules.md` |
@@ -83,6 +83,6 @@ modules/run.md
 ## 四、脚本清单
 
 - 对账:`scripts/check-docs-sync.sh/.ps1`、`scripts/check-doc-refs.sh/.ps1`、`scripts/review-backlog.sh/.ps1`
-- 新增:`scripts/check-code-refs.py`、`scripts/run-n2-acceptance.py`、`scripts/check-consistency.py`、`scripts/lint-doc-structure.py`、`scripts/adr-index.py`
-- 共享:`scripts/_doc_common.py`(5 个 Python 检查器必须同拷)
+- 新增:`scripts/check-code-refs.py`、`scripts/run-n2-acceptance.py`、`scripts/check-consistency.py`、`scripts/lint-doc-structure.py`
+- 共享:`scripts/_doc_common.py`(4 个 Python 检查器必须同拷)
 - 用法与触发见 `references/tooling.md`;接线见 `references/wiring.md`。
