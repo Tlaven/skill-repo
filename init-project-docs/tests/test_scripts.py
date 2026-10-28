@@ -137,7 +137,7 @@ class ScriptTests(unittest.TestCase):
             root = Path(tmp)
             write(
                 root / "AGENTS.md",
-                "- **历史只增不改**: ADR / reviews / git\n"
+                "- **历史内容只增不改**: ADR / reviews / git\n"
                 "- **未来必须带状态**: planned / doing / done / dropped\n"
                 "Prose localhost: 8080 and localhost: 8443 are not config keys.\n",
             )

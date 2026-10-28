@@ -1,7 +1,7 @@
 ---
 status: proposed
 date: YYYY-MM-DD
-# superseded_by: ADR-000        ← 被取代时填目标编号，并把本文件移进 archive/
+# superseded_by: ADR-000        ← 被取代时填目标编号，并把本文件退役(移出工作区)
 ---
 
 # ADR-000: [决策标题——祈使句，一个决策一条]
@@ -15,12 +15,15 @@ date: YYYY-MM-DD
 <!-- 写作纪律（填完删掉本注释）:
 - 一条决策一个文件：标题里需要「和」就是两条。
 - 标题是祈使句，说的是「决定了什么」，不是话题。
-- status: proposed / accepted / accepted(修订) / deprecated / rejected / superseded。
-  superseded 必须带 `superseded_by: ADR-XXX`。
-- 关系字段（只在旧记录上声明一次）：superseded_by / partially_superseded_by /
-  revised_by / extended_by；对应的正向字段 supersedes / revises / extends。
+- status: proposed / accepted / accepted(修订) / deprecated / rejected / superseded / expired。
+  superseded 必须带 `superseded_by: ADR-XXX`；expired = 前提消失、没有继任决定。两者都退役。
+- 关系字段：继任记录声明正向链接 supersedes / revises / extends；现役记录之间仍只声明一次。
+  退役记录不再要求可解析的反向链接——正向链是唯一保留下来的关系。
 - 句式：写「当时决定用 X（约束：…）」，不要写「本项目使用 X」。
   ADR 是历史记录，不是现状陈述——它会被单独引用，语法上就不能像一条现行规则。
+- 背景里的前提写成可判定条件（依赖版本 / 规模 / 合规条款），否则将来无法判 expired。
+- 决策稳定后：把仍成立的理由写进对应层的 [为什么] / 不变量，然后把本文件退役
+  （移出工作区，git 保留）。ADR 是过程载体，不是档案。
 - 不超过 800 词；更长的通常是两条决策，或一份实现日记（日记归 PR / 提交信息）。
 - 各段填成什么样，见 `docs-templates/adr-example.md`。
 -->
@@ -29,7 +32,7 @@ date: YYYY-MM-DD
 
 <!--
 - 为什么需要这个决策？遇到什么问题 / 什么触发了它？
-- 当时的约束（时间、技术、团队、合规）。
+- 当时的约束（时间、技术、团队、合规）。**把前提写成可判定条件**（依赖版本 / 规模 / 合规条款），否则将来无法判 expired。
 - 不写决策本身，只写「为什么需要决策」。
 -->
 
@@ -78,7 +81,7 @@ date: YYYY-MM-DD
 <!--
 同一决策路径内的修正（参数 / 实现方式 / 边界补强）→ 在文末按时间追加「补充 N」小节：
 **不改原文、不新建 ADR**，状态改成 `accepted(修订)`；每条写：日期 + 触发（谁 / 什么反馈）+ 改动 + 被拒做法（如有）+ 验证。
-**换掉被选方案本身、或引入第二套并行机制 → 另开新 ADR**，本文件 frontmatter 写 `superseded_by: ADR-YYY`，并移进 `archive/`。
+**换掉被选方案本身、或引入第二套并行机制 → 另开新 ADR**，本文件 frontmatter 写 `superseded_by: ADR-YYY`，并把本文件退役（移出工作区，git 保留）。
 补充只增不改——ADR 仍是「记录」，不是「现状文档」（现状陈述不得引用 ADR，见 evolution-rules E1）。
 -->
 

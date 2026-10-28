@@ -14,6 +14,8 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 本 skill 的常用词有专指,按通用义读会偏:
 
 - **历史 / 当下 / 未来** = 三个**时间桶**(决策记录 / 现状与约束 / 方向与开放问题),不是 git 历史 / 当前时刻 / 路线图。**文档层 L1–L4 是另一根轴**,别和时间桶混。
+- **升格 / 退役 / 游标** = 把仍成立的理由搬进当下正文后记录离场 / 记录移出工作区(git 保留,不是删除、不是换目录) / `.last-review` 这类只记录"看到哪了"的状态(不是历史)。**年龄不是判据**,只在对账时触发审计。
+- **superseded / expired** = 被新决定取代 / 前提消失且没有继任决定;两者都退役。
 - **沉淀侧 / 回灌** = 把对话固化为项目记忆 / 把可泛化经验写回上游 skill;不是对话技巧,也不是数据回填。
 - **契约 / 契约级变更** = 项目文档里的约束性陈述(不变量 / `[已定]` / 接口 / 术语定义)及其增删改;不是法律或 API 合同。
 - **对账 / 复核 / 验证 / 检查** = 文档-代码/记录的结构一致性核对(改代码前也做)/ 独立 agent 的语义复核 / 可执行验收 / 脚本结构检查;四者不互换。**「复核通过」只说明文档内部一致**,不证明断言为真。
@@ -102,7 +104,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
 2. 复制 `templates/methodology.md` → `docs-templates/methodology.md`；再按需复制 `module-doc` / `adr-template` / `glossary` / `architecture` / `evolution-rules` / `temporal-model` / `review-panel` / `verifying-n2` / `verifying-nonfunctional` / `teach-back-verifier-prompt`（映射见 `references/layout.md`）。
 3. 建 `task_plan.md`（未来桶）；第一个活文档出现时写 `docs/.live`（一行一个路径，相对 `docs/`）。
-4. 然后进入 Step 3 对话；`docs/` 下当前维护的文档按需创建（跨模块术语 → `docs/glossary.md`；L2 → `docs/architecture.md`；模块 → `docs/modules/<name>.md`；ADR → `docs/decisions/`，并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`；对账 → `docs/reviews/`；跨模块 N2 → `docs/core-code.md` 或 `docs/specs/`）。
+4. 然后进入 Step 3 对话；`docs/` 下当前维护的文档按需创建（跨模块术语 → `docs/glossary.md`；L2 → `docs/architecture.md`；模块 → `docs/modules/<name>.md`；ADR → `docs/decisions/`（决策工作台；稳定后升格 / 退役），并在 `docs/.ignore` 排掉 `decisions/` 与 `reviews/`；对账 → `docs/reviews/`（按对账周期退役）；跨模块 N2 → `docs/core-code.md` 或 `docs/specs/`）。
 5. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`（含共享模块 `_doc_common.py`）；若用户不接脚本，在 L1 标「scripts: 未接入」，后续命令按「未复跑」处理。
 
 > **模板铺齐 ≠ 完成：** 2A 在 Step 3 填完内容后、Step 4 做一次 prune pass；不要对空模板删栏位（会删掉检查器要求的节）。**2B/2C 不动作者原有文件；2D 只补 delta；想变少走 2R。**
@@ -136,17 +138,17 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 3. 布局跟随项目;不擅自升级版本(用户的决定)。
 4. 默认不新增本项目当前维护的文档;要新增先列提问清单。
 5. 收尾只汇报"补了哪些缺口 / 还差什么待定"。
-6. **存量减重(可选 delta):** 触发 = 任一活文档超预算 / 活文档总量 > 代码总量 / 副本候选 ≥3。动作 = 量行数与体量比 → 找重复字面量 / 单模块术语 / 机器可判计数 → 出「合并 / 下沉术语 / 归档」清单(不要用"转成指针"减行数) → 作者拍板后动手;不自动重写。reviews 文件名带日期 + 主题,`ls` 即列表——不要给它另建索引。
+6. **存量减重(可选 delta):** 触发 = 任一活文档超预算 / 活文档总量 > 代码总量 / 副本候选 ≥3。动作 = 量行数与体量比 → 找重复字面量 / 单模块术语 / 机器可判计数 → 出「合并 / 下沉术语 / 归档 / 退役」清单(不要用"转成指针"减行数) → 作者拍板后动手;不自动重写。**历史退役 = 已升格的 ADR + 上一对账周期的 reviews**;reviews 文件名带日期 + 主题,`ls` 即列表——不要给它另建索引。
 
 ### Step 2R: reset 模式——已有文档过写 / AI 生成 / 想变少
 
 **触发:** 活文档 >10 / 文档总量 > 代码量 / 同一事实多处定义 / 用户说“看不懂 / 一直干扰 / 想变少”。
-**门槛:** 作者点头；不删除，只归档；可回滚。
+**门槛:** 作者点头；**作者手写文档不删除，只归档；AI 生成的历史记录可退役**（移出工作区，git 保留）；可回滚。
 
 1. **冻结:** 先提交现状（或建分支 / `git stash`），确保可回滚。
-2. **清点:** 列 `docs/` + 根文件；每份标 `作者写 / AI 写 / 历史`。作者写的改动需确认；AI 写的可直接归档。
+2. **清点:** 列 `docs/` + 根文件；每份标 `作者写 / AI 写 / 历史`。作者写的改动需确认；AI 写的历史记录可直接退役，AI 写的其他文档可归档。
 3. **选活集:** 按加载频率选 3–6 份（每会话：L1 / `task_plan` / 当前构建手册 / 设计约束；按任务：architecture 一页 / 2–3 个模块 / 术语表）。写 `docs/.live`。
-4. **归档:** 其余移到 `docs/archive/`（保留日期在文件名）或 `docs/experiment/`（脚手架 / 实验日志）；不删除。
+4. **归档:** 其余移到 `docs/archive/`（保留日期在文件名）或 `docs/experiment/`（脚手架 / 实验日志）；不删除。AI 生成的历史记录（已升格的 ADR / 上周期 reviews）改为退役，移出工作区。
 5. **改指针:** L1 只指活文档；历史只在“历史”段出现；活文档不拿 ADR / review 当依据；`docs/scaffolds/` 从游戏 README / glossary / L1 入口删掉。
 6. **去时间 / 版本:** 活文档里的日期 / 文档版本号删掉或移进归档；只留顶部 `Last verified: <SHA>`；领域版本保留。
 7. **量 before / after:** 文件数 / 行数 / 字节 / 日期数 / `check-consistency` 警告；跑项目验收证明只动文档。
@@ -158,7 +160,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 - **第一阶段(填 L1 主轴):** [是什么] → [为什么] → [不变量],每段问 1–2 个核心问题,答完立即写入。
 - **第二阶段(填 L2 主流程):** L1 有共识后才创建 `docs/architecture.md`,重点产出主流程叙述(10–20 行,入口到出口)。
-- **第三阶段(按需):** 模块出现 N2 或细节开始往 L2 堆 → 建 L3;决策发生 → 建 ADR(`docs/decisions/` 下一个决策一个文件,主目录即现役名单;**不另写索引**——同目录 `ls` 就是索引);跨模块 N2 必须有家(先建 `docs/core-code.md` 或 `docs/specs/`,**不要塞进 L2**;L3 留指针);N2 单元同时登记 `docs/n2-acceptance.json`(命令 + cwd),供 `run-n2-acceptance --run` 使用。
+- **第三阶段(按需):** 模块出现 N2 或细节开始往 L2 堆 → 建 L3;决策发生 → **先判载体**(可逆 / 局部 / 一次性 → commit body;需评审 / 跨模块 → PR-RFC;不可逆 / 长期约束 → ADR),确需 ADR 才建(`docs/decisions/` 下一个决策一个文件,主目录即工作台;**不另写索引**——同目录 `ls` 就是索引;稳定后把仍成立的理由升格进当下,然后退役);跨模块 N2 必须有家(先建 `docs/core-code.md` 或 `docs/specs/`,**不要塞进 L2**;L3 留指针);N2 单元同时登记 `docs/n2-acceptance.json`(命令 + cwd),供 `run-n2-acceptance --run` 使用。
 - **[是什么] 未收敛**(重立项 / 方向未定):L1 概述写双段(现状 / 方向草案)+ 开放问题,**别假装收敛**;方向草案是 `[是什么]` 里唯一允许的方向陈述,**只有方向半段的每行**带状态并显式标注方向草案,现状半段保持事实、不带方向状态,收敛后移出;复核会正确卡在「需人拍板」。
 
 ### Step 3.5: 改代码前的复核(teach-back + 多镜 panel)
@@ -169,7 +171,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 **契约级变更定义:** 契约文件(L1 / L2 / L3 / L4 / glossary)中的不变量、`[已定]`、接口 / 数据结构 / 失败码、术语定义、契约级断言的增删改;纯措辞 / 链接 / 排版不算。**四信号是“跑不跑”的唯一裁决;`review-panel.md`只决定“跑哪几镜”。**
 
-**攒批:** 若已拷入 `scripts/`,先跑 `review-backlog`(零 token)列出自上次复核以来的契约 delta;未拷则人工列 delta 并标「未接入 / 未复跑」。只把 delta 喂给独立 agent;每个被喂的单元要整节(定义段 + 验收段必须同在);结论记 `docs/reviews/`,覆盖提交写进 `docs/reviews/.last-review`。
+**攒批:** 若已拷入 `scripts/`,先跑 `review-backlog`(零 token)列出自上次复核以来的契约 delta;未拷则人工列 delta 并标「未接入 / 未复跑」。只把 delta 喂给独立 agent;每个被喂的单元要整节(定义段 + 验收段必须同在);结论记 `docs/reviews/`,覆盖提交写进 `docs/reviews/.last-review`(游标,不退役)。**reviews 按对账周期整批退役**:下一次全量对账完成后,上一批移出工作区(git 保留)。
 
 **派发:**
 - 派一个**看不到本会话**的全新 subagent;当前会话自评 = 自证,不算数。
@@ -191,11 +193,11 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 
 **prune pass(仅 2A;2B/2C 不动作者内容,2D 走存量减重):** 找矛盾 → 只留必需 → 其余分组到按需加载的文件 → 建指针 → **flag for deletion**(冗余 / 太泛 / 显而易见的全删)。生成 ≠ 完成;不 prune 的初始化就是 Init Fossilization。
 
-初轮(L1 + L2 主流程)完成后告诉用户:建模块前先填 L3;决策发生记 ADR;大改动前先更新对应层文档;**改代码前跑复核 / panel**;L4 默认不建,跨模块 N2 才建 `core-code` / `specs`;填完删模板注释;新术语登记 glossary;N2 补步骤 / 危险清单 / 例子 / 验收 / 失败语义;复核按需、可攒批,推荐在实现前完成;检查器能查的先跑,不能跑就标"未接入 / 未复跑"。完整落点与脚本见 `references/layout.md` / `references/tooling.md`。
+初轮(L1 + L2 主流程)完成后告诉用户:建模块前先填 L3;决策发生先判载体(commit body / PR-RFC / ADR),稳定后按 E4 升格或退役;大改动前先更新对应层文档;**改代码前跑复核 / panel**;L4 默认不建,跨模块 N2 才建 `core-code` / `specs`;填完删模板注释;新术语登记 glossary;N2 补步骤 / 危险清单 / 例子 / 验收 / 失败语义;复核按需、可攒批,推荐在实现前完成;检查器能查的先跑,不能跑就标"未接入 / 未复跑";**收尾做一次退役 pass**:已升格的 ADR 与上一对账周期的 reviews 移出工作区(git 保留),`.last-review` 保留。完整落点与脚本见 `references/layout.md` / `references/tooling.md`。
 
 ## 产出文件结构
 
-落点唯一正文归属在 `references/layout.md`(完整目录 + 模板清单 + 脚本清单)。要点:L1 在项目根,只放项目记忆;`docs/.live` 是活文档清单;`docs/` 只放白名单活文档 + 历史;`docs-templates/methodology.md` 是协议正文(不自动加载);`docs-templates/` 是待填件 / 就地读件,对账忽略;`docs/reviews/` 存对账 / 复核留档;`docs/archive/` 与 `docs/experiment/` 不进日常加载。
+落点唯一正文归属在 `references/layout.md`(完整目录 + 模板清单 + 脚本清单)。要点:L1 在项目根,只放项目记忆;`docs/.live` 是活文档清单;`docs/` 只放白名单活文档 + 决策工作台 + 冷存;`docs-templates/methodology.md` 是协议正文(不自动加载);`docs-templates/` 是待填件 / 就地读件,对账忽略;`docs/decisions/` 是在议 / 在途,稳定后升格或退役;`docs/reviews/` 存对账 / 复核留档,按周期批量退役;`docs/archive/` 与 `docs/experiment/` 不进日常加载。
 
 ## 反模式(checklist)
 
@@ -223,15 +225,18 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - ❌ 模板加了要求、却没写明由谁检查(脚本 / 独立复核 / 自觉)
 - ❌ 让每层都"自足"(＝每层重写);也别用指针兜:摘要、`> 出处：…` 行、"见 ADR-0NN"都会变成第二处出处——别处就该不写(读者要知道去哪份文档,看 L1 的活文档索引)
 - ❌ 生成模板后不 prune(初始化 ≠ 完成;Init Fossilization)
-- ❌ 给同目录的 ADR 再写一份索引(`ls` 就是名单,多一份清单只多一处会漂);把 `superseded` 记录留在现役目录(读文件的人也会读到它)
-- ❌ 只把 `superseded` 记录移进 `archive/` 就以为 Agent 搜不到了——目录对内容搜索无效;ADR 是日志,整个 `docs/decisions/` 都该在 `docs/.ignore` 里排掉(且 `git grep` 仍会漏,见 `references/search-surface.md`)
+- ❌ 给同目录的 ADR 再写一份索引(`ls` 就是名单,多一份清单只多一处会漂);把 `superseded` / `expired` 记录留在工作区(读文件的人也会读到它)
+- ❌ 只把 `superseded` 记录移进 `archive/` 就以为 Agent 搜不到了——目录对内容搜索无效;**退役 = 移出工作区**;ADR 是日志,整个 `docs/decisions/` 都该在 `docs/.ignore` 里排掉(且 `git grep` 仍会漏,见 `references/search-surface.md`)
+- ❌ 用摘要压缩历史——摘要会成为第二处出处;历史要么升格进当下,要么退役
+- ❌ 给 reviews 写索引 / 年度总结——`ls` 即列表;唯一的"压缩产物"是写进 L1 的流程修正
+- ❌ 把归档目录当终点——归档只换路径,不改检索结果;能移出工作区的记录就退役
 
 ## 验收(teach-back)
 
 - **档位:** teach-back(无确定性产物;验收 = 独立复核)。
 - **流程:** 按 `references/teach-back-verifier-prompt.md` 派一个**看不到本会话**的独立 agent,只喂待验证文档 + 派发参数;产出三段:复述 / 缺口清单 / 判定(通过 / 不通过 / 需人拍板)。
 - **多镜 panel:** 命中 Step 3.5 信号(四信号)时,按 `references/review-panel.md` 跑四镜(必跑;N2 变更时加 N2 镜;可读性可选);每镜配校准探针;协调者合并去重;第 2 轮附上轮阻断清单。派发包格式见该文件。
-- **留档:** 结论与覆盖提交写入目标项目 `docs/reviews/YYYY-MM-DD-<主题>.md` + `.last-review`。
+- **留档:** 结论与覆盖提交写入目标项目 `docs/reviews/YYYY-MM-DD-<主题>.md` + `.last-review`(游标,不退役);reviews 按对账周期整批退役。
 - **判据:** 「通过」或「需人拍板」即达可交付态;「不通过(文档缺陷)」→ 先改文档,重跑附上轮阻断清单。**「通过」只说明文档内部一致,不证明断言为真。**
 - **工具自检:** `python -m unittest discover -s tests`(skill 侧);新脚本上线前必须有反向测试。
 - **术语自检:** 改 `SKILL.md` 的高频词 / 新增术语后,按 `references/skill-glossary.md` 跑一次「只给 SKILL.md」的无上下文理解测试;出现「猜的」或偏离就补限定。
@@ -245,3 +250,4 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - **Agent 上下文预算 / 配置异味:** AGENTS.md 配置异味研究(arXiv:2606.15828);Anthropic《How Claude remembers your project》(每份 CLAUDE.md <200 行、矛盾审计);HumanLayer《Writing a good CLAUDE.md》("prefer pointers to copies"、~150–200 条指令)。
 - **单一来源 / 文档分型:** Cyrille Martraire《Living Documentation》(每条知识只声明一次 + 对账工具);Single-sourcing / transclusion;Diátaxis(四类文档不要混)。
 - **决策记录:** Martin Fowler 的 ADR 条目;AWS ADR 最佳实践(不改已接受记录、supersede + 链接)。
+- **历史保留 / ADR 实践:** PDP Spectra《ADRs That Stick》(多数 ADR 实践死在无人阅读;小团队 / 短项目通常过度设计);bool.dev《10 ADR Anti-Patterns》(事后补写、把 ADR 当开发文档);Jeff Bailey《Fundamentals of Architecture Decision Making》(可逆 / 单向门;可逆低影响决策不写 ADR);StandIn《ADR Tools》(小决策用 decision log 链 PR);Lore(arXiv:2603.15566,用 commit message 承载决策记录)。

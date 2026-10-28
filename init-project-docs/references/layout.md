@@ -15,9 +15,9 @@
   ├── glossary.md              # 跨模块术语,2 列,≤40 词
   ├── modules/<name>.md        # L3:N1 一页 / N2 五件套
   ├── core-code.md             # 跨模块 N2 的家(需要时才建)
-  ├── reviews/                 # 历史:对账 / 复核
-  ├── decisions/               # 历史:ADR
-  ├── archive/                 # 历史:退役文档(文件名带日期)
+  ├── reviews/                 # 复核记录:只留本对账周期;.last-review 是游标
+  ├── decisions/               # 决策工作台:在议 / 在途;稳定后升格或退役
+  ├── archive/                 # 作者旧文档冷存(不是 AI 生成历史记录的家)
   └── experiment/              # 实验:scaffolds / experiment-log,不进开发入口
 ./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接入」,命令按「未复跑」处理
 ./docs-templates/           # 协议 / 模板(不是本项目当前维护的文档:对账忽略)
@@ -37,6 +37,8 @@
 ```
 
 除 L1、`task_plan.md` 与**当前用到的 `docs-templates/`** 外,`docs/` 下当前维护的文档**全部按需创建**;`docs/.live` 是唯一活文档清单。
+
+**记录有寿命:** ADR 稳定后把仍成立的理由升格进当下,然后退役;`reviews/` 按对账周期整批退役;两者都**移出工作区**(git 保留),不建永久归档层。`.last-review` 是游标,不是历史。
 
 > **待填件** = 复制到 `docs/` 后再填写的模板;**就地读件** = 留在 `docs-templates/` 直接引用的规则正文;两者都不是本项目当前维护的文档,对账忽略。
 
