@@ -72,7 +72,7 @@
 - Python 检查器（`check-consistency` / `check-code-refs` / `lint-doc-structure` / `run-n2-acceptance`）默认只扫白名单 + L1；`check-consistency --all-docs` 才扫全库（迁移 / 对账用）。`check-doc-refs` 仍按目录排除（archive / experiment / decisions / reviews / templates 不扫）。
 - **net-negative:** 新增一个活文档，必须合并 / 替换 / 归档一个；否则不许加。
 - 活文档按 profile 限制（起点，两个样本后调）：lite ≤6 文件 / 800 行；standard ≤12 / 2,000；full ≤20 / 4,000。
-- **历史内容只增不改，存在按寿命裁剪**：仍约束 → 升格进当下后退役；不再约束 → 退役（移出工作区，git 保留）。`docs/archive/`、`docs/decisions/`、`docs/reviews/`、`docs/experiment/` 都不是日常入口；**归档不是永久层，退役不是删除**。
+- **历史内容只增不改，存在按寿命裁剪**：仍约束 → 升格进当下后退役；有证据地不再约束 → 退役（移出工作区，git 保留）；答不出 → 退役候选，交作者。`docs/archive/`、`docs/decisions/`、`docs/reviews/`、`docs/experiment/` 都不是日常入口；**归档不是永久层，退役不是删除**。
 
 ### 跨层工件 + novelty 分档
 

@@ -16,7 +16,8 @@ date: YYYY-MM-DD
 - 一条决策一个文件：标题里需要「和」就是两条。
 - 标题是祈使句，说的是「决定了什么」，不是话题。
 - status: proposed / accepted / accepted(修订) / deprecated / rejected / superseded / expired。
-  superseded 必须带 `superseded_by: ADR-XXX`；expired = 前提消失、没有继任决定。两者都退役。
+  superseded 必须带 `superseded_by: ADR-XXX`；expired = 前提**有证据地**消失、没有继任决定。两者都退役。
+- 退役要有正面证据（理由已升格 / 前提可证伪地消失 / 作者拍板）；"答不出"只登记退役候选，不改 status。
 - 关系字段：继任记录声明正向链接 supersedes / revises / extends；现役记录之间仍只声明一次。
   退役记录不再要求可解析的反向链接——正向链是唯一保留下来的关系。
 - 句式：写「当时决定用 X（约束：…）」，不要写「本项目使用 X」。
