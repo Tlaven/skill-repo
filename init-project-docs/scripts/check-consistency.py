@@ -14,6 +14,14 @@ Default checks:
   two or more live docs.
 - Duplicate aliases: a backticked glossary alias (e.g. `profCoast`) appears in
   two or more live docs (README is included).
+- Dangling clause codes: a live doc cites a stable code (`D-14` / `A-1` / `R-5`)
+  that no live doc defines. Codes are the only legal cross-doc reference, so a
+  code without a definition means it was renamed or retired and the citation
+  rotted. Record codes (`ADR-031`) are excluded — records expire, clauses do not.
+- Downward references: a doc points at a *deeper* doc (architecture -> module).
+  Readers of the shallow doc would have to fetch the deep one for a sentence the
+  deep doc already owns; the pointer belongs in the L1 index instead. Depth comes
+  from the path, not from a written table; L1 itself is exempt (it is the index).
 - Over-budget: soft line caps (L1 100 / L2 80 / L3 400; see DEFAULT_BUDGETS).
 - Scope: docs/.live when present (only allowlisted docs count as current);
   --all-docs ignores it and scans every docs/ file (migration / audit).
@@ -46,6 +54,24 @@ DEF_RE = re.compile(r"^\s*[-*]\s+\*\*([^*]+?)\*\*\s*[:：]\s*(.+)$")
 NUM_RE = re.compile(
     r"\b([A-Za-z_][A-Za-z0-9_.]{2,})\s*[:=]\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\b"
 )
+# Stable clause codes: defined either as a bolded table cell (`| **D-14** | ...`)
+# or as a numbered heading (`## E-1: ...`), cited anywhere as `D-14` / `E-1`.
+# Record codes (ADR-031) are deliberately not matched.
+CODE_DEF_RE = re.compile(r"\|\s*\*\*([A-Z]{1,3}-\d{1,3})\*\*\s*\|")
+CODE_DEF_HEAD_RE = re.compile(r"^\s{0,3}#{1,6}\s+([A-Z]{1,3}-\d{1,3})\b")
+CODE_REF_RE = re.compile(r"\b([A-Z]{1,3}-\d{1,3})\b")
+# Reference direction. Depth is derived from the path — there is no written level
+# table: 0 = project memory (the index, exempt), 1 = architecture / design /
+# system docs, 2 = module docs. A shallower doc citing a deeper one means the
+# sentence is placed too high; readers would have to fetch the deep doc.
+DOC_DEPTH_EXACT = {
+    "docs/architecture.md": 1, "docs/architecture.markdown": 1,
+    "docs/design-contract.md": 1, "docs/world.md": 1,
+    "docs/upgrade-system.md": 1, "docs/core-code.md": 1,
+    "docs/core-code.markdown": 1,
+}
+DOC_DEPTH_PREFIX = (("docs/modules/", 2),)
+DOC_REF_RE = re.compile(r"(?:\./)?docs/[A-Za-z0-9_./-]+")
 
 
 def is_param_name(name):
@@ -87,6 +113,16 @@ def budget_for(file_rel, override):
     for pattern, budget in DEFAULT_BUDGETS:
         if fnmatch.fnmatch(file_rel, pattern):
             return budget
+    return None
+
+
+def doc_depth(file_rel):
+    """Path-derived depth; None = not part of the chain (README, L1, records)."""
+    if file_rel in DOC_DEPTH_EXACT:
+        return DOC_DEPTH_EXACT[file_rel]
+    for prefix, depth in DOC_DEPTH_PREFIX:
+        if file_rel.startswith(prefix):
+            return depth
     return None
 
 
@@ -305,6 +341,46 @@ def main():
                 }
             )
 
+    # Stable clause codes may be cited across live docs, but every cited code
+    # must be defined somewhere: a dangling code means a rename or a retirement
+    # left a rotted citation behind.
+    code_defs = set()
+    code_lines = defaultdict(list)
+    for file_rel, text in all_texts.items():
+        for lineno, line in enumerate(text.splitlines(), 1):
+            m = CODE_DEF_RE.search(line) or CODE_DEF_HEAD_RE.match(line)
+            if m:
+                code_defs.add(m.group(1))
+            for m in CODE_REF_RE.finditer(line):
+                code_lines[m.group(1)].append({"file": file_rel, "line": lineno})
+    families = {code.split("-")[0] for code in code_defs}
+    for code, items in sorted(code_lines.items()):
+        family = code.split("-")[0]
+        if code in code_defs or family not in families or family == "ADR":
+            continue
+        warnings.append({"kind": "dangling-code", "code": code, "items": items})
+
+    # A doc may cite the docs its readers already load (shallower), never a
+    # deeper one: that sentence belongs in the deeper doc, not here.
+    for file_rel, text in all_texts.items():
+        src = doc_depth(file_rel)
+        if src is None:
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            for m in DOC_REF_RE.finditer(line):
+                target = m.group(0).lstrip("./")
+                depth = doc_depth(target)
+                if depth is None or depth <= src:
+                    continue
+                warnings.append(
+                    {
+                        "kind": "downward-ref",
+                        "file": file_rel,
+                        "line": lineno,
+                        "target": target,
+                    }
+                )
+
     # Line budgets: always-loaded and per-module docs have soft caps.
     if not args.no_budget:
         for file_rel, count in sorted(file_lines.items()):
@@ -365,6 +441,13 @@ def main():
         elif kind == "duplicate-alias":
             print("[duplicate-alias] {}: {}".format(
                 warning["alias"], ", ".join(warning["files"])))
+        elif kind == "dangling-code":
+            print("[dangling-code] {}: cited but never defined".format(warning["code"]))
+            for item in warning["items"]:
+                print("  {}:{}".format(item["file"], item["line"]))
+        elif kind == "downward-ref":
+            print("[downward-ref] {}:{} -> {} (points deeper; the index owns navigation)".format(
+                warning["file"], warning["line"], warning["target"]))
         elif kind == "over-budget":
             print("[over-budget] {}: {} lines > budget {}".format(
                 warning["file"], warning["lines"], warning["budget"]))

@@ -14,7 +14,7 @@
 | 对标代码 | `scripts/check-docs-sync.sh/.ps1` | 脚本 | commit | 代码动了、文档没动 |
 | 对标代码 | `last verified` SHA(可选) | 约定 | 批次 / 里程碑 | 文档基线过期提醒 |
 | 自洽 | `scripts/check-doc-refs.sh/.ps1` | 脚本 | 编辑后 / CI(可选) / 收尾 | 死链 / 占位符 / N2 缺验收 / 危险清单未填 / N2 模块缺失败语义 / 现状文档引记录 |
-| 自洽 | `scripts/check-consistency.py` | 脚本(警告) | 契约级变更 / 批次 | 重复定义 / 同名数值冲突 / 重复字面量 / 未登记术语定义 / 超行数预算 / 参数别名跨文档 / 单模块术语(可选) |
+| 自洽 | `scripts/check-consistency.py` | 脚本(警告) | 契约级变更 / 批次 | 重复定义 / 同名数值冲突 / 重复字面量 / 未登记术语定义 / 悬空条款代号 / 向下引用 / 超行数预算 / 参数别名跨文档 / 单模块术语(可选) |
 | 核心逻辑 | `scripts/run-n2-acceptance.py` | 脚本 | 改代码前 / 批次 | 验收命令执行结果;无 manifest 只列不跑 |
 | 可读性 | `scripts/lint-doc-structure.py` | 脚本(警告) | 编辑后 / 批次 | 段落过长 / 缺小标题 / 缺示例 |
 | 历史边界 | `check-doc-refs` 的「现状文档引记录」 | 脚本代理 | 编辑后 / CI(可选) / 收尾 | 现状文档引记录 |
@@ -34,7 +34,7 @@
 - **`check-code-refs.py`** —— 扫 `docs/` + L1 里的反引号 token;**记录类文档(`docs/decisions/`、`docs/reviews/`)不扫**(历史可以引用已删文件,那不是漂移);只把**已知路径前缀或文件扩展名**当路径,无斜杠 token 还必须是 ASCII(`父.h`/`邻.h` 是标识符,不是文件名)。跳过 fenced code block、HTML 注释、URL、占位符(`<…>`/`…`)、glob、裸扩展名(`.sh`)与 L1 文件名(`AGENTS.md` / `CLAUDE.md` 等,避免把备选宿主名当缺失文件);按需创建的 `docs/architecture.md|.markdown` / `glossary.*` / `core-code.*` / `scaffolds/` / `modules/…` / `decisions/…` / `reviews/…` 与 `task_plan.md` 缺失时标 `pending-doc`,不算错误。
 - **`run-n2-acceptance.py`** —— 读 N2 验收 manifest,列出或执行验收命令。**默认只列不跑并标「未复跑」**;`--run` 才执行 manifest 里显式列出的命令;`--strict` 只在**无 manifest 的发现模式**下要求每条 N2 都有 `**验收**` 行。
 - **`check-consistency.py`** —— 启发式警告:同一术语在 `docs/` 多处定义、同名数值在**内联代码 / 表格**里出现不同值、非 glossary 的术语定义未登记。**记录类文档不扫**;定义只认"定义语境"小节(`是什么 / 定义 / 术语 / 概念`)或无小标题的文件——`[为什么]` / `[不变量]` 的粗体领起句是论述,不是定义。L1 的强调 bullet 不算术语定义;glossary 自己的唯一一条不算重复。只作警告,不进 pre-commit 门禁。**扫描范围:** 有 `docs/.live` 时只扫白名单 + L1;`--all-docs` 才扫全库(迁移 / 对账)。白名单列了不存在的文件 → `live-missing` 警告。
-  另有四项(2026-10-25 加):① **重复字面量**——同一 `key: value` / `key=value` 在 ≥2 个活文档(只扫内联代码 / 表格);② **超行数预算**——默认值见脚本 `DEFAULT_BUDGETS`;`--max-lines` 全局覆盖,`--no-budget` 关闭;只警告,默认不接 CI,`--strict` 下计入退出码;③ **参数别名跨文档**——术语表里反引号的别名(如 `profCoast`)出现在 ≥2 个活文档 → 提示唯一正文;`--ignore-alias` 排除;④ **单模块术语**(`--glossary-locality`,默认关)——术语表里的词只在一个模块出现 ≥N 次(`--min-term-mentions`,默认 3)→ 提示下沉;它是**候选清单**,粗判,必须人工复核。逐槽参数(`amp` / `wl`)的数值本来就会变,用 `--ignore` 排除。
+  另有五项(2026-10-25 / 10-31 加):① **重复字面量**——同一 `key: value` / `key=value` 在 ≥2 个活文档(只扫内联代码 / 表格);② **超行数预算**——默认值见脚本 `DEFAULT_BUDGETS`;`--max-lines` 全局覆盖,`--no-budget` 关闭;只警告,默认不接 CI,`--strict` 下计入退出码;③ **参数别名跨文档**——术语表里反引号的别名(如 `profCoast`)出现在 ≥2 个活文档 → 提示唯一正文;`--ignore-alias` 排除;④ **单模块术语**(`--glossary-locality`,默认关)——术语表里的词只在一个模块出现 ≥N 次(`--min-term-mentions`,默认 3)→ 提示下沉;它是**候选清单**,粗判,必须人工复核;⑤ **悬空条款代号**——引用了 `D-14` / `A-1` / `E-4` 这类稳定代号,但没有任何活文档定义它(定义 = 表格首格 `| **D-14** |` 或标题 `## E-1:`)→ 改名 / 退役后没改引用;记录代号(`ADR-031`)不在此列;⑥ **向下引用**——高层文档(架构 / 设计指挥)正文里指向模块文档 → 那句话该挪到模块里,导航归 L1 索引;层级由路径推,不写进文档。逐槽参数(`amp` / `wl`)的数值本来就会变,用 `--ignore` 排除。
 - **`lint-doc-structure.py`** —— 结构警告:段落过长(默认 >20 行)、没有小标题、没有示例 / 表格 / 代码块 / 列表。只作警告。
 - **`_doc_common.py`** —— **共享模块**:上面这些 Python 检查器都 import 它,必须与它们同拷;不要单独漏掉。
 

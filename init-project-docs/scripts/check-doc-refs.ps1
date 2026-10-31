@@ -139,8 +139,10 @@ foreach ($f in $targets) {
 }
 
 # 4) 现状文档里出现指向"记录类文档"的引用
-#    规则(E1):指针只解释文档,不解释句子。活文档里唯一允许出现记录类目录的地方,是入口文档的
-#    「活文档索引」那一张表(不在本扫描面);正文里零容忍——依据、`> 出处：` 行、编号都算。
+#    规则(E-1):引用只指稳定代号,不指位置。条款代号(`D-14` / `A-1` / `E-4`)可以引;
+#    记录类(ADR / `docs/decisions/` / `docs/reviews/`)不引——记录会过期,条款不会。
+#    活文档里唯一允许出现记录类目录的地方,是入口文档的「活文档索引」那一张表(不在本扫描面);
+#    正文里零容忍——依据、`> 出处：` 行、记录编号都算。
 #    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
 $liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/glossary.md','docs/glossary.markdown')
 foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
@@ -156,14 +158,14 @@ foreach ($f in $liveDocs) {
   foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释:引导注释里的示例引用不算正文
     $ln++
     if ($line -match $refPat) {
-      Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(指针只解释文档、不解释句子;要理由/被拒方案,从 L1 的活文档索引进)"
+      Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(记录会过期,条款不会;引条款请用稳定代号,如 D-14;要理由 / 被拒方案,从 L1 的活文档索引进)"
       $found = $true
     }
   }
 }
 
 # 4b) 入口文档(L1)里出现指向**具体** ADR 条目的引用
-#    规则(E1):L1 的活文档索引可以写"为什么这么定 / 被拒方案 → docs/decisions/"(目录级),但不得点条目。
+#    规则(E-1):L1 的活文档索引可以写"为什么这么定 / 被拒方案 → docs/decisions/"(目录级),但不得点条目。
 #    例外只有一个:`adr-000-template` 这类模板文件名不是决策(enumerate 时跳过 000)。
 #    按项目改:L1 的宿主文件名(全部存在才查)。
 $l1Files = @('AGENTS.md','CLAUDE.md','.cursor/rules/project.mdc','.windsurfrules','.github/copilot-instructions.md')

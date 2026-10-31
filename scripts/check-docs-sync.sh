@@ -11,7 +11,7 @@
 #
 # ── skills-repo 特化副本(源:init-project-docs/scripts/check-docs-sync.sh)──
 # 区别仅本配置块:代码 = 各 skill 的 scripts/ 下脚本;文档 = templates|references/ + 各 SKILL.md 与仓库级 AGENTS.md(L1)。
-# 源脚本更新(如 bug 修复)需手动同步本副本——E4:两套并存须注明区别。
+# 源脚本更新(如 bug 修复)需手动同步本副本——E-4:两套并存须注明区别。
 # 已接本仓库 .git/hooks/pre-commit(--staged --strict);check-doc-refs 不接(本仓库无 docs/)。
 CODE_GLOB='/scripts/.*\.(sh|ps1|py)$'
 DOC_GLOB='/(templates|references)/'

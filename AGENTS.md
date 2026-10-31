@@ -1,7 +1,7 @@
 # AGENTS.md — skills-repo
 
 > **定位**:本仓库的 repo 级 L1 记忆文件(Command Code 宿主加载;若将来接第二宿主,主文件仍为本文件,另一份只放指针,不复制内容)。
-> **边界**:方法论本体(三时间轴 / 三段式 / 4 层 / novelty / 铁律 / E1–E7)**不在本文件复述**——唯一归属是 `init-project-docs` skill;本文件只承载 **repo 级增量**。
+> **边界**:方法论本体(三时间轴 / 三段式 / 4 层 / novelty / 铁律 / E-1–E-7)**不在本文件复述**——唯一归属是 `init-project-docs` skill;本文件只承载 **repo 级增量**。
 > **状态**:2026-10-19 由 agent 按证据起草;标 `【推断待确认】` 的行待作者拍板。
 
 ## [是什么]
@@ -33,7 +33,7 @@
 
 ## [为什么]
 
-- 单源 + junction:多份副本必然漂移(与"文档同源"同一原则,见 init-project-docs 的 E1)。
+- 单源 + junction:多份副本必然漂移(与"文档同源"同一原则,见 init-project-docs 的 E-1)。
 - 门禁脚本只查"有没有动过"、不判对错:判对错交给独立复核(teach-back);检查器只做确定性对账。
 
 ## [不变量](repo 级)
@@ -77,7 +77,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-ps1-bom.ps1  #
 
 ## 指针
 
-- 方法论本体 + teach-back 流程:`init-project-docs` skill(`references/evolution-rules.md` 是 E1–E7 唯一正文归属)。
+- 方法论本体 + teach-back 流程:`init-project-docs` skill(`references/evolution-rules.md` 是 E-1–E-7 唯一正文归属)。
 - 术语:`init-project-docs` 的自有词(历史 / 当下 / 未来、契约、对账 / 复核、镜头等)以 `init-project-docs/references/skill-glossary.md` 为准;与通用义冲突时按该表。
 - skill 设计范式:`seeding-skills`。
 - 各 skill 行为契约:对应 `SKILL.md`。

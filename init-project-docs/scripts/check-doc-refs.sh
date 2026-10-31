@@ -142,8 +142,10 @@ for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/arc
 done
 
 # 4) 现状文档里出现指向"记录类文档"的引用
-#    规则(E1):指针只解释文档,不解释句子。活文档里唯一允许出现记录类目录的地方,是入口文档的
-#    「活文档索引」那一张表(不在本扫描面);正文里零容忍——依据、`> 出处：` 行、编号都算。
+#    规则(E-1):引用只指稳定代号,不指位置。条款代号(`D-14` / `A-1` / `E-4`)可以引;
+#    记录类(ADR / `docs/decisions/` / `docs/reviews/`)不引——记录会过期,条款不会。
+#    活文档里唯一允许出现记录类目录的地方,是入口文档的「活文档索引」那一张表(不在本扫描面);
+#    正文里零容忍——依据、`> 出处：` 行、记录编号都算。
 #    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
 LIVE_DOCS="docs/architecture.md docs/architecture.markdown docs/glossary.md docs/glossary.markdown"
 REF_PAT='docs/decisions/|docs/reviews/|ADR-[0-9]{3}|adr-[0-9]{3}-'
@@ -154,14 +156,14 @@ for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md 
   LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '{printf "%d:%s\n", NR, $0}' | grep -iE "$REF_PAT" 2>/dev/null)
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
-      echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(指针只解释文档、不解释句子;要理由/被拒方案,从 L1 的活文档索引进)"
+      echo "[live-doc-refs] $f:$l: 现状类文档引了记录类文档(记录会过期,条款不会;引条款请用稳定代号,如 D-14;要理由/被拒方案,从 L1 的活文档索引进)"
     done
     found=1
   fi
 done
 
 # 4b) 入口文档(L1)里出现指向**具体** ADR 条目的引用
-#    规则(E1):L1 的活文档索引可以写"为什么这么定 / 被拒方案 → docs/decisions/"(目录级),但不得点条目。
+#    规则(E-1):L1 的活文档索引可以写"为什么这么定 / 被拒方案 → docs/decisions/"(目录级),但不得点条目。
 #    例外只有一个:`adr-000-template` 这类模板文件名不是决策(跳过 000)。
 #    按项目改:L1 的宿主文件名(存在的才查)。
 for f in AGENTS.md CLAUDE.md .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md; do

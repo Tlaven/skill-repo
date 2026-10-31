@@ -450,5 +450,78 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
 
 
+    def test_check_consistency_dangling_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "contract.md",
+                "| # | rule |\n|---|---|\n| **D-14** | first look |\n",
+            )
+            write(
+                root / "docs" / "plan.md",
+                "依据 D-14 与 D-17；记录见 ADR-031。\n",
+            )
+            proc = run_script("check-consistency.py", "--root", ".", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("dangling-code", proc.stdout)
+            self.assertIn("D-17", proc.stdout)
+            self.assertNotIn("D-14:", proc.stdout)
+            self.assertNotIn("ADR-031", proc.stdout)
+
+    def test_check_consistency_code_defined_by_heading(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "rules.md",
+                "## E-1: 陈述退役\n\n## E-2: 方向型\n",
+            )
+            write(root / "docs" / "plan.md", "按 E-1 与 E-2 执行。\n")
+            proc = run_script("check-consistency.py", "--root", ".", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("dangling-code", proc.stdout)
+
+    def test_check_consistency_downward_reference(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / "world.md", "细节 → `docs/modules/car.md`。\n")
+            write(
+                root / "docs" / "architecture.md",
+                "细节 → `docs/modules/car.md`。\n整个目录 → `docs/modules/`。\n",
+            )
+            write(root / "docs" / "modules" / "car.md", "收法 → `docs/architecture.md`。\n")
+            write(root / "docs" / "modules" / "run.md", "机制 → `docs/modules/car.md`。\n")
+            write(root / "AGENTS.md", "| 模块 | `docs/modules/car.md` |\n")
+            proc = run_script("check-consistency.py", "--root", ".", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            out = proc.stdout
+            self.assertIn("[downward-ref] docs/world.md:1 -> docs/modules/car.md", out)
+            self.assertIn("[downward-ref] docs/architecture.md:1 -> docs/modules/car.md", out)
+            self.assertIn("[downward-ref] docs/architecture.md:2 -> docs/modules/", out)
+            self.assertNotIn("docs/modules/car.md:1 ->", out)
+            self.assertNotIn("docs/modules/run.md:1 ->", out)  # same level is allowed
+            self.assertNotIn("AGENTS.md:1 ->", out)
+
+
+class SingleHomeTests(unittest.TestCase):
+    """协议本体自己的规矩：E-1–E-7 只在 references/evolution-rules.md 写一次。
+
+    2026-10-31 实测：'一处正文'这条被写成 6 遍，其中两处互相打脸
+    （methodology 说"别处只导航"，evolution-rules 说"别处连指针都不写"）。
+    下面这几个说法是 E-1–E-7 独有的；出现在 methodology 里 = 开始复述。
+    """
+
+    E_ONLY = ("三条出路", "记录寿命", "单一事实来源", "只在一个地方写", "唯一正文归属处")
+
+    def test_e_rules_are_not_restated_in_methodology(self):
+        text = (ROOT / "templates" / "methodology.md").read_text(encoding="utf-8")
+        hits = [m for m in self.E_ONLY if m in text]
+        self.assertEqual(hits, [], "methodology.md 复述了演进规则：{}".format(hits))
+
+    def test_e_only_markers_still_have_a_home(self):
+        text = (ROOT / "references" / "evolution-rules.md").read_text(encoding="utf-8")
+        for marker in ("三条出路", "记录寿命", "单一事实来源"):
+            self.assertIn(marker, text, "演进规则丢了自己的正文：{}".format(marker))
+
+
 if __name__ == "__main__":
     unittest.main()

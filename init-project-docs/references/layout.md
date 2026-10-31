@@ -28,7 +28,7 @@
   ├── decisions-readme.md            # 待填件:复制到 docs/decisions/README.md 再填
   ├── core-code.md                   # 待填件:复制到 docs/core-code.md 再填
   ├── architecture.md                # 待填件:按需复制到 docs/architecture.md 再填
-  ├── evolution-rules.md             # 就地读件:E1–E7(项目 L1 的活文档索引里列出)
+  ├── evolution-rules.md             # 就地读件:E-1–E-7(项目 L1 的活文档索引里列出)
   ├── temporal-model.md              # 就地读件:三时间轴 / 四类路由 / 当下 DoD
   ├── review-panel.md                # 就地读件:当下层多镜复核
   ├── verifying-n2.md                # 就地读件:怎么给 N2 造验收
@@ -55,7 +55,7 @@
 | `templates/decisions-readme.md` | 待填件:ADR 读法与格式约定 | **立即**(Step 2A) | `docs-templates/decisions-readme.md` |
 | `templates/adr-template.md` | 待填件:单条 ADR 模板(frontmatter 状态 / 关系) | **立即**(Step 2A) | `docs-templates/adr-template.md` |
 | `references/adr-example.md` | 就地读件:填好的 ADR 示例(**不是决策**) | 写 ADR 时 | `docs-templates/adr-example.md` |
-| `references/evolution-rules.md` | 就地读件:E1–E7 | **立即**(Step 2A) | `docs-templates/evolution-rules.md` |
+| `references/evolution-rules.md` | 就地读件:E-1–E-7 | **立即**(Step 2A) | `docs-templates/evolution-rules.md` |
 | `references/temporal-model.md` | 就地读件:三时间轴 / 四类路由 / 当下 DoD | **立即**(Step 2A) | `docs-templates/temporal-model.md` |
 | `references/review-panel.md` | 就地读件:多镜复核(镜头 / 触发 / 回路) | **立即**(Step 2A) | `docs-templates/review-panel.md` |
 | `references/verifying-n2.md` | 就地读件:N2 验收手段 / 反模式 | **立即**(Step 2A) | `docs-templates/verifying-n2.md` |
