@@ -15,8 +15,6 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 
 ## 定位
 
-> **前提:人至少给出功能和可验收的行为**(连需求和验收都交给 AI 起草的项目不在范围内——见 Step 1)。
-
 **关键边界:** 不替用户写内容——但允许"从代码 / 作者已有的文档 / git 推断草稿 + 标『推断,待确认』 + 标来源";禁止凭空编造。
 
 **没证据就给方案,不给结论**——只适用于"为什么 / 不变量(阈值、替代指标)/ 方向与计划",不适用于"是什么"这种事实:新领域没有证据时,给 ≥2 个方案、各自标"待你选"并写清代价,由用户选或否;否掉的理由记进决策记录。**方案没被接受前一律留在开放问题里**:接受后写进现状(不变量 / 用词)或决策记录。不能悄悄转正。
@@ -34,12 +32,6 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 1. **先把词定清楚**:听到专有名词 / 易混词,追问并定义:跨模块的写进 `docs/glossary.md`,只在一个模块里用的写在该模块;一个词只定义一次。模糊词("优化 / 合理处理 / 相关逻辑")= 没有可判定的指称 → 追问"具体指什么?给我两个互斥解释让我选"。非功能 / 主观词也要落地(可测的替代指标 / 钉住可观测的不变);审美说不出阈值时允许"替代指标 + 备选",但不许原样留形容词。详见 `templates/glossary.md` 与 `references/verifying-nonfunctional.md`。
 2. **把逻辑分档**:N0 通用 / N1 项目特有 / **N2 AI 没见过**。N2 要写到"步骤级说明 + 危险实现清单 + 精确例子 + 能跑的验收 + 失败时是什么样";N0 / N1 不必。详见 `references/verifying-n2.md`。
 3. **按需复核**:命中 Step 3.5 的信号时,派独立 agent 或跑多视角复核;"不通过"→ 改文档;"要人定"→ 把没定的事交用户。
-
-## 何时使用 / 不适合
-
-**适合:** 新项目 / 立项;要写 `CLAUDE.md` / `AGENTS.md`;已有项目补 L1;已有 L1 但想引入这套做法;项目结构变了要重建;含 N2 核心逻辑要写到能实现。
-
-**不适合:** 已有完整 L1 且用户没说要改(不推销);单次任务 / 一次性脚本;用户只想快速生成代码速查。
 
 ## 规则靠什么生效
 
@@ -67,7 +59,7 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 1. 复制 `templates/l1-memory.md` → 项目根,名字按 Step 1 定的。
 2. 复制 `templates/methodology.md` → `docs-templates/methodology.md`;再按 `references/layout.md` 的落点表复制这次用得到的模板和参考件。
 3. 建 `task_plan.md`(放方向和计划);第一份当前维护的文档出现时写 `docs/.live`(一行一个路径,相对 `docs/`)。
-4. 然后进 Step 3 对话;`docs/` 里当前维护的文档按需创建(跨模块的词 → `docs/glossary.md`;L2 → `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`(在议的决策;定下来后把理由写回现状再移走),并把 `decisions/` / `reviews/` / `archive/` / `experiment/` 写进 `docs/.ignore`;核对记录 → `docs/reviews/`(按核对周期成批移走);想看核心怎么串起来 → `docs/core-analysis.md`(L4,可选、没人引用))。
+4. 然后进 Step 3 对话;`docs/` 里当前维护的文档按需创建(跨模块的词 → `docs/glossary.md`;L2 → `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`;核对记录 → `docs/reviews/`;想看核心怎么串起来 → `docs/core-analysis.md`),并把 `decisions/` / `reviews/` / `archive/` / `experiment/` 写进 `docs/.ignore`。
 5. 把本 skill 的 `scripts/` **整个目录**拷进项目 `<repo>/scripts/`(含共用的 `_doc_common.py`);用户不接脚本,就在 L1 标「scripts: 没拷进来」,后面相关命令按"这次没跑"处理。
 
 ### Step 2B: 合并模式——已有 L1
