@@ -66,5 +66,4 @@ date: YYYY-MM-DD
 同一决策路径内的修正（参数 / 实现方式 / 边界补强）→ 在文末按时间追加「补充 N」小节：
 **不改原文、不新建 ADR**，状态改成 `accepted(修订)`；每条写：日期 + 触发（谁 / 什么反馈）+ 改动 + 被拒做法（如有）+ 验证。
 **换掉被选方案本身、或引入第二套并行机制 → 另开新 ADR**，本文件 frontmatter 只改 `status: superseded`，并把本文件退役（移出工作区，git 保留）；继任记录写 `supersedes: ADR-YYY`。
-（现状陈述不得引用 ADR，见 evolution-rules E-1）
 -->
