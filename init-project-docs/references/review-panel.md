@@ -56,7 +56,7 @@
 - **里程碑 / 发布**:不因为"里程碑"本身开 panel;按四信号与是否换层选档。
 - **按文件选镜**（标准 / 全档内）:`glossary` → 术语 + 去模糊;`design-contract` → 自洽 + 术语;`architecture` / `modules` → 自洽 + 代码对标（该文件里有 N2 变更时加 N2 镜）;L1 → 自洽 + 术语;`core-analysis` → 不在映射内(阅读视图,不触发复核)。
 
-> 每个 commit 都跑全 panel,成本会让人直接绕过它——这正是 skill 侧 `RESEARCH-BACKLOG.md`「给指针发免检通行证」那条记录过的失败模式。
+> 每个 commit 都跑全 panel,成本会让人直接绕过它——这正是 skill 侧校准记录里「给指针发免检通行证」那条记录的失败模式。
 
 ## 四、派发
 
