@@ -19,25 +19,30 @@ $files = @(Get-ChildItem -Path $Root -Recurse -File -Filter *.ps1 -ErrorAction S
 
 $rows = @()
 $missing = 0
+$doubled = 0
 foreach ($f in $files) {
   $hasBom = $false
+  $doubleBom = $false
   $fs = [System.IO.File]::OpenRead($f.FullName)
   try {
-    $buf = New-Object byte[] 3
-    $n = $fs.Read($buf, 0, 3)
-    $hasBom = ($n -eq 3 -and $buf[0] -eq 0xEF -and $buf[1] -eq 0xBB -and $buf[2] -eq 0xBF)
+    $buf = New-Object byte[] 6
+    $n = $fs.Read($buf, 0, 6)
+    $hasBom = ($n -ge 3 -and $buf[0] -eq 0xEF -and $buf[1] -eq 0xBB -and $buf[2] -eq 0xBF)
+    # 双 BOM:PowerShell 只吃掉第一个,第二个变成行首字符 → '# : The term ... is not recognized'
+    $doubleBom = ($n -ge 6 -and $buf[3] -eq 0xEF -and $buf[4] -eq 0xBB -and $buf[5] -eq 0xBF)
   } finally {
     $fs.Dispose()
   }
   if (-not $hasBom) { $missing++ }
+  if ($doubleBom) { $doubled++ }
   $rows += [pscustomobject]@{
     Path   = $f.FullName.Substring($Root.Length).TrimStart('\')
-    Status = if ($hasBom) { 'OK' } else { 'MISSING' }
+    Status = if ($doubleBom) { 'DOUBLE-BOM' } elseif ($hasBom) { 'OK' } else { 'MISSING' }
   }
 }
 
 $rows | Format-Table -AutoSize
-Write-Output ("合计: 文件={0} 缺BOM={1}" -f $files.Count, $missing)
+Write-Output ("合计: 文件={0} 缺BOM={1} 双BOM={2}" -f $files.Count, $missing, $doubled)
 
-if ($Strict -and $missing -gt 0) { exit 1 }
+if ($Strict -and ($missing -gt 0 -or $doubled -gt 0)) { exit 1 }
 exit 0

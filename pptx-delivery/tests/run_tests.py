@@ -126,12 +126,15 @@ def main():
     ap.add_argument("--which", choices=["all", "controls", "e2e"], default="all")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--no-render", action="store_true")
+    ap.add_argument("--no-evidence", action="store_true",
+                    help="do not write tests/evidence/ (CI / eval runners that must leave the tree clean)")
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
-    EVID.mkdir(parents=True, exist_ok=True)
     (OUT / "reports").mkdir(parents=True, exist_ok=True)
-    (EVID / "reports").mkdir(parents=True, exist_ok=True)
+    if not args.no_evidence:
+        EVID.mkdir(parents=True, exist_ok=True)
+        (EVID / "reports").mkdir(parents=True, exist_ok=True)
 
     expected = json.loads((TESTS / "expected.json").read_text(encoding="utf-8"))
     results = {}
@@ -166,9 +169,10 @@ def main():
         qa(deck_path, pdf, json_path)
         report = json.loads(json_path.read_text(encoding="utf-8"))
         # copy report into evidence
-        (EVID / "reports" / f"{deck}.json").write_text(
-            json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        if not args.no_evidence:
+            (EVID / "reports" / f"{deck}.json").write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
         spec = expected["decks"].get(deck)
         if spec is not None:
             results[deck] = check_expectation(deck, report, spec)
@@ -185,8 +189,9 @@ def main():
         all_ok = all_ok and ok
         log(f"[{'PASS' if ok else 'FAIL'}] {deck}: " + "; ".join(notes))
 
-    (EVID / "run.log").write_text("\n".join(TRANSCRIPT) + "\n", encoding="utf-8")
-    log(f"evidence: {EVID / 'run.log'}")
+    if not args.no_evidence:
+        (EVID / "run.log").write_text("\n".join(TRANSCRIPT) + "\n", encoding="utf-8")
+        log(f"evidence: {EVID / 'run.log'}")
 
     return 0 if all_ok else 1
 

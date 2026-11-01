@@ -304,6 +304,7 @@ On Windows, `soffice.py` auto-detects common install paths (`Program Files\Libre
 - **档位:** acceptance（交付级）
 - **一键复跑:** `python tests/run_tests.py`（8 组负控 + 干净基线 + 端到端；证据落 `tests/evidence/`）
 - **免渲染自测:** `python tests/c5_selftest.py`、`python tests/c7_selftest.py`（检查器自身的红/绿验证——先红一次原则）
+- **钩子 / CI 子集:** `powershell -NoProfile -ExecutionPolicy Bypass -File eval/run.ps1`（9 组负控 + 干净基线 + C5/C7 自测；不重建、不渲染、不写 `tests/evidence/`，跑完工作区不变）
 - **交付清单:** [acceptance-checklist.md](acceptance-checklist.md)（分层检查 + 目检 + 签字项）
 - **独立复核留档:** `docs/reviews/2026-10-19-cold-verification.md`（冷眼复核记录）
 - **判据:** META=PASS、负控全中、干净基线 0 error / 0 flag；改动后必须同套件复跑（比较绑版本）。

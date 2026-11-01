@@ -46,7 +46,7 @@
 5. **证据标签**:新增断言 / 阈值标【实测:位置】/【引用:来源】/【假设待测】;假设待测占比尽量 <30%。【实测:pptx-delivery 落地;是否升格全仓约定【推断待确认】】
 6. **布局跟随项目**:各 skill 目录形态自定(flat / references / scripts / core……),不强制统一。【实测:三种形态并存】
 7. **本地物料不入库**:校准 / 盲测等物料放 `<skill>/.calibration/` 并在 `.gitignore` 声明(样板:`init-project-docs/.calibration/`)。【实测】
-8. **`.ps1` 必须 UTF-8 带 BOM**:Windows PowerShell 5.1 对无 BOM 文件按 ANSI(GBK)解码,中文字符串会被撕裂成语法错。【实测:skills-eval 首跑解析失败,补 BOM 后通过;同日全仓扫描并修正 `render_slides.ps1`】
+8. **`.ps1` 必须 UTF-8 带 BOM**:Windows PowerShell 5.1 对无 BOM 文件按 ANSI(GBK)解码,中文字符串会被撕裂成语法错。【实测:skills-eval 首跑解析失败,补 BOM 后通过;同日全仓扫描并修正 `render_slides.ps1`】**BOM 只能有一个**:转码脚本容易写成"读进来当作字符、再以 utf-8-sig 写出",结果是 `EF BB BF EF BB BF`——PowerShell 只吃掉第一个,第二个变成行首字符,报 `# : The term ... is not recognized`;`check-ps1-bom.ps1` 已把双 BOM 记为 `DOUBLE-BOM` 并按失败处理。【实测:pptx-delivery/eval/run.ps1 首版,2026-11-01】
 
 ## 维护 checklist(新增 / 修改 skill 时)
 
