@@ -54,6 +54,6 @@ v0.8 边通过 class.edges 静态字面量声明 + attrs 里的 null 引用槽�
 - 文档/CLAUDE.md 要大改(从 class 模型迁到实例模型)
 
 ### 需要跟进的
-- 旧文档(docs/node-interaction-redesign.md)标注"已被 v0.9 部分取代"
+- 旧文档(docs/node-interaction-redesign.md)按 E-1 **改写或删除**与 v0.9 冲突的段落(不标注"已被取代",不留旧表述)
 - bootstrap 教学示例重写
 ```

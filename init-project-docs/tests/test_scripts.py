@@ -59,6 +59,21 @@ class ScriptTests(unittest.TestCase):
             proc = run_script("check-code-refs.py", "--root", ".", "--strict", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
 
+    def test_step2a_minimal_project_is_clean(self):
+        """Step 2A 落盘即首跑必须是绿的:L1 模板 + methodology + task_plan + 空 .live."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", (ROOT / "templates" / "l1-memory.md").read_text(encoding="utf-8"))
+            write(
+                root / "docs-templates" / "methodology.md",
+                (ROOT / "templates" / "methodology.md").read_text(encoding="utf-8"),
+            )
+            write(root / "task_plan.md", "# plan\n")
+            write(root / "docs" / ".live", "")
+            proc = run_script("check-code-refs.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("[missing-ref]", proc.stdout)
+
     def test_cursor_l1_is_scanned(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -82,7 +97,8 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertIn("NOT executed", proc.stdout)
             self.assertIn("未复跑", proc.stdout)
-            self.assertNotIn("architecture.md", proc.stdout)
+            self.assertIn("architecture.md", proc.stdout)  # L2 现在是 N2 家
+            self.assertNotIn("core-code.md", proc.stdout)  # L4 是阅读视图,不扫
 
             proc = run_script("run-n2-acceptance.py", "--root", ".", "--json", "report.json", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
@@ -203,11 +219,19 @@ class ScriptTests(unittest.TestCase):
             self.assertNotIn("Widget", proc.stdout)
             self.assertNotIn("WhyThing", proc.stdout)
 
-    def test_check_consistency_over_budget(self):
+    def test_check_consistency_no_default_budget(self):
+        """行数预算没有内置默认值:不传 --max-lines 就只警告不报超预算。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write(root / "AGENTS.md", "\n".join("line" for _ in range(260)) + "\n")
             proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("[over-budget]", proc.stdout)
+
+            proc = run_script(
+                "check-consistency.py", "--root", ".", "--strict", "--max-lines", "100",
+                cwd=root,
+            )
             self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
             self.assertIn("[over-budget] AGENTS.md", proc.stdout)
 
@@ -354,24 +378,26 @@ class ScriptTests(unittest.TestCase):
             )
             write(root / "docs" / "design-contract.md", "# Contract\n\nN2: §3 重试语义\n")
             write(root / "docs" / "modules" / "fenced.md", "# Fenced\n\n```\nnovelty=N2\n```\n")
-            # N2 五件套的家：缺验收应报
+            # N2 五件套的家：缺验收应报(L2)
             write(
-                root / "docs" / "core-code.md",
-                "# Core\n\nnovelty=N2\n\n"
+                root / "docs" / "architecture.md",
+                "# Arch\n\nnovelty=N2\n\n"
                 "### 危险实现清单\n\n"
                 "| # | 最可能被写成的样子 | 为什么错 | 由谁挡住 |\n"
                 "|---|---|---|---|\n| 1 | x | y | z |\n",
             )
+            # 狗窝: L4 不再是家,写了也不该被扫
+            write(root / "docs" / "core-code.md", "# Core\n\nnovelty=N2\n\nNo acceptance.\n")
             proc = subprocess.run(
                 [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
                  "-File", str(SCRIPTS / "check-doc-refs.ps1")],
                 cwd=str(root), capture_output=True, text=True,
                 encoding="utf-8", errors="replace",
             )
-            self.assertNotIn("architecture.md", proc.stdout)
             self.assertNotIn("design-contract.md", proc.stdout)
             self.assertNotIn("fenced.md", proc.stdout)
-            self.assertIn("core-code.md", proc.stdout)
+            self.assertNotIn("core-code.md", proc.stdout)
+            self.assertIn("architecture.md", proc.stdout)
             self.assertIn("n2-missing-verification", proc.stdout)
 
     def test_check_doc_refs_provenance_line_is_flagged_ps1(self):
@@ -549,7 +575,8 @@ class ScriptTests(unittest.TestCase):
             self.skipTest("bash not available")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            write(root / "docs" / "core-code.md", "novelty=N2\n\n这一段没有可跑验收。\n")
+            write(root / "docs" / "architecture.md", "novelty=N2\n\n这一段没有可跑验收。\n")
+            write(root / "docs" / "core-code.md", "novelty=N2\n\nL4 是阅读视图,不该被扫。\n")
             write(root / "docs" / "modules" / "fenced.md", "# F\n\n```\nnovelty=N2\n```\n")
             proc = subprocess.run(
                 [bash, str(SCRIPTS / "check-doc-refs.sh").replace("\\", "/")],
@@ -560,7 +587,8 @@ class ScriptTests(unittest.TestCase):
                 errors="replace",
             )
             self.assertIn("n2-missing-verification", proc.stdout)
-            self.assertIn("docs/core-code.md", proc.stdout)
+            self.assertIn("docs/architecture.md", proc.stdout)
+            self.assertNotIn("core-code.md", proc.stdout)
             self.assertNotIn("fenced.md", proc.stdout)
 
 

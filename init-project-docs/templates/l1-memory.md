@@ -12,7 +12,7 @@
 > | Windsurf | `.windsurfrules` |
 > | GitHub Copilot | `.github/copilot-instructions.md` |
 >
-> **预算:** 行数是软预算，只警告、不阻断；超了先合并，或把细节移到活文档。
+> **预算:** 行数没有内置标准——多少行算过写是本项目自己的裁量;超了先合并，或把细节移到活文档。
 > **活文档清单:** `docs/.live`(一行一个路径);没列进去的 `docs/` 文档按历史 / 参考处理,不进日常加载。
 > **最后验证:** `Last verified: <commit SHA>`(可选,一行)。
 > **不写:** 日期、文档版本号、变更史、旧状态。
@@ -46,11 +46,12 @@
 
 | 想知道 | 去哪 |
 |---|---|
-| 现在是什么 | 当前构建手册(如 `README.md` / `game/README.md`) |
+| 现在是什么 | 当前构建手册（填实际路径,别留占位） |
 | 设计约束 | `docs/design-contract.md`(若有) |
 | 接下来做什么 | `task_plan.md` |
 | 为什么这么定 / 被拒方案 | 仍成立的理由看各层 `[为什么]`;完整过程 → `docs/decisions/`(工作台,按需;稳定后退役) |
-| 核心分析 / N2 五件套 | `docs/core-code.md`（若有；L4 核心分析，不被正文引用） |
+| 跨模块 N2 的规格 | `docs/architecture.md` 的「N2 单元规格」节（一个单元一节） |
+| 核心分析（可选） | `docs/core-code.md`（若有；L4 阅读视图，不被引用、不承载规格） |
 | 术语 | `docs/glossary.md` |
 | 方法论 / 铁律 / 加载表 | 方法论就地读件（`docs-templates/methodology.md` 或 `docs/templates/methodology.md`） |
 

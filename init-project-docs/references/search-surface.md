@@ -9,7 +9,7 @@
 | 层 | 机制 | 覆盖 | 失效场合 |
 |---|---|---|---|
 | **检索** | `docs/.ignore` 写 `decisions/` / `reviews/` / `archive/` / `experiment/`;`.vscode/settings.json` 的 `search.exclude` | rg / Claude Code / OpenCode / VS Code / Cursor | `git grep`、`grep -r`、任何不读这两个配置的工具 |
-| **命中** | 记录标题下的状态横幅 | 所有工具,前提是文件被打开 | 只读匹配行、不打开文件 |
+| **命中** | 被撞见时读 frontmatter 的 `status`(标题下不挂横幅——ADR 模板明令禁止在正文复述状态) | 所有工具,前提是文件被打开 | 只读匹配行、不打开文件 |
 | **解释** | L1 一行:命中 `docs/decisions` / `docs/reviews` 时那是理由,不是规则 | 所有工具 | L1 没加载(子 agent / 只喂了片段) |
 
 **只有第一层能改变"搜到什么"。** 目录名、`archive/` 的位置、另外写一份索引都改不了 grep 的结果——实测:把文件移进 `archive/`,`rg 关键词 .` 照样命中,目录对内容搜索没有任何意义。
@@ -53,6 +53,6 @@ experiment/
 
 ## 残留(只针对最小方案)
 
-不排 `docs/decisions/` 时,现役 ADR 正文里提到已退役的术语仍会被搜到——那是现役记录的正确内容,压不得,只能靠第二层(横幅)与第三层(L1 解读)兜。
+不排 `docs/decisions/` 时,现役 ADR 正文里提到已退役的术语仍会被搜到——那是现役记录的正确内容,压不得,只能靠第二层(命中时读 frontmatter `status`)与第三层(L1 解读)兜。
 
 整目录排除后这部分一并消失:实测一个 48 条 ADR 的项目,搜一个已退役术语从 17 个命中降到 2 个(只剩现行文档)。

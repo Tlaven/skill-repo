@@ -10,11 +10,11 @@
 ./docs/
   ├── .live                    # 活文档白名单(一行一个路径,相对 docs/)
   ├── .ignore                  # 让 decisions/、reviews/、archive/、experiment/ 退出 rg
-  ├── architecture.md          # L2:模块图 / 主流程 / 坐标,≤80 行
-  ├── design-contract.md       # 设计约束(若有),≤100 行
-  ├── glossary.md              # 跨模块术语,2 列,≤40 词
+  ├── architecture.md          # L2:模块图 / 主流程 / N2 单元规格
+  ├── design-contract.md       # 设计约束(若有)
+  ├── glossary.md              # 跨模块术语(一术语一行)
   ├── modules/<name>.md        # L3:N1 一页 / N2 五件套
-  ├── core-code.md             # L4 核心分析:承载跨模块 N2 五件套(可选)
+  ├── core-code.md             # L4 核心分析:可选阅读视图,不承载 N2 规格
   ├── n2-acceptance.json       # N2 单元 → 验收命令的登记表(run-n2-acceptance 用)
   ├── reviews/                 # 复核记录:只留本对账周期;.last-review 是游标
   ├── decisions/               # 决策工作台:在议 / 在途;稳定后升格或退役
@@ -50,10 +50,10 @@
 |---|---|---|---|
 | `templates/l1-memory.md` | 待填件:L1 记忆文件(项目记忆;方法论只在活文档索引里列一行) | **立即**(Step 2A) | 项目根 `<AGENTS.md / CLAUDE.md>` |
 | `templates/methodology.md` | 就地读件:三段式 / 4 层 / novelty / 铁律 / 加载表(不自动加载) | **立即**(Step 2A) | `docs-templates/methodology.md` |
-| `templates/architecture.md` | 待填件:L2 架构层 | 按需 | `docs-templates/architecture.md`(按需复制到 `docs/architecture.md`) |
+| `templates/architecture.md` | 待填件:L2 架构层(含「N2 单元规格」节,承载跨模块 N2 五件套) | 按需 | `docs-templates/architecture.md`(按需复制到 `docs/architecture.md`) |
 | `templates/module-doc.md` | 待填件:L3 模块详细(含 novelty 标记) | 按需 | `docs-templates/module-doc.md` |
 | `templates/glossary.md` | 待填件:术语表(受控词汇) | 按需 | `docs-templates/glossary.md`(按需复制到 `docs/glossary.md`) |
-| `templates/core-code.md` | 待填件:L4 核心分析(含 novelty 分档 / N2 附加栏) | 按需 | `docs-templates/core-code.md`(按需复制到 `docs/core-code.md`) |
+| `templates/core-code.md` | 待填件:L4 核心分析(阅读视图;不承载 N2 规格) | 按需 | `docs-templates/core-code.md`(按需复制到 `docs/core-code.md`) |
 | `templates/decisions-readme.md` | 待填件:ADR 读法与格式约定 | 按需 | `docs-templates/decisions-readme.md` |
 | `templates/adr-template.md` | 待填件:单条 ADR 模板(frontmatter 状态 / 关系) | 按需 | `docs-templates/adr-template.md` |
 | `references/adr-example.md` | 就地读件:填好的 ADR 示例(**不是决策**) | 写 ADR 时 | `docs-templates/adr-example.md` |

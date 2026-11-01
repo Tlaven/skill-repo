@@ -119,9 +119,9 @@ if ($ph) {
 # 3) 标了 N2 却缺 `**验收**`
 #    先剥掉 HTML 注释与 fenced code block——模板引导文字 / 示例代码本身含这些词,不剥会把计数算花(假阴性)。
 $targets = @()
-# 按项目改:下面是"承载 N2 五件套"的文档(L4 / L3)。
-# 高层 L2 只放 `N2: §…` 定位 / 契约,不进入本扫描;它不要求五件套和验收。
-foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $targets += $n } }
+# 按项目改:下面是"承载 N2 五件套"的文档(L2 / L3)。
+# N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-code 是阅读视图,不再扫。
+foreach ($n in @('docs/architecture.md','docs/architecture.markdown')) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
   $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }

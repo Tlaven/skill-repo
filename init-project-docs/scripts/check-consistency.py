@@ -18,7 +18,8 @@ Default checks:
   that no live doc defines. Codes are the only legal cross-doc reference, so a
   code without a definition means it was renamed or retired and the citation
   rotted. Record codes (`ADR-031`) are excluded — records expire, clauses do not.
-- Over-budget: soft line caps (L1 100 / L2 80 / L3 400; see DEFAULT_BUDGETS).
+- Over-budget: **no default caps**. Line budgets are per-project judgement, not a
+  rule this tool owns; pass `--max-lines N` to opt in, `--no-budget` to force off.
 - Scope: docs/.live when present (only allowlisted docs count as current);
   --all-docs ignores it and scans every docs/ file (migration / audit).
 
@@ -79,16 +80,9 @@ FIELD_LABELS = {
 }
 
 
-# 活文档软预算（行）。warning-only；--max-lines 覆盖，--no-budget 关闭。
-DEFAULT_BUDGETS = (
-    ("AGENTS.md", 100), ("CLAUDE.md", 100),
-    (".cursorrules", 100), (".windsurfrules", 100),
-    (".cursor/rules/project.mdc", 100),
-    (".github/copilot-instructions.md", 100),
-    ("docs/architecture.md", 80), ("docs/architecture.markdown", 80),
-    ("docs/core-code.md", 200), ("docs/core-code.markdown", 200),
-    ("docs/modules/*.md", 400), ("docs/modules/*.markdown", 400),
-)
+# 行数预算**没有内置默认值**:多少行算"过写"是项目自己的裁量,不是工具的规则。
+# 要查就显式传 --max-lines N(全局);--no-budget 强制关闭。
+DEFAULT_BUDGETS = ()
 
 
 def budget_for(file_rel, override):

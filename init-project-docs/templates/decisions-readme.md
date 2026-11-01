@@ -81,7 +81,6 @@ adr-XXX-[短描述].md
 
 ```
 docs/decisions/
-├── .ignore            # 让本目录退出 rg 的默认检索面
 ├── README.md          # 读法(本文件)
 └── adr-001-...md      # 在议 / 在途
 ```
