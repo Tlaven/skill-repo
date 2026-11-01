@@ -1,7 +1,8 @@
 ---
 status: proposed
 date: YYYY-MM-DD
-# superseded_by: ADR-000        ← 被取代时填目标编号，并把本文件退役(移出工作区)
+# supersedes: ADR-000        ← 继任记录声明正向链（被取代时旧记录只改 status）
+# 被取代时只改 status: superseded，并把本文件退役(移出工作区)
 ---
 
 # ADR-000: [决策标题——祈使句，一个决策一条]
@@ -16,7 +17,7 @@ date: YYYY-MM-DD
 - 一条决策一个文件：标题里需要「和」就是两条。
 - 标题是祈使句，说的是「决定了什么」，不是话题。
 - status: proposed / accepted / accepted(修订) / deprecated / rejected / superseded / expired。
-  superseded 必须带 `superseded_by: ADR-XXX`；expired = 前提**有证据地**消失、没有继任决定。两者都退役。
+  被取代时旧记录只改 `status: superseded`；继任记录写 `supersedes: ADR-XXX`。expired = 前提**有证据地**消失、没有继任决定。两者都退役。
 - 退役要有正面证据（理由已升格 / 前提可证伪地消失 / 作者拍板）；"答不出"只登记退役候选，不改 status。
 - 关系字段：继任记录声明正向链接 supersedes / revises / extends；现役记录之间仍只声明一次。
   退役记录不再要求可解析的反向链接——正向链是唯一保留下来的关系。
@@ -82,12 +83,10 @@ date: YYYY-MM-DD
 <!--
 同一决策路径内的修正（参数 / 实现方式 / 边界补强）→ 在文末按时间追加「补充 N」小节：
 **不改原文、不新建 ADR**，状态改成 `accepted(修订)`；每条写：日期 + 触发（谁 / 什么反馈）+ 改动 + 被拒做法（如有）+ 验证。
-**换掉被选方案本身、或引入第二套并行机制 → 另开新 ADR**，本文件 frontmatter 写 `superseded_by: ADR-YYY`，并把本文件退役（移出工作区，git 保留）。
+**换掉被选方案本身、或引入第二套并行机制 → 另开新 ADR**，本文件 frontmatter 只改 `status: superseded`，并把本文件退役（移出工作区，git 保留）；继任记录写 `supersedes: ADR-YYY`。
 补充只增不改——ADR 仍是「记录」，不是「现状文档」（现状陈述不得引用 ADR，见 evolution-rules E-1）。
 -->
 
-<!-- 被取代时，在标题正下方加一行（这是唯一允许的正文改动）:
-
-> Superseded by ADR-012 on 2026-10-24 — 一句话原因。
-
+<!-- 被取代时：只改 frontmatter 的 status: superseded；不要写反向链，也不要在正文加 "Superseded by …" 横幅。
+     追溯用继任记录的 supersedes + git；旧记录退役后移出工作区。
 -->

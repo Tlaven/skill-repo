@@ -8,7 +8,7 @@
 
 | 层 | 机制 | 覆盖 | 失效场合 |
 |---|---|---|---|
-| **检索** | `docs/.ignore` 写 `decisions/` 与 `reviews/`;`.vscode/settings.json` 的 `search.exclude` | rg / Claude Code / OpenCode / VS Code / Cursor | `git grep`、`grep -r`、任何不读这两个配置的工具 |
+| **检索** | `docs/.ignore` 写 `decisions/` / `reviews/` / `archive/` / `experiment/`;`.vscode/settings.json` 的 `search.exclude` | rg / Claude Code / OpenCode / VS Code / Cursor | `git grep`、`grep -r`、任何不读这两个配置的工具 |
 | **命中** | 记录标题下的状态横幅 | 所有工具,前提是文件被打开 | 只读匹配行、不打开文件 |
 | **解释** | L1 一行:命中 `docs/decisions` / `docs/reviews` 时那是理由,不是规则 | 所有工具 | L1 没加载(子 agent / 只喂了片段) |
 
@@ -23,21 +23,23 @@
 ```
 decisions/
 reviews/
+archive/
+experiment/
 ```
 
 - **名字层由目录承担**:问"有哪些决策",`ls docs/decisions/`——主目录是在议与在途;退役记录在 git 里,用 `git log -- docs/decisions/` 看。搜索不是入口,也不需要另维护一份清单。
 - 考古两种:`rg --no-ignore 关键词`,或 `rg 关键词 docs/decisions`——指定目录时父级 `.ignore` 不生效,这是有意的(指定目录 = 故意查)。
-- `.ignore` 不受版本控制,`decisions/` 照常提交。
-
-**最小方案(项目坚持现役 ADR 可搜):不排 `docs/decisions/`**,只靠记录自带 `status` 与 L1 解读;退役记录已移出工作区,不构成残留。
+- `.ignore` 和 `decisions/` 都照常提交；排除规则是项目配置，不是本机偏好。
 
 `.vscode/settings.json`(与已有配置合并,不要覆盖):
 
 ```json
 {
   "search.exclude": {
+    "docs/decisions": true,
     "docs/reviews": true,
-    "docs/archive": true
+    "docs/archive": true,
+    "docs/experiment": true
   }
 }
 ```

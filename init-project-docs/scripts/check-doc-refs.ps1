@@ -37,11 +37,23 @@ if ($DocExclude) {
 
 $found = $false
 
-# HTML 注释剥离(行数保真;模板引导注释不算正文)——#3 计数与 #4 引用扫描共用
+# HTML 注释 + fenced code block 剥离(行数保真;模板引导注释 / 示例代码不算正文)——#3 计数与 #4 引用扫描共用
 function Strip-Comments([string[]]$lines) {
   $out = New-Object System.Collections.Generic.List[string]
   $inC = $false
+  $inFence = $false
   foreach ($line in $lines) {
+    $s = $line.TrimStart()
+    if ($inFence) {
+      if ($s.StartsWith('```') -or $s.StartsWith('~~~')) { $inFence = $false }
+      $out.Add('')
+      continue
+    }
+    if ($s.StartsWith('```') -or $s.StartsWith('~~~')) {
+      $inFence = $true
+      $out.Add('')
+      continue
+    }
     $buf = $line; $outLine = ''
     while ($buf -ne '') {
       if ($inC) {
@@ -105,11 +117,11 @@ if ($ph) {
 }
 
 # 3) 标了 N2 却缺 `**验收**`
-#    先剥掉 HTML 注释——模板引导文字本身含这些词,不剥会把计数算花(假阴性)。
+#    先剥掉 HTML 注释与 fenced code block——模板引导文字 / 示例代码本身含这些词,不剥会把计数算花(假阴性)。
 $targets = @()
-# 按项目改:下面是"可能含 N2 条目"的文档(L4 / L2 公共节 / L3)。
-# L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这张表。
-foreach ($n in @('docs/core-code.md','docs/core-code.markdown','docs/architecture.md','docs/architecture.markdown')) { if (Test-Path $n) { $targets += $n } }
+# 按项目改:下面是"承载 N2 五件套"的文档(L4 / L3)。
+# 高层 L2 只放 `N2: §…` 定位 / 契约,不进入本扫描;它不要求五件套和验收。
+foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
   $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }
@@ -141,21 +153,22 @@ foreach ($f in $targets) {
 # 4) 现状文档里出现指向"记录类文档"的引用
 #    规则(E-1):引用只指稳定代号,不指位置。条款代号(`D-14` / `A-1` / `E-4`)可以引;
 #    记录类(ADR / `docs/decisions/` / `docs/reviews/`)不引——记录会过期,条款不会。
-#    活文档里唯一允许出现记录类目录的地方,是入口文档的「活文档索引」那一张表(不在本扫描面);
-#    正文里零容忍——依据、`> 出处：` 行、记录编号都算。
+#    活文档里唯一允许出现记录类目录的地方,是入口文档的「活文档索引」那张表的目录级行;
+#    正文里零容忍——依据、`> 出处：` 行、记录编号都算;具体 ADR 条目另由 4b) 检查。
 #    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
-$liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/glossary.md','docs/glossary.markdown')
+$liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/design-contract.md','docs/glossary.md','docs/glossary.markdown')
 foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
 if (Test-Path 'docs/modules') {
   $liveDocs += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }
+
 $refPat = 'docs/decisions/|docs/reviews/|ADR-\d{3}|adr-\d{3}-'
 foreach ($f in $liveDocs) {
   if (-not (Test-Path -LiteralPath $f)) { continue }
   $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
   if ($null -eq $raw) { continue }
   $ln = 0
-  foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释:引导注释里的示例引用不算正文
+  foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释 / fence:引导注释与示例代码里的引用不算正文
     $ln++
     if ($line -match $refPat) {
       Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(记录会过期,条款不会;引条款请用稳定代号,如 D-14;要理由 / 被拒方案,从 L1 的活文档索引进)"

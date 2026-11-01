@@ -12,7 +12,7 @@
 set -u
 
 # 契约面:L1(全部宿主文件名,与 check-docs-sync 的 L1_FILES 对齐)/L2/L4 + 术语表 + 模块文档(模块级不变量住 L3)
-CONTRACT="AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md docs/architecture.md docs/architecture.markdown docs/core-code.md docs/core-code.markdown docs/glossary.md docs/glossary.markdown docs/modules/"
+CONTRACT="AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md docs/architecture.md docs/architecture.markdown docs/design-contract.md docs/core-code.md docs/core-code.markdown docs/glossary.md docs/glossary.markdown docs/modules/"
 MARKER="docs/reviews/.last-review"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[review-backlog] 不是 git 仓库，跳过。"; exit 0; }

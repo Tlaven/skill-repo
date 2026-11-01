@@ -31,9 +31,13 @@ if [ ! -d docs ]; then echo "[check-doc-refs] 无 docs/,跳过"; exit 0; fi
 INC=()
 for e in $DOC_EXT; do INC+=("--include=*.$e"); done
 
-# HTML 注释剥离(行数保真;模板引导注释不算正文)——#3 的计数与 #4 的引用扫描共用
+# HTML 注释 + fenced code block 剥离(行数保真;模板引导注释 / 示例代码不算正文)——#3 的计数与 #4 的引用扫描共用
 COMMENT_STRIP='
-  { buf=$0; line=""
+  BEGIN { infence=0 }
+  { s=$0; sub(/^[ \t]+/,"",s)
+    if (infence) { if (s ~ /^```/ || s ~ /^~~~/) infence=0; print ""; next }
+    if (s ~ /^```/ || s ~ /^~~~/) { infence=1; print ""; next }
+    buf=$0; line=""
     while (buf != "") {
       if (inc) { i=index(buf,"-->");  if (i==0) { buf=""; break } buf=substr(buf,i+3); inc=0 }
       else     { i=index(buf,"<!--"); if (i==0) { line=line buf; buf=""; break } line=line substr(buf,1,i-1); buf=substr(buf,i+4); inc=1 }
@@ -111,8 +115,9 @@ fi
 #    没有"指针形"豁免:跨模块 N2 的正文与 novelty=N2 只写在承载它的那份里;模块文档不声明、也不写
 #    "验收见 docs/…"的指针行——所以"只声明、不写正文"的形态不该存在。
 #    边界(如实说):它数的是**短语出现**,不是"那一节在不在一句话之上"——短语出现在正文别处会漏报。
-# 按项目改:L2 文件名若不是 docs/architecture.md(项目自定义 L2 名),把实际名字加进这一行
-for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
+# 按项目改:若项目把 N2 五件套放在别的家文档(如自定义核心分析文件名),把实际名字加进这一行。
+# 高层 L2 只放 `N2: §…` 定位 / 契约,不进入本扫描;它不要求五件套和验收。
+for f in docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   body=$(awk "$COMMENT_STRIP" "$f")
   # grep -o|wc -l 数"次数"(grep -c 数"行"——一行多个标记会漏计,n2 偏低即漏报);
@@ -144,10 +149,10 @@ done
 # 4) 现状文档里出现指向"记录类文档"的引用
 #    规则(E-1):引用只指稳定代号,不指位置。条款代号(`D-14` / `A-1` / `E-4`)可以引;
 #    记录类(ADR / `docs/decisions/` / `docs/reviews/`)不引——记录会过期,条款不会。
-#    活文档里唯一允许出现记录类目录的地方,是入口文档的「活文档索引」那一张表(不在本扫描面);
-#    正文里零容忍——依据、`> 出处：` 行、记录编号都算。
+#    活文档里唯一允许出现记录类目录的地方,是入口文档的「活文档索引」那张表的目录级行;
+#    正文里零容忍——依据、`> 出处：` 行、记录编号都算;具体 ADR 条目另由 4b) 检查。
 #    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
-LIVE_DOCS="docs/architecture.md docs/architecture.markdown docs/glossary.md docs/glossary.markdown"
+LIVE_DOCS="docs/architecture.md docs/architecture.markdown docs/design-contract.md docs/glossary.md docs/glossary.markdown"
 REF_PAT='docs/decisions/|docs/reviews/|ADR-[0-9]{3}|adr-[0-9]{3}-'
 for f in $LIVE_DOCS docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
@@ -183,7 +188,7 @@ done
 #    起始形态:标题(`### 危险实现清单…`)或粗体(`**危险实现清单**——`,含 `- ` 前缀);
 #    表结束(表开始后的第一个非表行)即停止——避免把同节后续的普通表格算进来。
 #    机器只查"填没填";写法是否真挡得住仍是 teach-back 验证者的事
-for f in docs/core-code.md docs/core-code.markdown docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
+for f in docs/core-code.md docs/core-code.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   DB=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk -F'|' '
     /^#+[[:space:]]*\**危险实现清单/ || /^([[:space:]]*-[[:space:]]+)?\*\*危险实现清单/ { insec=1; intab=0; bcol=0; next }

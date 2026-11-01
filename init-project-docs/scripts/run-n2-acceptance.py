@@ -5,8 +5,9 @@ Safety: without a manifest, it only discovers and lists N2 acceptance lines;
 it never executes commands extracted from docs. With --run, it executes only
 commands explicitly listed in the manifest.
 
-Discovery looks for `novelty=N2` and then a `**验收**:` line within the next 40
-lines (this is a look-ahead heuristic, not a parser).
+Discovery looks for `novelty=N2` in the N2 homes (`docs/core-code.*`,
+`docs/modules/*`) and then a `**验收**:` line within the next 40 lines (this is
+a look-ahead heuristic, not a parser). High-level markers are not units.
 
 Modes:
   list/discovery : prints units and marks them 未复跑; --strict exits 1 if a
@@ -34,9 +35,17 @@ import sys
 from _doc_common import active_mask, iter_docs, read_lines, rel
 
 
+def is_n2_home(rel_path):
+    """N2 five-piece homes only: high-level markers are not units."""
+    return rel_path in ("docs/core-code.md", "docs/core-code.markdown") or rel_path.startswith("docs/modules/")
+
+
 def discover(root):
     units = []
     for path in iter_docs(root):
+        rel_path = rel(root, path)
+        if not is_n2_home(rel_path):
+            continue
         lines = read_lines(path)
         mask = active_mask(lines)
         for i, (line, in_fence) in enumerate(zip(lines, mask), 1):

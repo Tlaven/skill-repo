@@ -15,7 +15,7 @@
 $ErrorActionPreference = "Continue"
 
 # 按项目改：哪些文件算"契约"（L1 全部宿主文件名，与 check-docs-sync 对齐；+ L2/L4 + 术语表 + 模块文档）
-$CONTRACT = @("AGENTS.md", "CLAUDE.md", ".cursorrules", ".cursor/rules/project.mdc", ".windsurfrules", ".github/copilot-instructions.md", "docs/architecture.md", "docs/architecture.markdown", "docs/core-code.md", "docs/core-code.markdown", "docs/glossary.md", "docs/glossary.markdown", "docs/modules/")
+$CONTRACT = @("AGENTS.md", "CLAUDE.md", ".cursorrules", ".cursor/rules/project.mdc", ".windsurfrules", ".github/copilot-instructions.md", "docs/architecture.md", "docs/architecture.markdown", "docs/design-contract.md", "docs/core-code.md", "docs/core-code.markdown", "docs/glossary.md", "docs/glossary.markdown", "docs/modules/")
 $MARKER = "docs/reviews/.last-review"
 
 git rev-parse --is-inside-work-tree 2>$null | Out-Null

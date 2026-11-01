@@ -74,10 +74,15 @@ class ScriptTests(unittest.TestCase):
                 root / "docs" / "modules" / "a.md",
                 "# A\n\nnovelty=N2\n\n- **验收**: python -c \"print(1)\"\n",
             )
+            write(
+                root / "docs" / "architecture.md",
+                "# L2\n\nnovelty=N2\n\nN2: §2 分配算法\n",
+            )
             proc = run_script("run-n2-acceptance.py", "--root", ".", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertIn("NOT executed", proc.stdout)
             self.assertIn("未复跑", proc.stdout)
+            self.assertNotIn("architecture.md", proc.stdout)
 
             proc = run_script("run-n2-acceptance.py", "--root", ".", "--json", "report.json", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
@@ -335,6 +340,40 @@ class ScriptTests(unittest.TestCase):
             self.assertIn("n2.md", proc.stdout)
             self.assertIn("module-missing-failure-semantics", proc.stdout)
 
+    def test_check_doc_refs_n2_home_only(self):
+        ps = shutil.which("pwsh") or shutil.which("powershell")
+        if not ps:
+            self.skipTest("PowerShell not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", "# L1\n")
+            # 高层只放定位 / 契约，不要求五件套与验收
+            write(
+                root / "docs" / "architecture.md",
+                "# L2\n\nnovelty=N2\n\nN2: §2 分配算法\n",
+            )
+            write(root / "docs" / "design-contract.md", "# Contract\n\nN2: §3 重试语义\n")
+            write(root / "docs" / "modules" / "fenced.md", "# Fenced\n\n```\nnovelty=N2\n```\n")
+            # N2 五件套的家：缺验收应报
+            write(
+                root / "docs" / "core-code.md",
+                "# Core\n\nnovelty=N2\n\n"
+                "### 危险实现清单\n\n"
+                "| # | 最可能被写成的样子 | 为什么错 | 由谁挡住 |\n"
+                "|---|---|---|---|\n| 1 | x | y | z |\n",
+            )
+            proc = subprocess.run(
+                [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(SCRIPTS / "check-doc-refs.ps1")],
+                cwd=str(root), capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+            self.assertNotIn("architecture.md", proc.stdout)
+            self.assertNotIn("design-contract.md", proc.stdout)
+            self.assertNotIn("fenced.md", proc.stdout)
+            self.assertIn("core-code.md", proc.stdout)
+            self.assertIn("n2-missing-verification", proc.stdout)
+
     def test_check_doc_refs_provenance_line_is_flagged_ps1(self):
         ps = shutil.which("pwsh") or shutil.which("powershell")
         if not ps:
@@ -416,6 +455,16 @@ class ScriptTests(unittest.TestCase):
             proc = run_script("check-code-refs.py", "--root", ".", "--strict", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
 
+    def test_templates_do_not_teach_reverse_adr_links(self):
+        for name in ("adr-template.md", "decisions-readme.md"):
+            text = (ROOT / "templates" / name).read_text(encoding="utf-8")
+            self.assertNotIn("superseded_by", text, name)
+            self.assertNotIn("> Superseded by", text, name)
+
+    def test_glossary_template_has_no_record_reference(self):
+        text = (ROOT / "templates" / "glossary.md").read_text(encoding="utf-8")
+        self.assertNotIn("docs/decisions/", text)
+
     def test_core_code_card_labels_clean(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -480,26 +529,41 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertNotIn("dangling-code", proc.stdout)
 
-    def test_check_consistency_downward_reference(self):
+    def test_check_consistency_no_downward_reference_check(self):
+        # 索引（上层列下层）与"句子放太高"从文本上不可区分 → 不设机器判据。
+        # 这条测试守的是"别把它加回来"：任何指向更深文档的行都不该产生 finding。
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            write(root / "docs" / "world.md", "细节 → `docs/modules/car.md`。\n")
-            write(
-                root / "docs" / "architecture.md",
-                "细节 → `docs/modules/car.md`。\n整个目录 → `docs/modules/`。\n",
-            )
-            write(root / "docs" / "modules" / "car.md", "收法 → `docs/architecture.md`。\n")
-            write(root / "docs" / "modules" / "run.md", "机制 → `docs/modules/car.md`。\n")
-            write(root / "AGENTS.md", "| 模块 | `docs/modules/car.md` |\n")
+            write(root / "docs" / "architecture.md", "细节 → `docs/modules/car.md`。\n")
+            write(root / "docs" / "modules" / "car.md", "# 车\n")
             proc = run_script("check-consistency.py", "--root", ".", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-            out = proc.stdout
-            self.assertIn("[downward-ref] docs/world.md:1 -> docs/modules/car.md", out)
-            self.assertIn("[downward-ref] docs/architecture.md:1 -> docs/modules/car.md", out)
-            self.assertIn("[downward-ref] docs/architecture.md:2 -> docs/modules/", out)
-            self.assertNotIn("docs/modules/car.md:1 ->", out)
-            self.assertNotIn("docs/modules/run.md:1 ->", out)  # same level is allowed
-            self.assertNotIn("AGENTS.md:1 ->", out)
+            self.assertIn("no consistency warnings found", proc.stdout)
+
+    def test_check_doc_refs_sh_n2_home_behavior(self):
+        # 优先 Git for Windows 的 bash:Windows 上的 `bash` 常常是 WSL 的,
+        # 它拿 Windows 路径会直接失败(空输出),那样的"绿"是假绿。
+        git_bash = r"C:\Program Files\Git\bin\bash.exe"
+        bash = git_bash if os.path.exists(git_bash) else shutil.which("bash")
+        if not bash:
+            self.skipTest("bash not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / "core-code.md", "novelty=N2\n\n这一段没有可跑验收。\n")
+            write(root / "docs" / "modules" / "fenced.md", "# F\n\n```\nnovelty=N2\n```\n")
+            proc = subprocess.run(
+                [bash, str(SCRIPTS / "check-doc-refs.sh").replace("\\", "/")],
+                cwd=str(root),
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            self.assertIn("n2-missing-verification", proc.stdout)
+            self.assertIn("docs/core-code.md", proc.stdout)
+            self.assertNotIn("fenced.md", proc.stdout)
+
+
 
 
 class SingleHomeTests(unittest.TestCase):
