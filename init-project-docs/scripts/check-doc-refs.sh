@@ -116,7 +116,7 @@ fi
 #    "验收见 docs/…"的指针行——所以"只声明、不写正文"的形态不该存在。
 #    边界(如实说):它数的是**短语出现**,不是"那一节在不在一句话之上"——短语出现在正文别处会漏报。
 # 按项目改:若项目改了 L2 文件名(如 architecture-l2.md),把实际名字加进这一行。
-# N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-code 是阅读视图,不再扫。
+# N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-analysis 是阅读视图,不再扫。
 for f in docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   body=$(awk "$COMMENT_STRIP" "$f")

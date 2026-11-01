@@ -56,7 +56,7 @@ L1_FILES='AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfru
 
 (写法见 `docs-templates/module-doc.md` 的 N2 节 / `docs-templates/architecture.md` 的「N2 单元规格」——后者按需从 skill 的 `templates/architecture.md` 落地。)
 
-> **扫哪些文件:** N2 计数与危险实现清单看 `docs/architecture.md`、`docs/modules/*`；`docs/core-code.md`（L4）**不再扫**——它是阅读视图，不给验收；「现状文档引记录」还看 `docs/glossary.md`。
+> **扫哪些文件:** N2 计数与危险实现清单看 `docs/architecture.md`、`docs/modules/*`；`docs/core-analysis.md`（L4）**不再扫**——它是阅读视图，不给验收；「现状文档引记录」还看 `docs/glossary.md`。
 > 跨模块 N2 的**五件套正文**在 **L2 `docs/architecture.md` 的 `N2: <单元>` 节**。理由：判据是"被 ≥2 个**模块**的工作场景当前置读"（不是数加载表行数），而 L2 本来就在这些场景的加载集里；L4 可选、不默认加载，**把规格放 L4 = 没人读得到**。
 > 项目改了 N2 家文件名 → 把新名字加进脚本顶部的 **N2 扫描表**；项目 L2 改名 → 加进 `LIVE_DOCS`（两张表都有“按项目改”标注），否则对应检查会对它空跑。
 

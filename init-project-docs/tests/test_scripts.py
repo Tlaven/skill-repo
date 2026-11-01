@@ -111,7 +111,7 @@ class ScriptTests(unittest.TestCase):
             self.assertIn("NOT executed", proc.stdout)
             self.assertIn("未复跑", proc.stdout)
             self.assertIn("architecture.md", proc.stdout)  # L2 现在是 N2 家
-            self.assertNotIn("core-code.md", proc.stdout)  # L4 是阅读视图,不扫
+            self.assertNotIn("core-analysis.md", proc.stdout)  # L4 是阅读视图,不扫
 
             proc = run_script("run-n2-acceptance.py", "--root", ".", "--json", "report.json", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
@@ -400,7 +400,7 @@ class ScriptTests(unittest.TestCase):
                 "|---|---|---|---|\n| 1 | x | y | z |\n",
             )
             # 狗窝: L4 不再是家,写了也不该被扫
-            write(root / "docs" / "core-code.md", "# Core\n\nnovelty=N2\n\nNo acceptance.\n")
+            write(root / "docs" / "core-analysis.md", "# Core\n\nnovelty=N2\n\nNo acceptance.\n")
             proc = subprocess.run(
                 [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
                  "-File", str(SCRIPTS / "check-doc-refs.ps1")],
@@ -409,7 +409,7 @@ class ScriptTests(unittest.TestCase):
             )
             self.assertNotIn("design-contract.md", proc.stdout)
             self.assertNotIn("fenced.md", proc.stdout)
-            self.assertNotIn("core-code.md", proc.stdout)
+            self.assertNotIn("core-analysis.md", proc.stdout)
             self.assertIn("architecture.md", proc.stdout)
             self.assertIn("n2-missing-verification", proc.stdout)
 
@@ -508,7 +508,7 @@ class ScriptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write(
-                root / "docs" / "core-code.md",
+                root / "docs" / "core-analysis.md",
                 "- **职责**: pick a slot\n"
                 "- **前置不变量**: order is pending\n"
                 "- **后置不变量**: capacity holds\n"
@@ -589,7 +589,7 @@ class ScriptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write(root / "docs" / "architecture.md", "novelty=N2\n\n这一段没有可跑验收。\n")
-            write(root / "docs" / "core-code.md", "novelty=N2\n\nL4 是阅读视图,不该被扫。\n")
+            write(root / "docs" / "core-analysis.md", "novelty=N2\n\nL4 是阅读视图,不该被扫。\n")
             write(root / "docs" / "modules" / "fenced.md", "# F\n\n```\nnovelty=N2\n```\n")
             proc = subprocess.run(
                 [bash, str(SCRIPTS / "check-doc-refs.sh").replace("\\", "/")],
@@ -601,7 +601,7 @@ class ScriptTests(unittest.TestCase):
             )
             self.assertIn("n2-missing-verification", proc.stdout)
             self.assertIn("docs/architecture.md", proc.stdout)
-            self.assertNotIn("core-code.md", proc.stdout)
+            self.assertNotIn("core-analysis.md", proc.stdout)
             self.assertNotIn("fenced.md", proc.stdout)
 
 

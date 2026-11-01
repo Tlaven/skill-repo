@@ -13,7 +13,7 @@ Checks backticked tokens that look like paths or filenames:
     ASCII — `父.h` / `邻.h` are identifiers, not filenames
   - a leading `/` is treated as repo-relative
   - missing on-demand docs (`docs/architecture.md|.markdown`, `docs/glossary.*`,
-    `docs/core-code.*`, `docs/scaffolds/`, `docs/modules/…`, `docs/decisions/…`,
+    `docs/core-analysis.*`, `docs/scaffolds/`, `docs/modules/…`, `docs/decisions/…`,
     `docs/reviews/…`, `docs/templates/`) and `task_plan.md` are reported as
     `pending-doc`, not as errors (they are created later by design).
 Exit 1 only with --strict when real findings exist.
@@ -46,8 +46,8 @@ PENDING_DOCS = (
     "docs/architecture.markdown",
     "docs/glossary.md",
     "docs/glossary.markdown",
-    "docs/core-code.md",
-    "docs/core-code.markdown",
+    "docs/core-analysis.md",
+    "docs/core-analysis.markdown",
     "docs/design-contract.md",
     "docs/design-contract.markdown",
     "docs/n2-acceptance.json",

@@ -51,7 +51,7 @@
 | 接下来做什么 | `task_plan.md` |
 | 为什么这么定 / 被拒方案 | 仍成立的理由看各层 `[为什么]`;完整过程 → `docs/decisions/`(工作台,按需;稳定后退役) |
 | 跨模块 N2 的规格 | `docs/architecture.md` 的「N2 单元规格」节（一个单元一节） |
-| 核心分析（可选） | `docs/core-code.md`（若有；L4 阅读视图，不被引用、不承载规格） |
+| 核心分析（可选） | `docs/core-analysis.md`（若有；L4 阅读视图，不被引用、不承载规格） |
 | 术语 | `docs/glossary.md` |
 | 方法论 / 铁律 / 加载表 | 方法论就地读件（`docs-templates/methodology.md` 或 `docs/templates/methodology.md`） |
 

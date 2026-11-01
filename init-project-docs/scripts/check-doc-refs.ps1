@@ -120,7 +120,7 @@ if ($ph) {
 #    先剥掉 HTML 注释与 fenced code block——模板引导文字 / 示例代码本身含这些词,不剥会把计数算花(假阴性)。
 $targets = @()
 # 按项目改:下面是"承载 N2 五件套"的文档(L2 / L3)。
-# N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-code 是阅读视图,不再扫。
+# N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-analysis 是阅读视图,不再扫。
 foreach ($n in @('docs/architecture.md','docs/architecture.markdown')) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
   $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
@@ -157,7 +157,7 @@ foreach ($f in $targets) {
 #    正文里零容忍——依据、`> 出处：` 行、记录编号都算;具体 ADR 条目另由 4b) 检查。
 #    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
 $liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/design-contract.md','docs/glossary.md','docs/glossary.markdown')
-foreach ($n in @('docs/core-code.md','docs/core-code.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
+foreach ($n in @('docs/core-analysis.md','docs/core-analysis.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
 if (Test-Path 'docs/modules') {
   $liveDocs += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }

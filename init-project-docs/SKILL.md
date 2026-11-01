@@ -17,7 +17,7 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 - **升格 / 退役 / 游标** = 把仍成立的理由搬进当下正文后记录离场 / 记录移出工作区(git 保留,不是删除、不是换目录) / `.last-review` 这类只记录"看到哪了"的状态(不是历史)。**年龄不是判据**,只在对账时触发审计。
 - **superseded / expired** = 被新决定取代 / 前提**有证据地**消失且没有继任决定;两者都退役,`expired` 不是退役候选。
 - **沉淀侧 / 回灌** = 把对话固化为项目记忆 / 把可泛化经验写回上游 skill;不是对话技巧,也不是数据回填。
-- **契约 / 契约级变更** = 契约文件里的约束性陈述及其增删改;**契约文件清单与变更范围在 `references/review-panel.md` §三**（唯一正文),本行不复述——四套说法并存过,漂的就是这一行。不是法律或 API 合同。
+- **契约 / 契约级变更** = 契约文件里的约束性陈述及其增删改;**契约文件清单见 `C-1`,变更范围见 `C-2`**（唯一正文都在 `review-panel.md`),本行不复述——四套说法并存过,漂的就是这一行。不是法律或 API 合同。
 - **对账 / 复核 / 验证 / 检查** = 文档-代码/记录的结构一致性核对(改代码前也做)/ 独立 agent 的语义复核 / 可执行验收 / 脚本结构检查;四者不互换。**「复核通过」只说明文档内部一致**,不证明断言为真。
 - **镜头 / 多镜 panel** = 一个独立复核视角 / 多个互不可见的视角各判一遍再合并去重;不是相机镜头或 UI 面板。
 - **未接入 / 未复跑** = `scripts/` 未拷入 / 脚本在但这次只列未执行;都不是"已通过"。
@@ -111,7 +111,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 1. 复制 `templates/l1-memory.md` → 项目根 L1 文件名。
 2. 复制 `templates/methodology.md` → `docs-templates/methodology.md`；再按 `references/layout.md` 的落地表复制当前会用到的就地读件与待填件（不在此另列清单——两处枚举必然漂移）。
 3. 建 `task_plan.md`（未来桶）；第一个活文档出现时写 `docs/.live`（一行一个路径，相对 `docs/`）。
-4. 然后进入 Step 3 对话；`docs/` 下当前维护的文档按需创建（跨模块术语 → `docs/glossary.md`；L2 → `docs/architecture.md`；模块 → `docs/modules/<name>.md`；ADR → `docs/decisions/`（决策工作台；稳定后升格 / 退役），并在 `docs/.ignore` 排掉 `decisions/` / `reviews/` / `archive/` / `experiment/`；对账 → `docs/reviews/`（按对账周期退役）；跨模块 N2 五件套 → `docs/architecture.md` 的「N2 单元规格」节；模块内 N2 → 模块 L3；要看核心怎么串起来 → `docs/core-code.md`（L4，可选、不被引用））。
+4. 然后进入 Step 3 对话；`docs/` 下当前维护的文档按需创建（跨模块术语 → `docs/glossary.md`；L2 → `docs/architecture.md`；模块 → `docs/modules/<name>.md`；ADR → `docs/decisions/`（决策工作台；稳定后升格 / 退役），并在 `docs/.ignore` 排掉 `decisions/` / `reviews/` / `archive/` / `experiment/`；对账 → `docs/reviews/`（按对账周期退役）；跨模块 N2 五件套 → `docs/architecture.md` 的「N2 单元规格」节；模块内 N2 → 模块 L3；要看核心怎么串起来 → `docs/core-analysis.md`（L4，可选、不被引用））。
 5. 把本 skill 的 `scripts/` **整目录**拷进项目 `<repo>/scripts/`（含共享模块 `_doc_common.py`）；若用户不接脚本，在 L1 标「scripts: 未接入」，后续命令按「未复跑」处理。
 
 > **模板铺齐 ≠ 完成：** 2A 在 Step 3 填完内容后、Step 4 做一次 prune pass；不要对空模板删栏位（会删掉检查器要求的节）。**2B/2C 不动作者原有文件；2D 只补 delta；想变少走 2R。**

@@ -7,7 +7,7 @@ commands explicitly listed in the manifest.
 
 Discovery looks for `novelty=N2` in the N2 homes (`docs/architecture.*`,
 `docs/modules/*`) and then the first `**验收**:` line between that marker and
-the next `novelty=` marker (or end of file). `docs/core-code.*` (L4) is a
+the next `novelty=` marker (or end of file). `docs/core-analysis.*` (L4) is a
 reading view, not an N2 home, so it is not scanned.
 
 Modes:
@@ -39,7 +39,7 @@ from _doc_common import active_mask, iter_docs, read_lines, rel
 def is_n2_home(rel_path):
     """N2 five-piece homes: L2 (cross-module) and module L3 (in-module).
 
-    L4 `docs/core-code.*` is a reading view, not a home, so it is excluded.
+    L4 `docs/core-analysis.*` is a reading view, not a home, so it is excluded.
     """
     return rel_path in ("docs/architecture.md", "docs/architecture.markdown") or rel_path.startswith("docs/modules/")
 
