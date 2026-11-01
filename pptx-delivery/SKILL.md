@@ -304,7 +304,7 @@ On Windows, `soffice.py` auto-detects common install paths (`Program Files\Libre
 - **档位:** acceptance（交付级）
 - **一键复跑:** `python tests/run_tests.py`（8 组负控 + 干净基线 + 端到端；证据落 `tests/evidence/`）
 - **免渲染自测:** `python tests/c5_selftest.py`、`python tests/c7_selftest.py`（检查器自身的红/绿验证——先红一次原则）
-- **钩子 / CI 子集:** `powershell -NoProfile -ExecutionPolicy Bypass -File eval/run.ps1`（从源码重建 fixture，不渲染；9 组负控 + 干净基线 + C5/C7 自测；不写 `tests/evidence/`，跑完工作区不变；无 node 时退化为只跑自测）
+- **钩子 / CI 子集:** `powershell -NoProfile -ExecutionPolicy Bypass -File eval/run.ps1`（只跑 C5/C7 检查器自测——人造输入，不依赖渲染器与 `pdftotext` 版本；**全量套件不进钩子**：它依赖本机渲染链，同一批 deck 在 Git 自带的 `pdftotext` 下会多出 C7/C8 误报）
 - **交付清单:** [acceptance-checklist.md](acceptance-checklist.md)（分层检查 + 目检 + 签字项）
 - **独立复核留档:** `docs/reviews/2026-10-19-cold-verification.md`（冷眼复核记录）
 - **判据:** META=PASS、负控全中、干净基线 0 error / 0 flag；改动后必须同套件复跑（比较绑版本）。
