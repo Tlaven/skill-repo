@@ -59,7 +59,7 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 1. 复制 `templates/l1-memory.md` → 项目根,名字按 Step 1 定的。
 2. 复制 `templates/methodology.md` → `docs-templates/methodology.md`;再按 `references/layout.md` 的落点表复制这次用得到的模板和参考件。
 3. 建 `task_plan.md`(放方向和计划);第一份当前维护的文档出现时写 `docs/.live`(一行一个路径,相对 `docs/`)。
-4. 然后进 Step 3 对话;`docs/` 里当前维护的文档按需创建(跨模块的词 → `docs/glossary.md`;L2 → `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`;核对记录 → `docs/reviews/`;想看核心怎么串起来 → `docs/core-analysis.md`),并把 `decisions/` / `reviews/` / `archive/` / `experiment/` 写进 `docs/.ignore`。
+4. 然后进 Step 3 对话;`docs/` 里当前维护的文档按需创建(跨模块的词 → `docs/glossary.md`;L2 → `docs/architecture.md`;模块 → `docs/modules/<name>.md`;ADR → `docs/decisions/`;核对记录 → `docs/reviews/`;想看核心怎么串起来 → `docs/core-analysis.md`(L4,可选)),并把 `decisions/` / `reviews/` / `archive/` / `experiment/` 写进 `docs/.ignore`。
 5. 把本 skill 的 `scripts/` **整个目录**拷进项目 `<repo>/scripts/`(含共用的 `_doc_common.py`);用户不接脚本,就在 L1 标「scripts: 没拷进来」,后面相关命令按"这次没跑"处理。
 
 ### Step 2B: 合并模式——已有 L1
