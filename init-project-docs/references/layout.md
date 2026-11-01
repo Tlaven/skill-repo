@@ -21,26 +21,10 @@
   ├── archive/                 # 作者旧文档冷存(不是 AI 生成历史记录的家)
   └── experiment/              # 实验:scaffolds / experiment-log,不进开发入口
 ./scripts/                  # 从 skill 拷入;未拷则 L1 标「scripts: 未接入」,命令按「未复跑」处理
-./docs-templates/           # 协议 / 模板(不是本项目当前维护的文档:对账忽略)
-  ├── methodology.md                 # 协议正文(不自动加载;L1 的活文档索引里列出)
-  ├── module-doc.md                  # 待填件:复制到 docs/modules/<name>.md 再填
-  ├── adr-template.md                # 待填件:复制成 adr-XXX-<短描述>.md 再填
-  ├── adr-example.md                 # 就地读件:填好的 ADR 示例(不是决策)
-  ├── glossary.md                    # 待填件:复制到 docs/glossary.md 再填
-  ├── decisions-readme.md            # 待填件:复制到 docs/decisions/README.md 再填
-  ├── core-analysis.md                   # 待填件:复制到 docs/core-analysis.md 再填
-  ├── architecture.md                # 待填件:按需复制到 docs/architecture.md 再填
-  ├── evolution-rules.md             # 就地读件:E-1–E-7(项目 L1 的活文档索引里列出)
-  ├── temporal-model.md              # 就地读件:三时间轴 / 四类路由 / 当下 DoD
-  ├── review-panel.md                # 就地读件:当下层多镜复核
-  ├── verifying-n2.md                # 就地读件:怎么给 N2 造验收
-  ├── verifying-nonfunctional.md     # 就地读件:非功能 / 主观需求怎么造验收
-  └── teach-back-verifier-prompt.md  # 就地读件:teach-back 验证者 prompt
+./docs-templates/           # 协议 / 模板:待填件 + 就地读件,清单见 §二
 ```
 
 除 L1、`task_plan.md` 与**当前用到的 `docs-templates/`** 外,`docs/` 下当前维护的文档**全部按需创建**;`docs/.live` 是唯一活文档清单。
-
-**记录有寿命:** ADR 稳定后把仍成立的理由升格进当下,然后退役;`reviews/` 按对账周期整批退役;两者都**移出工作区**(git 保留),不建永久归档层;答不出三问的 ADR 只登记退役候选,交作者。`.last-review` 是游标,不是历史。
 
 > **待填件** = 复制到 `docs/` 后再填写的模板;**就地读件** = 留在 `docs-templates/` 直接引用的规则正文;两者都不是本项目当前维护的文档,对账忽略。
 
@@ -74,7 +58,6 @@
 
 - 一行一个路径，相对 `docs/`；`#` 注释、空行忽略。
 - 只有列出的文档算“当前”；未列出的按历史 / 参考处理，不进日常加载。
-- Python 检查器默认只扫白名单 + L1；`check-consistency --all-docs` 才扫全库（迁移 / 对账用）。`check-doc-refs` 仍按目录排除（archive / experiment / decisions / reviews / templates 不扫）。
 - 新增活文档必须合并 / 替换 / 归档一个（net-negative）。
 
 ```text
@@ -83,10 +66,3 @@ design-contract.md
 architecture.md
 modules/run.md
 ```
-
-## 四、脚本清单
-
-- 对账:`scripts/check-docs-sync.sh/.ps1`、`scripts/check-doc-refs.sh/.ps1`、`scripts/review-backlog.sh/.ps1`
-- 新增:`scripts/check-code-refs.py`、`scripts/run-n2-acceptance.py`、`scripts/check-consistency.py`、`scripts/lint-doc-structure.py`
-- 共享:`scripts/_doc_common.py`(与上面这些 Python 检查器同拷)
-- 用法与触发见 `references/tooling.md`;接线见 `references/wiring.md`。
