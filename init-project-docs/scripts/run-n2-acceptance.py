@@ -6,9 +6,9 @@ it never executes commands extracted from docs. With --run, it executes only
 commands explicitly listed in the manifest.
 
 Discovery looks for `novelty=N2` in the N2 homes (`docs/architecture.*`,
-`docs/modules/*`) and then a `**验收**:` line within the next 40 lines (this is
-a look-ahead heuristic, not a parser). `docs/core-code.*` (L4) is a reading
-view, not an N2 home, so it is not scanned.
+`docs/modules/*`) and then the first `**验收**:` line between that marker and
+the next `novelty=` marker (or end of file). `docs/core-code.*` (L4) is a
+reading view, not an N2 home, so it is not scanned.
 
 Modes:
   list/discovery : prints units and marks them 未复跑; --strict exits 1 if a
@@ -55,8 +55,15 @@ def discover(root):
         for i, (line, in_fence) in enumerate(zip(lines, mask), 1):
             if in_fence or "novelty=N2" not in line:
                 continue
+            # 单元的边界 = 下一个 `novelty=` 标记(没有就扫到文件末)。
+            # 不能只搜固定行数:模块模板把 novelty 写在文件头,`**验收**` 在几十行之后。
+            end = len(lines)
+            for k in range(i + 1, len(lines) + 1):
+                if "novelty=" in lines[k - 1]:
+                    end = k - 1
+                    break
             acceptance = None
-            for j in range(i, min(i + 40, len(lines) + 1)):
+            for j in range(i, end + 1):
                 if "**验收**" in lines[j - 1]:
                     acceptance = lines[j - 1].strip()
                     break

@@ -88,7 +88,7 @@ python scripts/lint-doc-structure.py --root .
 }
 ```
 
-没有 manifest 时,脚本只在 N2 家（`docs/architecture.*` / `docs/modules/*`）扫描 `novelty=N2` 与 `**验收**:`(在 N2 行后 40 行内查找)并打印"发现但未执行",输出明确标 **未复跑**;这不算通过。`--strict` 可要求每条 N2 都有 `**验收**` 行。`--timeout`(默认 300s)控制 `--run` 时单条命令的超时。
+没有 manifest 时,脚本只在 N2 家（`docs/architecture.*` / `docs/modules/*`）扫描 `novelty=N2`,并取**从该标记到下一个 `novelty=` 标记(或文件末)**之间的第一条 `**验收**`,打印"发现但未执行",输出明确标 **未复跑**;这不算通过。`--strict` 可要求每条 N2 都有 `**验收**` 行。`--timeout`(默认 300s)控制 `--run` 时单条命令的超时。
 
 ## 四、什么时候跑
 

@@ -248,7 +248,7 @@ skill 提供四样东西:① 方法论框架(三时间轴 × 三段式 × 4 层)
 - **多镜 panel:** 命中 Step 3.5 信号(四信号)时,按 `references/review-panel.md` 的**三档**取镜(单镜 = 1 个通用镜;标准 = 按文件映射 2–3 镜;全档 = 四镜,可加通用镜);分档与映射以该文件为准,本行不复述条件。每镜配校准探针;协调者合并去重;第 2 轮附上轮阻断清单。派发包格式见该文件。
 - **留档:** 结论与覆盖提交写入目标项目 `docs/reviews/YYYY-MM-DD-<主题>.md` + `.last-review`(游标,不退役);reviews 按对账周期整批退役。
 - **判据:** 「通过」或「需人拍板」即达可交付态;「不通过(文档缺陷)」→ 先改文档,重跑附上轮阻断清单。**「通过」只说明文档内部一致,不证明断言为真。**
-- **工具自检:** `python -m unittest discover -s tests`(skill 侧);新脚本上线前必须有反向测试。
+- **工具自检:** `python -m unittest discover -s tests`(skill 侧);新脚本上线前必须有反向测试。仓库级 `scripts/skills-eval.ps1` 走 `eval/run.ps1`(内容就是这套测试)。
 - **术语自检:** 改 `SKILL.md` 的高频词 / 新增术语后,按 `references/skill-glossary.md` 跑一次「只给 SKILL.md」的无上下文理解测试;出现「猜的」或偏离就补限定。
 
 ## 参考来源(改版时借鉴)

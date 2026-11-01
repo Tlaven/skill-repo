@@ -82,6 +82,19 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
             self.assertIn("src/missing.py", proc.stdout)
 
+    def test_run_n2_acceptance_finds_far_acceptance(self):
+        """验收写在 N2 标记几十行之后(模块模板就是这种排布)也要发现。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            body = ["# 模块 A", "", "novelty=N2", ""]
+            body += ["说明行 %d" % i for i in range(60)]
+            body += ["", "- **验收**: python -c \"print(2)\"", ""]
+            write(root / "docs" / "modules" / "far.md", "\n".join(body))
+            proc = run_script("run-n2-acceptance.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("discovered 1 N2 unit(s)", proc.stdout)
+            self.assertIn("print(2)", proc.stdout)
+
     def test_run_n2_acceptance_list_only_and_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
