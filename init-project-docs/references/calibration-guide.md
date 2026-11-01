@@ -51,4 +51,4 @@
 
 ## 设计依据
 
-- 骨架借自 `spec-reviewer-prompt.md`（独立验证、不信报告）；判据写法借自 `writing-skills`（堵死漏洞、列显式不通过条件）。
+- 骨架借自 `subagent-driven-development/spec-reviewer-prompt.md`（独立验证、不信报告）；判据写法借自 `writing-skills`（堵死漏洞、列显式不通过条件）。
