@@ -20,7 +20,7 @@
 | init-project-docs | 项目记忆协议:历史 / 当下 / 未来 + 三段式 × 4 层 + 多镜复核;seeding 子 skill | teach-back |
 | macro-market-radar | 全球宏观市场雷达:数据快照 → 收集 → 交叉验证 → 融合解读 | 未验收 |
 | pptx-delivery | PPTX 生成 / 编辑 / QA:可执行断言 C1–C9 + 负控套件 + 交付验收清单 | acceptance |
-| seeding-skills | skill 设计范式:上下文 / 约束定位 + 类型分诊 + 种子式演化 | 未验收 |
+| seeding-skills | skill 设计范式:上下文 / 约束定位 + 类型分诊 + 种子式演化 | teach-back |
 | thesis-docx | 中文论文 .docx 读写:Locator → Anchor → Mutation 内容寻址 | 未验收 |
 | video-decode | 视频链接 → 完整文字稿 + 结构化解读(可按需逐条核查) | 未验收 |
 
@@ -72,9 +72,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-ps1-bom.ps1  #
 
 ## 开放问题
 
-- [x] **使用点覆盖(2026-10-19 核 / 同日处置)**:① `aigc-derate` 已补挂 OpenCode(与论文套件 thesis-docx / drawio-export 同宿主);② OpenCode 侧 `macro-market-radar` 已由副本改为 junction(改前核验:9 文件全同,仅 `.cache/index_history.json` 不同;旧副本备份留在会话沙盒)。当前:OpenCode 挂 7 个(pptx-delivery / drawio-export / thesis-docx / init-project-docs / video-decode / macro-market-radar / aigc-derate),CC 挂 5 个(essentials / init-project-docs / macro-market-radar / seeding-skills / video-decode),Claude 挂 2 个(init-project-docs / seeding-skills)。
-- [x] **2026-10-21 补挂**:`essentials` 已挂 OpenCode(`~/.config/opencode/skills/essentials` → 本仓库 junction),OpenCode 现 8 个;新会话生效。
-- [x] **2026-11-01 补登记**:`blender-agent`(2026-10-26 加入)漏登记——已补进 `scripts/check-docs-sync.sh` 的 `L1_FILES` 与本文件 skill 地图(9 → 10);该 skill 早已挂 OpenCode(`~/.config/opencode/skills/blender-agent` → 本仓库 junction),OpenCode 现 9 个。仍缺 `## 验收` 段(档位待定,现有 6 个 skill 同缺)。
 - [ ] 不变量 4 / 5 是否升格为全仓约定(现仅 pptx-delivery 一例)?
 
 ## 指针

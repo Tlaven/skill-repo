@@ -47,6 +47,6 @@
 ## 示例夹具(pptx-delivery,现成)
 
 - 夹具:`pptx-delivery/examples/acceptance-sample/`(deck + 渲染 + QA);
-- gold:`UPGRADE-REPORT.md §7` 的目检余项 + `qa_check --strict` 的 errors / flags;
+- gold:`acceptance-checklist.md` 的 §3 目检清单 + `qa_check --strict` 的 errors / flags;
 - 任务示例:"改进这个 deck 的视觉质量,输出改后 deck 与改动说明;不要加内容。"
 - 留档:`pptx-delivery/tests/evidence/ablation-<日期>/`。
