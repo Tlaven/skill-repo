@@ -90,6 +90,10 @@ python scripts/lint-doc-structure.py --root .
 
 没有 manifest 时,脚本只在 N2 家（`docs/architecture.*`,以及**实际承载五件套**的 `docs/modules/*`——以文件里出现「危险实现清单」为准）扫描 `novelty=N2`,并取**从该标记到下一个 `novelty=` 标记(或文件末)**之间的第一条 `**验收**`,打印"发现但未执行",输出明确标 **未复跑**;这不算通过。`--strict` 可要求每条 N2 都有 `**验收**` 行。`--timeout`(默认 300s)控制 `--run` 时单条命令的超时。
 
+**里程碑 / 发布:** 全部脚本;命中四信号才开 panel,档位按 `P-1` 选。
+
+**非 git 项目:** `check-docs-sync` / `review-backlog` 的 delta 能力不可用 → 退化为人工清单,并在文档里标「未复跑」。
+
 ## 四、新增脚本的验收纪律
 
 每个新机器判据上线前必须:
