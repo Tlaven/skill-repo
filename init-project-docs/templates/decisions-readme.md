@@ -33,7 +33,7 @@ date: 2026-10-24
 ## 后果          正面 / 负面后果;需要跟进的
 ```
 
-- **状态取值:** `proposed` / `accepted` / `accepted(修订)` / `rejected` / `superseded` / `expired`。被取代时旧记录只改 `status: superseded`;继任记录写 `supersedes: ADR-XXX`。`expired` = 前提**有证据地**消失、没有继任决定。**两者都退役**;`expired` 不是退役候选。**弃用某条决定而没有继任决定 → 记 `expired`,理由写进正文**。
+- **状态取值:** `proposed` / `accepted` / `accepted(修订)` / `rejected` / `superseded` / `expired`。被取代时旧记录只改 `status: superseded`;继任记录写 `supersedes: ADR-XXX`。`expired` = 前提**有证据地**消失、没有继任决定。**两者都退役**;`expired` 不是退役候选。**弃用某条决定而没有继任决定 → 记 `expired`,理由写进正文**(旧记录里出现 `deprecated` 的,按 `expired` 读)。
 - **关系字段:** 继任记录声明**正向链接** `supersedes` / `revises` / `extends`;现役记录之间仍只声明一次。
 - **句式:** 写「当时决定用 X（约束：…）」,不写「本项目使用 X」。
 - **可选第六段「修订 / 补充」(append-only):** 同一决策内的修正用带日期的补充追加在文末,不改原文、不新建 ADR;换掉被选方案本身 → 新 ADR（`superseded`）。
@@ -69,7 +69,7 @@ docs/decisions/
 - **退役前**:按 E-4「记录寿命」——退役要有正面证据(理由已升格 / 前提可证伪地消失 / 作者拍板);**"答不出"只登记退役候选、不改 `status`**,交作者。继任记录写 `supersedes: ADR-XXX`;在对账记录里留一行处置证据。
 - **非 git 项目不退役**:确认前提消失后标 `expired` 留在原处(读的时候按 `status` 跳过),靠 `docs/.ignore` 退出检索面;没有恢复手段。
 
-**整个 `docs/decisions/` 默认退出关键词检索面。** `docs/.ignore` 排掉整个目录组:
+**整个 `docs/decisions/` 默认退出关键词检索面。** `docs/.ignore` 排掉:
 
 ```
 decisions/
@@ -80,4 +80,4 @@ experiment/
 
 - **入口不在搜索,在目录**:问"有哪些决策"就 `ls` 本目录——这条路不受 `.ignore` 影响。
 - 考古:`rg --no-ignore 关键词`,或直接 `rg 关键词 docs/decisions`(指定目录时父级 `.ignore` 不生效)。
-- **已知的洞:** `git grep` 不认 `.ignore`,也没有排除开关;IDE 全局搜索要各自配 `search.exclude`。
+- **已知的洞:** `git grep` 不认 `.ignore`,也没有排除开关;IDE 全局搜索要各自配 `search.exclude`。**退役(移出工作区)是唯一能挡住 `git grep` 的做法。**
