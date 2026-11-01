@@ -10,7 +10,7 @@
 > | Windsurf | `.windsurfrules` |
 > | GitHub Copilot | `.github/copilot-instructions.md` |
 >
-> **预算:** 超了先合并，或把细节移到活文档。
+> **预算:** 行数超了先合并，或把细节移到活文档。
 > **活文档清单:** `docs/.live`(一行一个路径);没列进去的 `docs/` 文档按历史 / 参考处理,不进日常加载。
 > **最后验证:** `Last verified: <commit SHA>`(可选,一行)。
 > **不写:** 日期、文档版本号、变更史、旧状态。
