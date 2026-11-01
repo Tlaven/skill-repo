@@ -68,6 +68,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/skills-eval.ps1 -Cha
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-skill.ps1 -Name <skill>   # 打交付包（dist/<name>-<version>.zip + manifest + sha256；非 golden/acceptance 需 -Force）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-skills.ps1   # 结构检查：frontmatter / TRIGGER / 死链 / 行数（-Changed / -Name / -Strict）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-ps1-bom.ps1  # .ps1 BOM 检查（-Strict / -Root）
+bash scripts/doc-delta.sh                 # 这次提交的 md 增删（临时，只报数不阻断）
 ```
 
 ## 开放问题
