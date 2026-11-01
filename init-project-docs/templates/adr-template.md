@@ -16,7 +16,8 @@ date: YYYY-MM-DD
 <!-- 写作纪律（填完删掉本注释）:
 - 一条决策一个文件：标题里需要「和」就是两条。
 - 标题是祈使句，说的是「决定了什么」，不是话题。
-- status: proposed / accepted / accepted(修订) / deprecated / rejected / superseded / expired。
+- status: proposed / accepted / accepted(修订) / rejected / superseded / expired。
+  弃用而无继任决定 → `expired`(理由写进正文);没有 `deprecated` 这个状态。
   被取代时旧记录只改 `status: superseded`；继任记录写 `supersedes: ADR-XXX`。expired = 前提**有证据地**消失、没有继任决定。两者都退役。
 - 退役要有正面证据（理由已升格 / 前提可证伪地消失 / 作者拍板）；"答不出"只登记退役候选，不改 status。
 - 关系字段：继任记录声明正向链接 supersedes / revises / extends；现役记录之间仍只声明一次。

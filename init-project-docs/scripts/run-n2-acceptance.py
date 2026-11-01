@@ -5,8 +5,9 @@ Safety: without a manifest, it only discovers and lists N2 acceptance lines;
 it never executes commands extracted from docs. With --run, it executes only
 commands explicitly listed in the manifest.
 
-Discovery looks for `novelty=N2` in the N2 homes (`docs/architecture.*`,
-`docs/modules/*`) and then the first `**验收**:` line between that marker and
+Discovery looks for `novelty=N2` in the N2 homes (`docs/architecture.*`, and
+`docs/modules/*` that actually carry the five-piece set, i.e. contain
+「危险实现清单」) and then the first `**验收**:` line between that marker and
 the next `novelty=` marker (or end of file). `docs/core-analysis.*` (L4) is a
 reading view, not an N2 home, so it is not scanned.
 
@@ -36,27 +37,35 @@ import sys
 from _doc_common import active_mask, iter_docs, read_lines, rel
 
 
-def is_n2_home(rel_path):
+def is_n2_home(rel_path, text=""):
     """N2 five-piece homes: L2 (cross-module) and module L3 (in-module).
 
     L4 `docs/core-analysis.*` is a reading view, not a home, so it is excluded.
+    A module file counts as a home only when it actually carries the five-piece
+    set (marked by「危险实现清单」): `novelty=N2` in a module states how novel
+    the module is, not where the spec lives — a cross-module N2 moved up to L2
+    leaves that marker behind.
     """
-    return rel_path in ("docs/architecture.md", "docs/architecture.markdown") or rel_path.startswith("docs/modules/")
+    if rel_path in ("docs/architecture.md", "docs/architecture.markdown"):
+        return True
+    if rel_path.startswith("docs/modules/"):
+        return "危险实现清单" in text
+    return False
 
 
 def discover(root):
     units = []
     for path in iter_docs(root):
         rel_path = rel(root, path)
-        if not is_n2_home(rel_path):
-            continue
         lines = read_lines(path)
+        if not is_n2_home(rel_path, "\n".join(lines)):
+            continue
         mask = active_mask(lines)
         for i, (line, in_fence) in enumerate(zip(lines, mask), 1):
             if in_fence or "novelty=N2" not in line:
                 continue
             # 单元的边界 = 下一个 `novelty=` 标记(没有就扫到文件末)。
-            # 不能只搜固定行数:模块模板把 novelty 写在文件头,`**验收**` 在几十行之后。
+            # 不能只搜固定行数:模块模板把档位写在文件头,`**验收**` 在几十行之后。
             end = len(lines)
             for k in range(i + 1, len(lines) + 1):
                 if "novelty=" in lines[k - 1]:

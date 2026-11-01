@@ -121,6 +121,8 @@ if ($ph) {
 $targets = @()
 # 按项目改:下面是"承载 N2 五件套"的文档(L2 / L3)。
 # N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-analysis 是阅读视图,不再扫。
+# 模块文档顶部的 `novelty=` 是**模块档位**(五件套上移 L2 后仍是 N2),不表示规格住在这里;
+# 模块侧改用「危险实现清单」判"本文件是否承载五件套"——承载了才要求验收与失败语义。
 foreach ($n in @('docs/architecture.md','docs/architecture.markdown')) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
   $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
@@ -131,21 +133,27 @@ foreach ($f in $targets) {
   $body = (Strip-Comments ($raw -split "`n")) -join "`n"
   $n2  = ([regex]::Matches($body, 'novelty=N2')).Count
   $acc = ([regex]::Matches($body, '\*\*验收\*\*')).Count
+  $dan = ([regex]::Matches($body, '危险实现清单')).Count
+  if ($f -like 'docs/modules/*') {
+    if (($dan -gt 0) -and ($acc -eq 0)) {
+      Write-Host "[n2-missing-verification] $($f): 本文件承载五件套(含「危险实现清单」),但没有 ``**验收**`` 行"
+      $found = $true
+    }
+    if (($dan -gt 0) -and ($body -notmatch '失败语义')) {
+      Write-Host "[module-missing-failure-semantics] $($f): 承载五件套的模块文档没有「失败语义」一节"
+      $found = $true
+    }
+    continue
+  }
   if ($n2 -gt $acc) {
     Write-Host "[n2-missing-verification] $($f): N2 条目 $n2 个,「**验收**」仅 $acc 处"
     $found = $true
   }
   # 标了 N2 却没有「危险实现清单」
-  #    没有"指针形"豁免:跨模块 N2 的正文与 `novelty=N2` 只写在承载它的那份里;
-  #    模块文档不声明、也不写"验收见 docs/…"的指针行——所以"只声明、不写正文"的形态不该存在。
-  $dan = ([regex]::Matches($body, '危险实现清单')).Count
+  #    没有"指针形"豁免:N2 的正文与 `novelty=N2` 只写在承载它的那份里;
+  #    模块文档只留档位标记、不写正文——所以"只声明、不写正文"的形态在 L2 不该存在。
   if (($n2 -gt 0) -and ($dan -eq 0)) {
     Write-Host "[n2-missing-checklist] $($f): 标了 N2 却没有「危险实现清单」"
-    $found = $true
-  }
-  # N2 模块文档必须有「失败语义」一节(仅 N2)
-  if (($f -like 'docs/modules/*') -and ($body -match 'novelty=N2') -and ($body -notmatch '失败语义')) {
-    Write-Host "[module-missing-failure-semantics] $($f): N2 模块文档没有「失败语义」一节"
     $found = $true
   }
 }

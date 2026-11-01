@@ -86,7 +86,7 @@ class ScriptTests(unittest.TestCase):
         """验收写在 N2 标记几十行之后(模块模板就是这种排布)也要发现。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            body = ["# 模块 A", "", "novelty=N2", ""]
+            body = ["# 模块 A", "", "novelty=N2", "", "### 危险实现清单", ""]
             body += ["说明行 %d" % i for i in range(60)]
             body += ["", "- **验收**: python -c \"print(2)\"", ""]
             write(root / "docs" / "modules" / "far.md", "\n".join(body))
@@ -100,7 +100,7 @@ class ScriptTests(unittest.TestCase):
             root = Path(tmp)
             write(
                 root / "docs" / "modules" / "a.md",
-                "# A\n\nnovelty=N2\n\n- **验收**: python -c \"print(1)\"\n",
+                "# A\n\nnovelty=N2\n\n### 危险实现清单\n\n- **验收**: python -c \"print(1)\"\n",
             )
             write(
                 root / "docs" / "architecture.md",
@@ -119,7 +119,7 @@ class ScriptTests(unittest.TestCase):
             self.assertFalse(report["executed"])
             self.assertEqual(report["status"], "未复跑")
 
-            write(root / "docs" / "modules" / "b.md", "# B\n\nnovelty=N2\n\nNo acceptance here.\n")
+            write(root / "docs" / "modules" / "b.md", "# B\n\nnovelty=N2\n\n### 危险实现清单\n\nNo acceptance here.\n")
             write(root / "docs" / "modules" / "c.md", "# C\n\n<!-- novelty=N2\nNo acceptance; comment must be ignored. -->\n")
             proc = run_script("run-n2-acceptance.py", "--root", ".", cwd=root)
             self.assertNotIn("c.md", proc.stdout)
@@ -153,6 +153,30 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
             self.assertIn("[PASS] pass", proc.stdout)
             self.assertIn("[FAIL] fail", proc.stdout)
+
+    def test_n2_moved_up_module_is_not_an_n2_home(self):
+        """模块档位写 N2、但五件套已上移 L2:模块侧不该被当成 N2 家(不查验收,也不查失败语义)。"""
+        ps = shutil.which("pwsh") or shutil.which("powershell")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "modules" / "moved.md",
+                "# M\n\nnovelty=N2\n\n## [不变量]\n\n- x\n",
+            )
+            proc = run_script("run-n2-acceptance.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("no N2 units discovered", proc.stdout)
+
+            if ps:
+                write(root / "AGENTS.md", "# L1\n")
+                proc = subprocess.run(
+                    [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                     "-File", str(SCRIPTS / "check-doc-refs.ps1")],
+                    cwd=str(root), capture_output=True, text=True,
+                    encoding="utf-8", errors="replace",
+                )
+                self.assertNotIn("moved.md", proc.stdout)
+                self.assertNotIn("module-missing-failure-semantics", proc.stdout)
 
     def test_check_consistency_red(self):
         with tempfile.TemporaryDirectory() as tmp:

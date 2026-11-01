@@ -117,6 +117,8 @@ fi
 #    边界(如实说):它数的是**短语出现**,不是"那一节在不在一句话之上"——短语出现在正文别处会漏报。
 # 按项目改:若项目改了 L2 文件名(如 architecture-l2.md),把实际名字加进这一行。
 # N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-analysis 是阅读视图,不再扫。
+# 模块文档顶部的 novelty= 是模块档位(五件套上移 L2 后仍是 N2),不表示规格住在这里;
+# 模块侧改用「危险实现清单」判"本文件是否承载五件套"——承载了才要求验收与失败语义。
 for f in docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   body=$(awk "$COMMENT_STRIP" "$f")
@@ -124,26 +126,29 @@ for f in docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/
   # 语义对齐 .ps1 版的 [regex]::Matches().Count。
   n2=$(printf '%s\n' "$body" | grep -o 'novelty=N2' 2>/dev/null | wc -l | tr -d ' ')
   acc=$(printf '%s\n' "$body" | grep -o '\*\*验收\*\*' 2>/dev/null | wc -l | tr -d ' ')
-  : "${n2:=0}"; : "${acc:=0}"
+  dan=$(printf '%s\n' "$body" | grep -o '危险实现清单' 2>/dev/null | wc -l | tr -d ' ')
+  : "${n2:=0}"; : "${acc:=0}"; : "${dan:=0}"
+  case "$f" in
+    docs/modules/*)
+      if [ "$dan" -gt 0 ] && [ "$acc" -eq 0 ]; then
+        echo "[n2-missing-verification] $f: 本文件承载五件套(含「危险实现清单」),但没有 \`**验收**\` 行"
+        found=1
+      fi
+      if [ "$dan" -gt 0 ] && ! printf '%s\n' "$body" | grep -q '失败语义'; then
+        echo "[module-missing-failure-semantics] $f: 承载五件套的模块文档没有「失败语义」一节"
+        found=1
+      fi
+      continue ;;
+  esac
   if [ "$n2" -gt "$acc" ]; then
     echo "[n2-missing-verification] $f: N2 条目 $n2 个,「**验收**」仅 $acc 处"
     found=1
   fi
   # 标了 N2 却没有「危险实现清单」(没有指针形豁免)
-  dan=$(printf '%s\n' "$body" | grep -o '危险实现清单' 2>/dev/null | wc -l | tr -d ' ')
-  : "${dan:=0}"
   if [ "$n2" -gt 0 ] && [ "$dan" -eq 0 ]; then
     echo "[n2-missing-checklist] $f: 标了 N2 却没有「危险实现清单」"
     found=1
   fi
-  # N2 模块文档必须有「失败语义」一节(仅 N2)
-  case "$f" in
-    docs/modules/*)
-      if [ "$n2" -gt 0 ] && ! printf '%s\n' "$body" | grep -q '失败语义'; then
-        echo "[module-missing-failure-semantics] $f: N2 模块文档没有「失败语义」一节"
-        found=1
-      fi ;;
-  esac
 done
 
 # 4) 现状文档里出现指向"记录类文档"的引用

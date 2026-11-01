@@ -49,7 +49,7 @@ date: 2026-10-24
 ## 后果          正面 / 负面后果;需要跟进的
 ```
 
-- **状态取值:** `proposed` / `accepted` / `accepted(修订)` / `deprecated` / `rejected` / `superseded` / `expired`。被取代时旧记录只改 `status: superseded`;继任记录写 `supersedes: ADR-XXX`。`expired` = 前提**有证据地**消失、没有继任决定。**两者都退役**;`expired` 不是退役候选;不在这个集合里的写法（如 `approved`）等于没写状态,读者会按未知处理。
+- **状态取值:** `proposed` / `accepted` / `accepted(修订)` / `rejected` / `superseded` / `expired`。被取代时旧记录只改 `status: superseded`;继任记录写 `supersedes: ADR-XXX`。`expired` = 前提**有证据地**消失、没有继任决定。**两者都退役**;`expired` 不是退役候选;不在这个集合里的写法（如 `approved`）等于没写状态,读者会按未知处理。**弃用某条决定而没有继任决定 → 记 `expired`,理由写进正文**:不再单设 `deprecated`(旧记录里出现 `deprecated` 的,按 `expired` 读)。
 - **关系字段:** 继任记录声明**正向链接** `supersedes` / `revises` / `extends`;现役记录之间仍只声明一次。退役记录不再要求可解析的反向链接——正向链是唯一保留下来的关系。
 - **句式:** 写「当时决定用 X（约束：…）」,不写「本项目使用 X」。记录会被单独引用,语法上就不能像一条现行规则。
 - **可选第六段「修订 / 补充」(append-only):** 同一决策内的修正用带日期的补充追加在文末,不改原文、不新建 ADR;换掉被选方案本身 → 新 ADR（`superseded`）。
