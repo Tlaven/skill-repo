@@ -18,10 +18,6 @@ Default checks:
   that no live doc defines. Codes are the only legal cross-doc reference, so a
   code without a definition means it was renamed or retired and the citation
   rotted. Record codes (`ADR-031`) are excluded — records expire, clauses do not.
-- Downward references: a doc points at a *deeper* doc (architecture -> module).
-  Readers of the shallow doc would have to fetch the deep one for a sentence the
-  deep doc already owns; the pointer belongs in the L1 index instead. Depth comes
-  from the path, not from a written table; L1 itself is exempt (it is the index).
 - Over-budget: soft line caps (L1 100 / L2 80 / L3 400; see DEFAULT_BUDGETS).
 - Scope: docs/.live when present (only allowlisted docs count as current);
   --all-docs ignores it and scans every docs/ file (migration / audit).
@@ -60,18 +56,6 @@ NUM_RE = re.compile(
 CODE_DEF_RE = re.compile(r"\|\s*\*\*([A-Z]{1,3}-\d{1,3})\*\*\s*\|")
 CODE_DEF_HEAD_RE = re.compile(r"^\s{0,3}#{1,6}\s+([A-Z]{1,3}-\d{1,3})\b")
 CODE_REF_RE = re.compile(r"\b([A-Z]{1,3}-\d{1,3})\b")
-# Reference direction. Depth is derived from the path — there is no written level
-# table: 0 = project memory (the index, exempt), 1 = architecture / design /
-# system docs, 2 = module docs. A shallower doc citing a deeper one means the
-# sentence is placed too high; readers would have to fetch the deep doc.
-DOC_DEPTH_EXACT = {
-    "docs/architecture.md": 1, "docs/architecture.markdown": 1,
-    "docs/design-contract.md": 1, "docs/world.md": 1,
-    "docs/upgrade-system.md": 1, "docs/core-code.md": 1,
-    "docs/core-code.markdown": 1,
-}
-DOC_DEPTH_PREFIX = (("docs/modules/", 2),)
-DOC_REF_RE = re.compile(r"(?:\./)?docs/[A-Za-z0-9_./-]+")
 
 
 def is_param_name(name):
@@ -113,16 +97,6 @@ def budget_for(file_rel, override):
     for pattern, budget in DEFAULT_BUDGETS:
         if fnmatch.fnmatch(file_rel, pattern):
             return budget
-    return None
-
-
-def doc_depth(file_rel):
-    """Path-derived depth; None = not part of the chain (README, L1, records)."""
-    if file_rel in DOC_DEPTH_EXACT:
-        return DOC_DEPTH_EXACT[file_rel]
-    for prefix, depth in DOC_DEPTH_PREFIX:
-        if file_rel.startswith(prefix):
-            return depth
     return None
 
 
@@ -360,26 +334,11 @@ def main():
             continue
         warnings.append({"kind": "dangling-code", "code": code, "items": items})
 
-    # A doc may cite the docs its readers already load (shallower), never a
-    # deeper one: that sentence belongs in the deeper doc, not here.
-    for file_rel, text in all_texts.items():
-        src = doc_depth(file_rel)
-        if src is None:
-            continue
-        for lineno, line in enumerate(text.splitlines(), 1):
-            for m in DOC_REF_RE.finditer(line):
-                target = m.group(0).lstrip("./")
-                depth = doc_depth(target)
-                if depth is None or depth <= src:
-                    continue
-                warnings.append(
-                    {
-                        "kind": "downward-ref",
-                        "file": file_rel,
-                        "line": lineno,
-                        "target": target,
-                    }
-                )
+    # NOTE: there is deliberately no "downward reference" check. Whether a line is
+    # an index entry (legal: an upper doc lists the docs below it) or a sentence
+    # placed too high cannot be told apart from the text; that judgement is a
+    # review job. A proxy here fired on the legal pattern and taught readers to
+    # ignore the tool.
 
     # Line budgets: always-loaded and per-module docs have soft caps.
     if not args.no_budget:
@@ -445,9 +404,6 @@ def main():
             print("[dangling-code] {}: cited but never defined".format(warning["code"]))
             for item in warning["items"]:
                 print("  {}:{}".format(item["file"], item["line"]))
-        elif kind == "downward-ref":
-            print("[downward-ref] {}:{} -> {} (points deeper; the index owns navigation)".format(
-                warning["file"], warning["line"], warning["target"]))
         elif kind == "over-budget":
             print("[over-budget] {}: {} lines > budget {}".format(
                 warning["file"], warning["lines"], warning["budget"]))
