@@ -58,7 +58,7 @@ N0 通用 / N1 项目特有 / N2 AI 未见。 -->
 - **N2 的步骤级说明**(AI 未见的核心逻辑):1)… 2)… 3)…,含边界与错误语义——把逻辑讲到可实现,不是写代码
 - **N2 的失败语义**:每条失败路径的可重试性 / 幂等性 / 对外表现 / 观测(见下方失败语义表;别只写"错误处理约定")
 - **N2 的精确例子**:1~2 个"输入 → 输出",可直接当 fixture
-- **验收**(N2 必填,且必须写成独立一行 `**验收**:…`——机器按它做**次数粗检**,逐条配对仍靠复核):命令 + 预期,或 property 断言;怎么造见 `docs-templates/verifying-n2.md`,从(property / mutation / approved scenario / 盲测 / differential)里选 1~2 个——别只写"看起来对"
+- **验收**(N2 必填,且必须写成独立一行 `**验收**:…`——机器按它做**次数粗检**,逐条配对仍靠复核):命令 + 预期,或 property 断言;怎么造见 `docs-templates/verifying-n2.md`,从(property / mutation / approved scenario / 盲测 / differential)里选 1~2 个——别只写"看起来对"。**同时把这条命令登记进 `docs/n2-acceptance.json`**(`{"units":[{"id","doc","command","cwd"}]}`)——不登记,`run-n2-acceptance` 只能"发现但未执行"
 - 边界条件(空输入、超大输入、并发)
 - 性能预算(该模块的时间/空间上限)
 - 并发 / 生命周期假设

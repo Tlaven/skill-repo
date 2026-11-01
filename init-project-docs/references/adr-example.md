@@ -2,13 +2,15 @@
 
 > **这是一条示例，不是本项目的决策。** 读它是为了知道各段该填成什么样；不要把它复制进 `docs/decisions/`，它也不属于任何工作台名单。
 >
-> 来源：system-analyzer 项目 v0.9。示例按**旧格式**（状态写在 `## 状态` 段）给出，便于对照历史记录；新记录的状态与关系写在 frontmatter，见 `adr-template.md`。
+> 来源：system-analyzer 项目 v0.9，按**现行格式**整理（状态与关系在 frontmatter；日期与编号仅作示例）。项目里可能读到**旧格式**记录——状态写在正文 `## 状态` 段：那种记录照旧读该段，但新记录一律按 frontmatter 写，正文不复述状态。
 
 ```markdown
-# ADR-007: 边模型从 class 级迁到实例级
+---
+status: accepted
+date: 2025-01-01
+---
 
-## 状态
-accepted
+# ADR-007: 边模型从 class 级迁到实例级
 
 ## 背景
 v0.8 边通过 class.edges 静态字面量声明 + attrs 里的 null 引用槽实现。
