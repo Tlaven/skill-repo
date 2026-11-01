@@ -9,11 +9,12 @@
 - 个人 **skill 单源仓库**:每个顶层目录 = 一个可加载的 skill;使用点(`~/.commandcode/skills/`、`~/.claude/skills/`、`~/.config/opencode/skills/`)以 **junction** 指回本仓库。
 - 根 `scripts/` = 仓库级工具(门禁 / 验收 runner);各 skill 的 `scripts/` 归各 skill 自己。
 - 根 `notes/` = 「agent」抽象项目的汇总脚手架(非 skill;自带生长纪律,见其 README)——与具体项目层的 `docs/scaffolds/` 同族异层;项目向下取用后各自独立、不设同步。【作者拍板 2026-10-19;本地目录,不入库】
-- skill 地图(9 个;「验收档」定义见各 SKILL.md 的 `## 验收` 段):
+- skill 地图(10 个;「验收档」定义见各 SKILL.md 的 `## 验收` 段):
 
 | skill | 一句话 | 验收档 |
 |---|---|---|
 | aigc-derate | 论文降重 / AIGC 降率:标色检测、往返翻译改写、字数偏差检查(配合 thesis-docx) | 未验收 |
+| blender-agent | 驱动实时 Blender 会话(bpy / MCP)建 3D 场景与游戏资产:build→refine→verify、修改器 / 几何节点优先、GLB 导出陷阱、面数与体积预算 | 未验收 |
 | drawio-export | JSON 描述生成 .drawio,本地 draw.io 导出 SVG/PNG(配合 thesis-docx 插图) | smoke |
 | essentials | 上下文的自我调试:缺什么 → 去哪取 → 有没有用 → 留不留;账本是断言底座、视图是缓存;域要领是教学层,不是文档工厂 | teach-back |
 | init-project-docs | 项目记忆协议:历史 / 当下 / 未来 + 三段式 × 4 层 + 多镜复核;seeding 子 skill | teach-back |
@@ -73,6 +74,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-ps1-bom.ps1  #
 
 - [x] **使用点覆盖(2026-10-19 核 / 同日处置)**:① `aigc-derate` 已补挂 OpenCode(与论文套件 thesis-docx / drawio-export 同宿主);② OpenCode 侧 `macro-market-radar` 已由副本改为 junction(改前核验:9 文件全同,仅 `.cache/index_history.json` 不同;旧副本备份留在会话沙盒)。当前:OpenCode 挂 7 个(pptx-delivery / drawio-export / thesis-docx / init-project-docs / video-decode / macro-market-radar / aigc-derate),CC 挂 5 个(essentials / init-project-docs / macro-market-radar / seeding-skills / video-decode),Claude 挂 2 个(init-project-docs / seeding-skills)。
 - [x] **2026-10-21 补挂**:`essentials` 已挂 OpenCode(`~/.config/opencode/skills/essentials` → 本仓库 junction),OpenCode 现 8 个;新会话生效。
+- [x] **2026-11-01 补登记**:`blender-agent`(2026-10-26 加入)漏登记——已补进 `scripts/check-docs-sync.sh` 的 `L1_FILES` 与本文件 skill 地图(9 → 10);该 skill 早已挂 OpenCode(`~/.config/opencode/skills/blender-agent` → 本仓库 junction),OpenCode 现 9 个。仍缺 `## 验收` 段(档位待定,现有 6 个 skill 同缺)。
 - [ ] 不变量 4 / 5 是否升格为全仓约定(现仅 pptx-delivery 一例)?
 
 ## 指针

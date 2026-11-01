@@ -1,6 +1,6 @@
 ---
 name: blender-agent
-description: "Use when driving a live Blender session (MCP or headless bpy) to build or edit 3D scenes and assets, especially game assets exported as GLB for three.js/Babylon. Covers the build→refine→verify loop, small-step bpy calls, driving GUI-only add-ons from code, preferring modifiers and geometry nodes over hand-written vertices, and the GLB export traps (modifier baking, lost procedural textures, name mangling) plus triangle and file-size budgets."
+description: "Use when driving a live Blender session (MCP or headless bpy) to build or edit 3D scenes and assets, especially game assets exported as GLB for three.js/Babylon. Covers the build→refine→verify loop, small-step bpy calls, driving GUI-only add-ons from code, preferring modifiers and geometry nodes over hand-written vertices, and the GLB export traps (modifier baking, lost procedural textures, name mangling) plus triangle and file-size budgets. TRIGGER: Blender, bpy, geometry nodes, GLB, glTF, decimation, game asset, 3D scene, Blender MCP."
 category: creative
 risk: safe
 source: composed
