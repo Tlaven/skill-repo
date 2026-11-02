@@ -55,8 +55,9 @@ NUM_RE = re.compile(
 # or as a numbered heading (`## E-1: ...`), cited anywhere as `D-14` / `E-1`.
 # Record codes (ADR-031) are deliberately not matched.
 CODE_DEF_RE = re.compile(r"\|\s*\*\*([A-Z]{1,3}-\d{1,3})\*\*\s*\|")
-CODE_DEF_HEAD_RE = re.compile(r"^\s{0,3}#{1,6}\s+([A-Z]{1,3}-\d{1,3})\b")
+CODE_DEF_HEAD_RE = re.compile(r"^\s{0,3}#{1,6}\s+.*?\b([A-Z]{1,3}-\d{1,3})\b")
 CODE_REF_RE = re.compile(r"\b([A-Z]{1,3}-\d{1,3})\b")
+KNOWN_CODE_FAMILIES = {"I", "Q", "E", "D", "A", "R"}
 
 
 def is_param_name(name):
@@ -187,14 +188,17 @@ def collect(root, ignore_keys, max_lines=None, use_live=True):
         in_docs = file_rel.startswith("docs/") and file_rel not in glossary_files
         mask = active_mask(lines)
         in_def_scope = True                     # 无小标题的文件按定义语境处理
+        in_module_term = False                  # 模块「术语」小节：单模块词允许在此定义
         for lineno, (line, in_fence) in enumerate(zip(lines, mask), 1):
             if in_fence:
                 continue
             heading = HEADING_RE.match(line)
             if heading:
-                in_def_scope = bool(DEF_SCOPE_RE.search(heading.group(1)))
+                title = heading.group(1)
+                in_def_scope = bool(DEF_SCOPE_RE.search(title))
+                in_module_term = file_rel.startswith("docs/modules/") and "术语" in title
                 continue
-            if in_docs and in_def_scope:
+            if in_docs and in_def_scope and not in_module_term:
                 m = DEF_RE.match(line)
                 if m:
                     term = m.group(1).strip()
@@ -324,7 +328,9 @@ def main():
     families = {code.split("-")[0] for code in code_defs}
     for code, items in sorted(code_lines.items()):
         family = code.split("-")[0]
-        if code in code_defs or family not in families or family == "ADR":
+        if code in code_defs or family == "ADR":
+            continue
+        if family not in families and family not in KNOWN_CODE_FAMILIES:
             continue
         warnings.append({"kind": "dangling-code", "code": code, "items": items})
 

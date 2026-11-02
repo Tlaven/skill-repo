@@ -57,7 +57,7 @@ date: YYYY-MM-DD
 
 ### 需要跟进的
 - 后续要做什么来支撑这个决策？
-- 若本决策推翻了旧决策：联动义务（改正文 + 修订不变量）见 `docs-templates/evolution-rules.md` 的 E-3，此处不重述。
+- 若本决策推翻了旧决策：联动义务（改正文 + 修订不变量）见 `docs-templates/lifecycle.md` 的 E-3，此处不重述。
 -->
 
 ## 修订 / 补充（append-only，可选）

@@ -8,6 +8,12 @@ $ErrorActionPreference = 'SilentlyContinue'
 # 按项目改:文档扩展名(含点)。默认同时认 .md 与 .markdown。
 $DocExt = @('.md', '.markdown')
 
+# L2 文件名来自 scripts/l2-docs.txt；缺失时用默认值。
+$L2Docs = @((Get-Content (Join-Path $PSScriptRoot 'l2-docs.txt') -Raw -Encoding UTF8 -ErrorAction SilentlyContinue) -split "\r?\n" |
+  Where-Object { $_ -and $_.Trim() -and $_.Trim() -notmatch '^#' } |
+  ForEach-Object { $_.Trim() })
+if ($L2Docs.Count -eq 0) { $L2Docs = @('docs/architecture.md','docs/architecture.markdown') }
+
 # 按项目改:对账要排除的路径(正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:存档层
 # (如 docs/legacy/、docs/archive/、docs/experiment/、docs/scaffolds/)、记录类(docs/decisions/、
 # docs/reviews/——历史快照,引用退役术语/旧链接是常态,不是错误)与待填件目录(docs/templates/——
@@ -75,7 +81,7 @@ function Strip-Comments([string[]]$lines) {
 # 1) 死链
 foreach ($f in $docsMd) {
   $rel = $f.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/')
-  $text = Get-Content -Raw -LiteralPath $f.FullName -Encoding UTF8
+  $text = (Strip-Comments @(Get-Content -LiteralPath $f.FullName -Encoding UTF8)) -join "`n"
   foreach ($m in [regex]::Matches($text, '\]\(([^)]+)\)')) {
     $t = $m.Groups[1].Value
     if ($t -match '^(https?:|#|mailto:)') { continue }
@@ -116,14 +122,10 @@ if ($ph) {
   $found = $true
 }
 
-# 3) 标了 N2 却缺 `**验收**`
-#    先剥掉 HTML 注释与 fenced code block——模板引导文字 / 示例代码本身含这些词,不剥会把计数算花(假阴性)。
+# 3) N2 结构：L2 与承载五件套的模块（模块以「危险实现清单」判定）。
+#    先剥 HTML 注释与 fenced code；只做字面计数，语义归复核。
 $targets = @()
-# 按项目改:下面是"承载 N2 五件套"的文档(L2 / L3)。
-# N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-analysis 是阅读视图,不再扫。
-# 模块文档顶部的 `novelty=` 是**模块档位**(五件套上移 L2 后仍是 N2),不表示规格住在这里;
-# 模块侧改用「危险实现清单」判"本文件是否承载五件套"——承载了才要求验收与失败语义。
-foreach ($n in @('docs/architecture.md','docs/architecture.markdown')) { if (Test-Path $n) { $targets += $n } }
+foreach ($n in $L2Docs) { if (Test-Path $n) { $targets += $n } }
 if (Test-Path 'docs/modules') {
   $targets += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
 }
@@ -135,15 +137,24 @@ foreach ($f in $targets) {
   $acc = ([regex]::Matches($body, '\*\*验收\*\*')).Count
   $dan = ([regex]::Matches($body, '危险实现清单')).Count
   if ($f -like 'docs/modules/*') {
-    if (($dan -gt 0) -and ($acc -eq 0)) {
-      Write-Host "[n2-missing-verification] $($f): 本文件承载五件套(含「危险实现清单」),但没有 ``**验收**`` 行"
-      $found = $true
-    }
-    if (($dan -gt 0) -and ($body -notmatch '失败语义')) {
-      Write-Host "[module-missing-failure-semantics] $($f): 承载五件套的模块文档没有「失败语义」一节"
-      $found = $true
+    if ($dan -gt 0) {
+      if ($n2 -eq 0) {
+        Write-Host "[n2-missing-marker] $($f): 承载五件套(含「危险实现清单」),但没有 novelty=N2"
+        $found = $true
+      } elseif ($n2 -gt $acc) {
+        Write-Host "[n2-missing-verification] $($f): N2 条目 $n2 个,「**验收**」仅 $acc 处"
+        $found = $true
+      }
+      if ($body -notmatch '失败语义') {
+        Write-Host "[module-missing-failure-semantics] $($f): 承载五件套的模块文档没有「失败语义」一节"
+        $found = $true
+      }
     }
     continue
+  }
+  if (($n2 -eq 0) -and ($body -match '### N2:|危险实现清单')) {
+    Write-Host "[n2-missing-marker] $($f): 有 N2 结构但没有 novelty=N2"
+    $found = $true
   }
   if ($n2 -gt $acc) {
     Write-Host "[n2-missing-verification] $($f): N2 条目 $n2 个,「**验收**」仅 $acc 处"
@@ -158,13 +169,9 @@ foreach ($f in $targets) {
   }
 }
 
-# 4) 现状文档里出现指向"记录类文档"的引用
-#    规则(E-1):引用只指稳定代号,不指位置。条款代号(`D-14` / `A-1` / `E-4`)可以引;
-#    记录类(ADR / `docs/decisions/` / `docs/reviews/`)不引——记录会过期,条款不会。
-#    活文档里唯一允许出现记录类目录的地方,是入口文档的「活文档索引」那张表的目录级行;
-#    正文里零容忍——依据、`> 出处：` 行、记录编号都算;具体 ADR 条目另由 4b) 检查。
-#    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
-$liveDocs = @('docs/architecture.md','docs/architecture.markdown','docs/design-contract.md','docs/glossary.md','docs/glossary.markdown')
+# 4) 现状文档不得引用记录类（ADR / decisions / reviews）；要引就引稳定代号。
+#    $liveDocs = 现状 / 规则类文档;L2 用上面的 $L2Docs。
+$liveDocs = @($L2Docs + @('docs/design-contract.md','docs/glossary.md','docs/glossary.markdown'))
 foreach ($n in @('docs/core-analysis.md','docs/core-analysis.markdown')) { if (Test-Path $n) { $liveDocs += $n } }
 if (Test-Path 'docs/modules') {
   $liveDocs += (Get-ChildItem 'docs/modules' -File | Where-Object { $DocExt -ccontains $_.Extension } | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/') })
@@ -176,7 +183,7 @@ foreach ($f in $liveDocs) {
   $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
   if ($null -eq $raw) { continue }
   $ln = 0
-  foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 剥注释 / fence:引导注释与示例代码里的引用不算正文
+  foreach ($line in (Strip-Comments ($raw -split "`n"))) {   # 先剥注释 / fence；命中即报
     $ln++
     if ($line -match $refPat) {
       Write-Host "[live-doc-refs] ${f}:${ln}:${line}: 现状类文档引了记录类文档(记录会过期,条款不会;引条款请用稳定代号,如 D-14;要理由 / 被拒方案,从 L1 的活文档索引进)"
@@ -185,9 +192,7 @@ foreach ($f in $liveDocs) {
   }
 }
 
-# 4b) 入口文档(L1)里出现指向**具体** ADR 条目的引用
-#    规则(E-1):L1 的活文档索引可以写"为什么这么定 / 被拒方案 → docs/decisions/"(目录级),但不得点条目。
-#    例外只有一个:`adr-000-template` 这类模板文件名不是决策(enumerate 时跳过 000)。
+# 4b) 入口文档不得点具体 ADR 条目；目录级引用可以，000 模板例外。
 #    按项目改:L1 的宿主文件名(全部存在才查)。
 $l1Files = @('AGENTS.md','CLAUDE.md','.cursor/rules/project.mdc','.windsurfrules','.github/copilot-instructions.md')
 foreach ($f in $l1Files) {
@@ -206,11 +211,8 @@ foreach ($f in $l1Files) {
   }
 }
 
-# 5) 危险实现清单的行级粗检:数据行的「挡住者」列要有内容、不能是占位符
-#    列位置由表头定位(找含"挡住"的那一列;表头没有这一列 → 不猜、不报),因此**不看列数与写法**。
-#    起始形态:标题(`### 危险实现清单…`)或粗体(`**危险实现清单**——`,含 `- ` 前缀);
-#    表结束(表开始后的第一个非表行)即停止——避免把同节后续的普通表格算进来。
-#    机器只查"填没填";写法是否真挡得住仍是 teach-back 验证者的事
+# 5) 危险实现清单：数据行的「挡住者」列不能是空 / 占位符。
+#    列位置按表头含“挡住”定位；只查填没填，是否真挡住归复核。
 foreach ($f in $targets) {
   $raw = Get-Content -Raw -LiteralPath $f -Encoding UTF8
   if ($null -eq $raw) { continue }

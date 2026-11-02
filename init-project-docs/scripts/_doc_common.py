@@ -113,10 +113,27 @@ def iter_docs(root, use_live=True):
 
 
 def read_lines(path):
-    # utf-8-sig tolerates a BOM (PowerShell 5.1 UTF-8 output); without it the
-    # first heading can be missed by structural checks.
+    # 容忍 BOM（PowerShell 5.1 的 UTF-8 输出会带）；不剥会漏掉第一个标题。
     with open(path, "r", encoding="utf-8-sig", errors="replace") as f:
         return f.read().splitlines()
+
+
+def load_l2_docs():
+    """L2 文件名，来自 scripts/l2-docs.txt；缺失时用默认值。"""
+    defaults = ("docs/architecture.md", "docs/architecture.markdown")
+    path = os.path.join(os.path.dirname(__file__), "l2-docs.txt")
+    if not os.path.isfile(path):
+        return defaults
+    docs = []
+    for line in read_lines(path):
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        docs.append(s.replace("\\", "/"))
+    return tuple(docs) or defaults
+
+
+N2_L2_DOCS = load_l2_docs()
 
 
 def fenced_mask(lines):

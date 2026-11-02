@@ -1,31 +1,8 @@
 #!/usr/bin/env python3
-"""run-n2-acceptance.py — list or run N2 acceptance commands from a manifest.
+"""run-n2-acceptance.py — 发现 N2 单元，或执行 manifest 里的验收命令。
 
-Safety: without a manifest, it only discovers and lists N2 acceptance lines;
-it never executes commands extracted from docs. With --run, it executes only
-commands explicitly listed in the manifest.
-
-Discovery looks for `novelty=N2` in the N2 homes (`docs/architecture.*`, and
-`docs/modules/*` that actually carry the five-piece set, i.e. contain
-「危险实现清单」) and then the first `**验收**:` line between that marker and
-the next `novelty=` marker (or end of file). `docs/core-analysis.*` (L4) is a
-reading view, not an N2 home, so it is not scanned.
-
-Modes:
-  list/discovery : prints units and marks them 未复跑; --strict exits 1 if a
-                   discovered N2 unit has no `**验收**` line.
-  manifest list  : prints units and marks them 未复跑.
-  --run          : executes manifest commands; exits 1 if any command fails.
-
---json writes the units (list mode) or results (--run) to the given path.
-
-Manifest:
-{
-  "units": [
-    {"id": "N2-1", "doc": "docs/modules/foo.md",
-     "command": "pytest -q tests/test_foo.py", "cwd": "."}
-  ]
-}
+合同: docs 的 novelty=N2 + manifest -> 单元列表 / 执行结果；缺验收 / 空 N2 家 / 覆盖不足 1，执行失败 1。
+边界: 只跑 manifest 显式命令；覆盖不足会报，但验收语义仍归复核。
 """
 
 import argparse
@@ -33,46 +10,63 @@ import json
 import os
 import subprocess
 import sys
+from collections import Counter
 
-from _doc_common import active_mask, iter_docs, read_lines, rel
+from _doc_common import N2_L2_DOCS, active_mask, iter_docs, read_lines, rel
 
 
 def is_n2_home(rel_path, text=""):
-    """N2 five-piece homes: L2 (cross-module) and module L3 (in-module).
+    """N2 家：L2，或承载五件套的模块 L3（以「危险实现清单」为标记）。
 
-    L4 `docs/core-analysis.*` is a reading view, not a home, so it is excluded.
-    A module file counts as a home only when it actually carries the five-piece
-    set (marked by「危险实现清单」): `novelty=N2` in a module states how novel
-    the module is, not where the spec lives — a cross-module N2 moved up to L2
-    leaves that marker behind.
+    模块里的 novelty=N2 是模块档位，不是规格位置；L4 是阅读视图，不算家。
     """
-    if rel_path in ("docs/architecture.md", "docs/architecture.markdown"):
+    if rel_path in N2_L2_DOCS:
         return True
     if rel_path.startswith("docs/modules/"):
         return "危险实现清单" in text
     return False
 
 
+def _active_text(lines):
+    mask = active_mask(lines)
+    return "\n".join(line for line, inactive in zip(lines, mask) if not inactive)
+
+
+def _has_n2_intent(rel_path, text):
+    if rel_path.startswith("docs/modules/"):
+        return "危险实现清单" in text
+    if rel_path in N2_L2_DOCS:
+        return "### N2:" in text or "危险实现清单" in text
+    return False
+
+
 def discover(root):
     units = []
+    empty_homes = []
     for path in iter_docs(root):
         rel_path = rel(root, path)
         lines = read_lines(path)
-        if not is_n2_home(rel_path, "\n".join(lines)):
+        text = _active_text(lines)
+        if not is_n2_home(rel_path, text):
             continue
         mask = active_mask(lines)
-        for i, (line, in_fence) in enumerate(zip(lines, mask), 1):
-            if in_fence or "novelty=N2" not in line:
+        found = False
+        for i, (line, inactive) in enumerate(zip(lines, mask), 1):
+            if inactive or "novelty=N2" not in line:
                 continue
-            # 单元的边界 = 下一个 `novelty=` 标记(没有就扫到文件末)。
-            # 不能只搜固定行数:模块模板把档位写在文件头,`**验收**` 在几十行之后。
+            found = True
+            # 单元边界 = 下一个活动行里的 `novelty=`；跳过注释 / fenced code。
             end = len(lines)
             for k in range(i + 1, len(lines) + 1):
+                if mask[k - 1]:
+                    continue
                 if "novelty=" in lines[k - 1]:
                     end = k - 1
                     break
             acceptance = None
             for j in range(i, end + 1):
+                if mask[j - 1]:
+                    continue
                 if "**验收**" in lines[j - 1]:
                     acceptance = lines[j - 1].strip()
                     break
@@ -84,7 +78,9 @@ def discover(root):
                     "acceptance": acceptance,
                 }
             )
-    return units
+        if not found and _has_n2_intent(rel_path, text):
+            empty_homes.append(rel_path)
+    return units, empty_homes
 
 
 def load_manifest(path):
@@ -111,8 +107,41 @@ def load_manifest(path):
     return clean
 
 
+def coverage_gaps(discovered, manifest_units):
+    """按 doc 比较“文档里发现的单元数”与“manifest 列出的单元数”。"""
+    need = Counter(unit["doc"] for unit in discovered)
+    have = Counter(unit["doc"] for unit in manifest_units)
+    gaps = []
+    for doc, count in sorted(need.items()):
+        if have.get(doc, 0) < count:
+            gaps.append({"doc": doc, "discovered": count, "manifest": have.get(doc, 0)})
+    return gaps
+
+
+def print_coverage(gaps, empty_homes):
+    for home in empty_homes:
+        print("[n2-home-without-marker] {}: N2 家但没找到 novelty=N2".format(home))
+    for gap in gaps:
+        print(
+            "[coverage] {}: 文档 N2 单元 {} 个，manifest 仅 {} 个".format(
+                gap["doc"], gap["discovered"], gap["manifest"]
+            )
+        )
+
+
 def run_unit(root, unit, timeout):
-    cwd = os.path.join(root, unit["cwd"])
+    cwd = os.path.abspath(os.path.join(root, unit["cwd"]))
+    root_n = os.path.normcase(root)
+    cwd_n = os.path.normcase(cwd)
+    if cwd_n != root_n and not cwd_n.startswith(root_n + os.sep):
+        return {
+            "id": unit["id"],
+            "command": unit["command"],
+            "returncode": None,
+            "ok": False,
+            "stdout": "",
+            "stderr": "cwd 越出项目根: {}".format(unit["cwd"]),
+        }
     try:
         proc = subprocess.run(
             unit["command"],
@@ -161,42 +190,68 @@ def main():
     ap.add_argument("--manifest", help="JSON manifest of N2 units")
     ap.add_argument("--run", action="store_true", help="execute manifest commands")
     ap.add_argument("--timeout", type=int, default=300, help="per-command timeout seconds")
-    ap.add_argument("--strict", action="store_true", help="exit 1 if a discovered N2 unit has no acceptance line")
+    ap.add_argument(
+        "--strict", action="store_true",
+        help="exit 1 if a discovered N2 unit has no acceptance line, or manifest coverage is incomplete",
+    )
     ap.add_argument("--json", help="write JSON report to this path")
     args = ap.parse_args()
 
     root = os.path.abspath(args.root)
+    manifest_path = args.manifest
+    if manifest_path and not os.path.isabs(manifest_path):
+        manifest_path = os.path.join(root, manifest_path)
 
     if not args.manifest:
-        units = discover(root)
+        units, empty_homes = discover(root)
+        print_coverage([], empty_homes)
         if not units:
             print("[run-n2-acceptance] no N2 units discovered (no manifest, nothing run).")
             if args.json:
                 with open(args.json, "w", encoding="utf-8") as f:
-                    json.dump({"units": [], "executed": False, "status": "未复跑"}, f, ensure_ascii=False, indent=2)
+                    json.dump(
+                        {"units": [], "empty_homes": empty_homes, "executed": False, "status": "未复跑"},
+                        f, ensure_ascii=False, indent=2,
+                    )
+            if args.strict and empty_homes:
+                print("[run-n2-acceptance] strict: N2 home(s) without novelty=N2.")
+                return 1
             return 0
         print("[run-n2-acceptance] discovered {} N2 unit(s); 未复跑 (NOT executed).".format(len(units)))
         print_discovered(units)
         print("[run-n2-acceptance] provide --manifest and --run to execute explicit commands.")
         if args.json:
             with open(args.json, "w", encoding="utf-8") as f:
-                json.dump({"units": units, "executed": False, "status": "未复跑"}, f, ensure_ascii=False, indent=2)
+                json.dump(
+                    {"units": units, "empty_homes": empty_homes, "executed": False, "status": "未复跑"},
+                    f, ensure_ascii=False, indent=2,
+                )
         missing = [u for u in units if not u["acceptance"]]
-        if args.strict and missing:
-            print("[run-n2-acceptance] strict: {} N2 unit(s) have no **验收** line.".format(len(missing)))
+        if args.strict and (missing or empty_homes):
+            if missing:
+                print("[run-n2-acceptance] strict: {} N2 unit(s) have no **验收** line.".format(len(missing)))
             return 1
         return 0
 
+    discovered, empty_homes = discover(root)
+    units = load_manifest(manifest_path)
+    gaps = coverage_gaps(discovered, units)
+    print_coverage(gaps, empty_homes)
+
     if not args.run:
-        units = load_manifest(args.manifest)
         print("[run-n2-acceptance] {} unit(s) in manifest; 未复跑 (add --run).".format(len(units)))
         print_manifest(units)
         if args.json:
             with open(args.json, "w", encoding="utf-8") as f:
-                json.dump({"units": units, "executed": False, "status": "未复跑"}, f, ensure_ascii=False, indent=2)
+                json.dump(
+                    {"units": units, "coverage_gaps": gaps, "empty_homes": empty_homes,
+                     "executed": False, "status": "未复跑"},
+                    f, ensure_ascii=False, indent=2,
+                )
+        if args.strict and (gaps or empty_homes):
+            return 1
         return 0
 
-    units = load_manifest(args.manifest)
     results = [run_unit(root, unit, args.timeout) for unit in units]
     for result in results:
         print(
@@ -210,11 +265,14 @@ def main():
 
     if args.json:
         with open(args.json, "w", encoding="utf-8") as f:
-            json.dump({"results": results, "executed": True}, f, ensure_ascii=False, indent=2)
+            json.dump(
+                {"results": results, "coverage_gaps": gaps, "empty_homes": empty_homes, "executed": True},
+                f, ensure_ascii=False, indent=2,
+            )
 
     failed = sum(1 for result in results if not result["ok"])
     print("[run-n2-acceptance] {} passed, {} failed.".format(len(results) - failed, failed))
-    return 1 if failed else 0
+    return 1 if (failed or (args.strict and (gaps or empty_homes))) else 0
 
 
 if __name__ == "__main__":

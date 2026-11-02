@@ -11,9 +11,12 @@
 
 set -u
 
-# 契约面:L1(全部宿主文件名,与 check-docs-sync 的 L1_FILES 对齐)/L2 + 术语表 + 模块文档(模块级不变量住 L3)
+# 契约面:L1(全部宿主文件名)/L2 + 术语表 + 模块文档(模块级不变量住 L3)
 # L4(docs/core-analysis.*)不算契约文件——阅读视图,不触发复核(C-1)
-CONTRACT="AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md docs/architecture.md docs/architecture.markdown docs/design-contract.md docs/glossary.md docs/glossary.markdown docs/modules/"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+L2_DOCS=$(sed -e 's/#.*//' -e 's/\r$//' -e 's/[[:space:]]*$//' -e '/^$/d' "$SCRIPT_DIR/l2-docs.txt" 2>/dev/null | tr '\n' ' ')
+[ -n "$L2_DOCS" ] || L2_DOCS="docs/architecture.md docs/architecture.markdown"
+CONTRACT="AGENTS.md CLAUDE.md .cursorrules .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md $L2_DOCS docs/design-contract.md docs/glossary.md docs/glossary.markdown docs/modules/"
 MARKER="docs/reviews/.last-review"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[review-backlog] 不是 git 仓库，跳过。"; exit 0; }
@@ -24,7 +27,13 @@ for f in $CONTRACT; do [ -e "$f" ] && existing="$existing $f"; done
 [ -z "$existing" ] && { echo "[review-backlog] 未找到契约文件（$(printf '%s' "$CONTRACT" | sed 's/ /, /g')）。"; exit 0; }
 
 since=""
-[ -f "$MARKER" ] && since=$(head -n1 "$MARKER" 2>/dev/null | awk '{print $1}')
+if [ -f "$MARKER" ]; then
+  since=$(head -n1 "$MARKER" 2>/dev/null | tr -d '\357\273\277' | awk '{print $1}')
+  if [ -n "$since" ] && ! git cat-file -e "${since}^{commit}" 2>/dev/null; then
+    echo "[review-backlog] 起点 $since 不是有效 commit；按首次全量列。"
+    since=""
+  fi
+fi
 
 if [ -z "$since" ]; then
   echo "[review-backlog] 还没有复核起点（$MARKER 不存在）——首次按全量列。"
@@ -50,7 +59,7 @@ echo "被增删改的编号（复核时只看这些 + 它们引用的上下文�
 # 行过滤用 awk(--/++ 元数据行排除,且不吞首字符——行首紧跟 +/- 的编号也要能匹配)
 hits=$(git diff -U0 "$since..HEAD" -- $existing 2>/dev/null \
   | awk '/^[+-]/ && !/^(\+\+\+|---)/' \
-  | grep -E '\b(I-[0-9]+|Q-[0-9]+|A-[0-9]+|M[0-9]+-[0-9]+|U-[0-9]+|P-A[0-9]+-[0-9]+)\b')
+  | grep -E '\b(I-[0-9]+|Q-[0-9]+|E-[0-9]+|D-[0-9]+|R-[0-9]+|A-[0-9]+|M[0-9]+-[0-9]+|U-[0-9]+|P-A[0-9]+-[0-9]+)\b')
 nhits=0
 [ -n "$hits" ] && nhits=$(printf '%s\n' "$hits" | wc -l | tr -d ' ')
 if [ "$nhits" -gt 0 ]; then

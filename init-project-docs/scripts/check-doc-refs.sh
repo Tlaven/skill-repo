@@ -16,6 +16,11 @@ for a in "$@"; do [ "$a" = "--strict" ] && STRICT=1; done
 # 按项目改:文档扩展名(不含点,空格分隔)。默认同时认 .md 与 .markdown。
 DOC_EXT="md markdown"
 
+# L2 文件名来自 scripts/l2-docs.txt；缺失时用默认值。
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+L2_DOCS=$(sed -e 's/#.*//' -e 's/\r$//' -e 's/[[:space:]]*$//' -e '/^$/d' "$SCRIPT_DIR/l2-docs.txt" 2>/dev/null | tr '\n' ' ')
+[ -n "$L2_DOCS" ] || L2_DOCS="docs/architecture.md docs/architecture.markdown"
+
 # 按项目改:对账要**排除**的路径(扩展正则,匹配即跳过)。默认排除"不是本项目当前维护的文档"的那些:
 # 存档层(如 docs/legacy/、docs/archive/、docs/experiment/、docs/scaffolds/)、**记录类**
 # (docs/decisions/、docs/reviews/——历史快照,引用退役术语 / 旧链接是常态,不是错误)、与
@@ -69,6 +74,10 @@ while IFS= read -r hit; do
   file=${hit%%:*}
   if [ -n "$DOC_EXCLUDE" ] && printf '%s' "$file" | grep -Eq "$DOC_EXCLUDE"; then continue; fi
   target=$(printf '%s' "$hit" | grep -oE '\]\([^)]+\)' | head -n1 | sed -E 's/^\]\(//; s/\)$//')
+  lineno=$(printf '%s' "$hit" | awk -F: '{print $2}')
+  [ -z "$lineno" ] && continue
+  active=$(awk "$COMMENT_STRIP" "$file" 2>/dev/null | sed -n "${lineno}p")
+  [ -z "$active" ] && continue
   if printf '%s' "$target" | grep -Eqi '^(https?:|#|mailto:)'; then continue; fi
   target=${target%%#*}
   [ -z "$target" ] && continue
@@ -109,17 +118,9 @@ if [ -n "$PH" ]; then
   found=1
 fi
 
-# 3) 标了 N2 却缺 `**验收**` / 没有「危险实现清单」;N2 模块缺「失败语义」(共用同一批文件与剥注释后的 body)
-#    先剥掉 HTML 注释——模板里的引导文字本身含这些词,不剥会把计数算花(假阴性)。
-#    「危险实现清单」这条要求出自 module-doc 模板(N2 必须给"步骤级说明 + 危险实现清单 + 例子 + 验收 + 失败语义")。
-#    没有"指针形"豁免:跨模块 N2 的正文与 novelty=N2 只写在承载它的那份里;模块文档不声明、也不写
-#    "验收见 docs/…"的指针行——所以"只声明、不写正文"的形态不该存在。
-#    边界(如实说):它数的是**短语出现**,不是"那一节在不在一句话之上"——短语出现在正文别处会漏报。
-# 按项目改:若项目改了 L2 文件名(如 architecture-l2.md),把实际名字加进这一行。
-# N2 的家 = L2 的「N2 单元规格」节(跨模块)与模块 L3(模块内);L4 core-analysis 是阅读视图,不再扫。
-# 模块文档顶部的 novelty= 是模块档位(五件套上移 L2 后仍是 N2),不表示规格住在这里;
-# 模块侧改用「危险实现清单」判"本文件是否承载五件套"——承载了才要求验收与失败语义。
-for f in docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
+# 3) N2 结构：L2 与承载五件套的模块（模块以「危险实现清单」判定）。
+#    先剥 HTML 注释，避免模板引导文字把计数算花；只做字面计数，语义归复核。
+for f in $L2_DOCS docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   body=$(awk "$COMMENT_STRIP" "$f")
   # grep -o|wc -l 数"次数"(grep -c 数"行"——一行多个标记会漏计,n2 偏低即漏报);
@@ -130,16 +131,25 @@ for f in docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/
   : "${n2:=0}"; : "${acc:=0}"; : "${dan:=0}"
   case "$f" in
     docs/modules/*)
-      if [ "$dan" -gt 0 ] && [ "$acc" -eq 0 ]; then
-        echo "[n2-missing-verification] $f: 本文件承载五件套(含「危险实现清单」),但没有 \`**验收**\` 行"
-        found=1
-      fi
-      if [ "$dan" -gt 0 ] && ! printf '%s\n' "$body" | grep -q '失败语义'; then
-        echo "[module-missing-failure-semantics] $f: 承载五件套的模块文档没有「失败语义」一节"
-        found=1
+      if [ "$dan" -gt 0 ]; then
+        if [ "$n2" -eq 0 ]; then
+          echo "[n2-missing-marker] $f: 承载五件套(含「危险实现清单」),但没有 novelty=N2"
+          found=1
+        elif [ "$n2" -gt "$acc" ]; then
+          echo "[n2-missing-verification] $f: N2 条目 $n2 个,「**验收**」仅 $acc 处"
+          found=1
+        fi
+        if ! printf '%s\n' "$body" | grep -q '失败语义'; then
+          echo "[module-missing-failure-semantics] $f: 承载五件套的模块文档没有「失败语义」一节"
+          found=1
+        fi
       fi
       continue ;;
   esac
+  if [ "$n2" -eq 0 ] && printf '%s\n' "$body" | grep -qE '### N2:|危险实现清单'; then
+    echo "[n2-missing-marker] $f: 有 N2 结构但没有 novelty=N2"
+    found=1
+  fi
   if [ "$n2" -gt "$acc" ]; then
     echo "[n2-missing-verification] $f: N2 条目 $n2 个,「**验收**」仅 $acc 处"
     found=1
@@ -151,18 +161,13 @@ for f in docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/
   fi
 done
 
-# 4) 现状文档里出现指向"记录类文档"的引用
-#    规则(E-1):引用只指稳定代号,不指位置。条款代号(`D-14` / `A-1` / `E-4`)可以引;
-#    记录类(ADR / `docs/decisions/` / `docs/reviews/`)不引——记录会过期,条款不会。
-#    活文档里唯一允许出现记录类目录的地方,是入口文档的「活文档索引」那张表的目录级行;
-#    正文里零容忍——依据、`> 出处：` 行、记录编号都算;具体 ADR 条目另由 4b) 检查。
-#    按项目改:LIVE_DOCS = 现状 / 规则类文档(默认 L2 是 docs/architecture.md;L2 改名或另有现状类文档时加进来)。
-LIVE_DOCS="docs/architecture.md docs/architecture.markdown docs/design-contract.md docs/glossary.md docs/glossary.markdown"
+# 4) 现状文档不得引用记录类（ADR / decisions / reviews）；要引就引稳定代号。
+#    LIVE_DOCS = 现状 / 规则类文档;L2 用上面的 L2_DOCS。
+LIVE_DOCS="$L2_DOCS docs/design-contract.md docs/glossary.md docs/glossary.markdown docs/core-analysis.md docs/core-analysis.markdown"
 REF_PAT='docs/decisions/|docs/reviews/|ADR-[0-9]{3}|adr-[0-9]{3}-'
-for f in $LIVE_DOCS docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
+for f in $LIVE_DOCS docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
-  # 先剥 HTML 注释(引导注释里的示例引用不算正文;与 #3 同一套状态机,行号保真)。
-  # 不再跳过 `⚠` 行 / `> 出处：` 行——那两种写法已退役,命中即报。
+  # 先剥 HTML 注释；命中即报（⚠ / > 出处 不再豁免）。
   LREF=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk '{printf "%d:%s\n", NR, $0}' | grep -iE "$REF_PAT" 2>/dev/null)
   if [ -n "$LREF" ]; then
     printf '%s\n' "$LREF" | while IFS= read -r l; do
@@ -172,10 +177,7 @@ for f in $LIVE_DOCS docs/architecture.md docs/architecture.markdown docs/modules
   fi
 done
 
-# 4b) 入口文档(L1)里出现指向**具体** ADR 条目的引用
-#    规则(E-1):L1 的活文档索引可以写"为什么这么定 / 被拒方案 → docs/decisions/"(目录级),但不得点条目。
-#    例外只有一个:`adr-000-template` 这类模板文件名不是决策(跳过 000)。
-#    按项目改:L1 的宿主文件名(存在的才查)。
+# 4b) 入口文档不得点具体 ADR 条目；目录级引用可以，000 模板例外。
 for f in AGENTS.md CLAUDE.md .cursor/rules/project.mdc .windsurfrules .github/copilot-instructions.md; do
   [ -f "$f" ] || continue
   L1REF=$(grep -inE 'ADR-[0-9]{3}|adr-[0-9]{3}' "$f" 2>/dev/null | grep -vE 'ADR-000|adr-000')
@@ -187,13 +189,9 @@ for f in AGENTS.md CLAUDE.md .cursor/rules/project.mdc .windsurfrules .github/co
   fi
 done
 
-# 5) 危险实现清单的行级粗检:数据行的「挡住者」列要有内容、不能是占位符
-#    列位置由表头定位(找含"挡住"的那一列;表头没有这一列 → 不猜、不报),因此**不看列数与写法**——
-#    填完的文档会演化出两列 / 四列等不同形状,判据只认"这一格填没填"。
-#    起始形态:标题(`### 危险实现清单…`)或粗体(`**危险实现清单**——`,含 `- ` 前缀);
-#    表结束(表开始后的第一个非表行)即停止——避免把同节后续的普通表格算进来。
-#    机器只查"填没填";写法是否真挡得住仍是 teach-back 验证者的事
-for f in docs/architecture.md docs/architecture.markdown docs/modules/*.md docs/modules/*.markdown; do
+# 5) 危险实现清单：数据行的「挡住者」列不能是空 / 占位符。
+#    列位置按表头含“挡住”定位；只查填没填，是否真挡住归复核。
+for f in $L2_DOCS docs/modules/*.md docs/modules/*.markdown; do
   [ -f "$f" ] || continue
   DB=$(awk "$COMMENT_STRIP" "$f" 2>/dev/null | awk -F'|' '
     /^#+[[:space:]]*\**危险实现清单/ || /^([[:space:]]*-[[:space:]]+)?\*\*危险实现清单/ { insec=1; intab=0; bcol=0; next }

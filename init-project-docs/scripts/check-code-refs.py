@@ -25,7 +25,7 @@ import os
 import re
 import sys
 
-from _doc_common import L1_NAMES, active_mask, iter_docs, read_lines, rel
+from _doc_common import L1_NAMES, N2_L2_DOCS, active_mask, iter_docs, read_lines, rel
 
 TOKEN_RE = re.compile(r"`([^`\n]+)`")
 EXT_RE = re.compile(
@@ -42,8 +42,7 @@ PATH_PREFIXES = (
     "spec/", "cmd/", "internal/", "pkg/", "include/",
 )
 PENDING_DOCS = (
-    "docs/architecture.md",
-    "docs/architecture.markdown",
+    *N2_L2_DOCS,
     "docs/glossary.md",
     "docs/glossary.markdown",
     "docs/core-analysis.md",

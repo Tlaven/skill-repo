@@ -1,0 +1,4 @@
+# L2 文件名，一行一个；改名时只改这里。
+# 所有检查器（Python / Bash / PowerShell）都读这个文件。
+docs/architecture.md
+docs/architecture.markdown

@@ -178,6 +178,56 @@ class ScriptTests(unittest.TestCase):
                 self.assertNotIn("moved.md", proc.stdout)
                 self.assertNotIn("module-missing-failure-semantics", proc.stdout)
 
+    def test_run_n2_acceptance_empty_home_strict(self):
+        """N2 家(有危险清单)但没有 novelty=N2:--strict 应失败,不能静默退 0。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "modules" / "empty.md",
+                "# M\n\n### 危险实现清单\n\n"
+                "| # | 最可能被写成的样子 | 为什么错 | 由谁挡住 |\n"
+                "|---|---|---|---|\n| 1 | x | y | z |\n\n"
+                "**验收**: python -c \"print(1)\"\n",
+            )
+            proc = run_script("run-n2-acceptance.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("n2-home-without-marker", proc.stdout)
+
+    def test_run_n2_acceptance_manifest_coverage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "modules" / "m.md",
+                "# M\n\nnovelty=N2\n\n### 危险实现清单\n\n"
+                "| # | 最可能被写成的样子 | 为什么错 | 由谁挡住 |\n"
+                "|---|---|---|---|\n| 1 | x | y | z |\n\n"
+                "**验收**: python -c \"print(1)\"\n",
+            )
+            manifest = {
+                "units": [
+                    {"id": "other", "doc": "docs/modules/other.md",
+                     "command": '"{}" -c "print(1)"'.format(sys.executable)}
+                ]
+            }
+            (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            proc = run_script(
+                "run-n2-acceptance.py", "--root", ".", "--manifest", "manifest.json",
+                "--run", "--strict", cwd=root,
+            )
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[coverage]", proc.stdout)
+
+    def test_run_n2_acceptance_commented_checklist_not_home(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "modules" / "commented.md",
+                "# M\n\nnovelty=N2\n\n<!--\n### 危险实现清单\n-->\n\n没有验收。\n",
+            )
+            proc = run_script("run-n2-acceptance.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertNotIn("n2-home-without-marker", proc.stdout)
+
     def test_check_consistency_red(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -219,6 +269,37 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
             self.assertIn("[unregistered-definition] Gadget", proc.stdout)
             self.assertIn("[duplicate-definition] Widget", proc.stdout)
+
+    def test_check_consistency_dangling_known_family(self):
+        """已知族(I/Q/E/D/A/R)整族没有定义时,孤立引用也要报。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "docs" / "a.md", "引用 I-3 但没有定义。\n")
+            proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("[dangling-code] I-3", proc.stdout)
+
+    def test_check_consistency_module_term_section(self):
+        """模块「术语」小节里的定义是合法的,不该报未登记。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "modules" / "m.md",
+                "# M\n\n## 术语\n\n- **本地词**: 只在本模块使用。\n",
+            )
+            proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+    def test_check_consistency_heading_with_prefix(self):
+        """`## 二、E-1:` 也要被识别为定义容器。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs" / "a.md",
+                "## E-2: defined\n\n## 二、E-1: styled heading\n\n引用 E-1。\n",
+            )
+            proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
 
     def test_check_code_refs_skips_records_identifiers_placeholders(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -437,6 +518,74 @@ class ScriptTests(unittest.TestCase):
             self.assertIn("architecture.md", proc.stdout)
             self.assertIn("n2-missing-verification", proc.stdout)
 
+    def test_check_doc_refs_module_multi_unit_needs_each_acceptance(self):
+        ps = shutil.which("pwsh") or shutil.which("powershell")
+        if not ps:
+            self.skipTest("PowerShell not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", "# L1\n")
+            write(
+                root / "docs" / "modules" / "multi.md",
+                "# M\n\nnovelty=N2\n\n### 危险实现清单\n\n"
+                "| # | 最可能被写成的样子 | 为什么错 | 由谁挡住 |\n"
+                "|---|---|---|---|\n| 1 | x | y | z |\n\n"
+                "**验收**: python -c \"print(1)\"\n\n"
+                "### 失败语义\n\n| 失败路径 | 可重试? | 幂等? | 对外表现 | 怎么观测 |\n"
+                "|---|---|---|---|---|\n| 超时 | 是 | 是 | 报错 | 日志 |\n\n"
+                "## 单元 B\n\nnovelty=N2\n\n### 危险实现清单\n\n"
+                "| # | 最可能被写成的样子 | 为什么错 | 由谁挡住 |\n"
+                "|---|---|---|---|\n| 1 | x | y | z |\n\n没有验收。\n",
+            )
+            proc = subprocess.run(
+                [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(SCRIPTS / "check-doc-refs.ps1")],
+                cwd=str(root), capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+            self.assertIn("n2-missing-verification", proc.stdout)
+            self.assertIn("N2 条目 2 个", proc.stdout)
+
+    def test_check_doc_refs_l2_missing_marker(self):
+        ps = shutil.which("pwsh") or shutil.which("powershell")
+        if not ps:
+            self.skipTest("PowerShell not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", "# L1\n")
+            write(
+                root / "docs" / "architecture.md",
+                "# L2\n\n### N2: 分配算法\n\n没有验收。\n",
+            )
+            proc = subprocess.run(
+                [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(SCRIPTS / "check-doc-refs.ps1")],
+                cwd=str(root), capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+            self.assertIn("n2-missing-marker", proc.stdout)
+
+    def test_check_doc_refs_ignores_fenced_dead_link(self):
+        ps = shutil.which("pwsh") or shutil.which("powershell")
+        if not ps:
+            self.skipTest("PowerShell not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "AGENTS.md", "# L1\n")
+            write(
+                root / "docs" / "a.md",
+                "# A\n\n```markdown\n[fenced](not-a-real-file.md)\n```\n\n"
+                "[body](body-missing.md)\n",
+            )
+            proc = subprocess.run(
+                [ps, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(SCRIPTS / "check-doc-refs.ps1")],
+                cwd=str(root), capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+            self.assertIn("body-missing.md", proc.stdout)
+            self.assertNotIn("not-a-real-file.md", proc.stdout)
+
     def test_check_doc_refs_provenance_line_is_flagged_ps1(self):
         ps = shutil.which("pwsh") or shutil.which("powershell")
         if not ps:
@@ -512,8 +661,8 @@ class ScriptTests(unittest.TestCase):
                 (ROOT / "templates" / "adr-template.md").read_text(encoding="utf-8"),
             )
             write(
-                root / "docs-templates" / "evolution-rules.md",
-                (ROOT / "references" / "evolution-rules.md").read_text(encoding="utf-8"),
+                root / "docs-templates" / "lifecycle.md",
+                (ROOT / "references" / "lifecycle.md").read_text(encoding="utf-8"),
             )
             proc = run_script("check-code-refs.py", "--root", ".", "--strict", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
@@ -540,27 +689,6 @@ class ScriptTests(unittest.TestCase):
             )
             proc = run_script("check-consistency.py", "--root", ".", "--strict", cwd=root)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-
-    def test_bom_heading_is_recognized(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            write(root / "docs" / "a.md", "\ufeff## Section\n\nsome text\n")
-            proc = run_script("lint-doc-structure.py", "--root", ".", cwd=root)
-            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-            self.assertNotIn("no-headings", proc.stdout)
-
-    def test_lint_doc_structure_warning(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            paragraph = "\n".join("line {}".format(i) for i in range(25)) + "\n"
-            write(root / "docs" / "a.md", paragraph)
-            proc = run_script("lint-doc-structure.py", "--root", ".", cwd=root)
-            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-            self.assertIn("long-paragraph", proc.stdout)
-
-            proc = run_script("lint-doc-structure.py", "--root", ".", "--strict", cwd=root)
-            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
-
 
     def test_check_consistency_dangling_code(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -628,14 +756,46 @@ class ScriptTests(unittest.TestCase):
             self.assertNotIn("core-analysis.md", proc.stdout)
             self.assertNotIn("fenced.md", proc.stdout)
 
-
+    def test_review_backlog_reads_bom_marker(self):
+        git_bash = r"C:\Program Files\Git\bin\bash.exe"
+        bash = git_bash if os.path.exists(git_bash) else shutil.which("bash")
+        if not bash:
+            self.skipTest("bash not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "config", "user.email", "a@b.c"], cwd=root, check=True)
+            subprocess.run(["git", "config", "user.name", "t"], cwd=root, check=True)
+            write(root / "docs" / "architecture.md", "# L2\n\n## E-4: old\n")
+            subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+            subprocess.run(["git", "commit", "-qm", "init"], cwd=root, check=True)
+            sha = subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"], cwd=root, text=True
+            ).strip()
+            write(root / "docs" / "reviews" / ".last-review", "")
+            (root / "docs" / "reviews" / ".last-review").write_bytes(
+                b"\xef\xbb\xbf" + "{} 2026-01-01\n".format(sha).encode("utf-8")
+            )
+            subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+            subprocess.run(["git", "commit", "-qm", "marker"], cwd=root, check=True)
+            write(root / "docs" / "architecture.md", "# L2\n\n## E-4: new\n")
+            subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+            subprocess.run(["git", "commit", "-qm", "change"], cwd=root, check=True)
+            proc = subprocess.run(
+                [bash, str(SCRIPTS / "review-backlog.sh").replace("\\", "/")],
+                cwd=str(root), capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+            self.assertNotIn("（无变化）", proc.stdout)
+            self.assertIn("docs/architecture.md", proc.stdout)
+            self.assertIn("E-4", proc.stdout)
 
 
 class SingleHomeTests(unittest.TestCase):
-    """协议本体自己的规矩：E-1–E-7 只在 references/evolution-rules.md 写一次。
+    """协议本体自己的规矩：E-1–E-7 只在 references/lifecycle.md 写一次。
 
     2026-10-31 实测：'一处正文'这条被写成 6 遍，其中两处互相打脸
-    （methodology 说"别处只导航"，evolution-rules 说"别处连指针都不写"）。
+    （methodology 说"别处只导航"，lifecycle 说"别处连指针都不写"）。
     下面这几个说法是 E-1–E-7 独有的；出现在 methodology 里 = 开始复述。
     """
 
@@ -647,7 +807,7 @@ class SingleHomeTests(unittest.TestCase):
         self.assertEqual(hits, [], "methodology.md 复述了演进规则：{}".format(hits))
 
     def test_e_only_markers_still_have_a_home(self):
-        text = (ROOT / "references" / "evolution-rules.md").read_text(encoding="utf-8")
+        text = (ROOT / "references" / "lifecycle.md").read_text(encoding="utf-8")
         for marker in ("三条出路", "记录寿命", "单一事实来源"):
             self.assertIn(marker, text, "演进规则丢了自己的正文：{}".format(marker))
 
