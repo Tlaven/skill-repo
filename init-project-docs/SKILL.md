@@ -5,7 +5,17 @@ description: "为 AI 协作建立项目记忆协议(AGENTS.md / CLAUDE.md + docs
 
 # Init Project Docs — 项目记忆做法
 
-> 本文件只做入口：契约、引用/索引、五段主线、路由。规则正文在 `references/` 的模块里；模块边界见 `references/modules.md`。
+> 本文件只做入口：核心理念、契约、引用/索引、五段主线、路由。规则正文在 `references/` 的模块里；模块边界见 `references/modules.md`。
+
+## 0.0 核心理念
+
+文档是人和 AI 的**共享内存**。写**决策需要的信息**，不写**实现需要的信息**。
+
+- 人 vibe coding 不读代码 → 文档是人理解项目的唯一心智模型。
+- AI 不自动读全部代码 → 文档是 AI 加载项目上下文的入口。
+- 双方要在同一份信息上对齐 → 文档是唯一共享协议。
+
+所以内容只能靠对话产生，**不能跳过对话**：skill 给骨架和问题，不给答案。操作判据见 `references/authoring.md` 的「三段式与必填件」。
 
 ## 0.1 契约
 

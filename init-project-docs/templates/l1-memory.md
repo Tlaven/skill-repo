@@ -1,5 +1,6 @@
 # L1 记忆文件(项目根)
 
+> **本文件是项目 L1(根记忆文件)的模板**,不是 skill 的某个模块。
 > 复制到项目根,按宿主命名(见下表)。
 >
 > | 宿主 | 文件名 |
@@ -51,7 +52,7 @@
 | 跨模块 N2 的规格 | `docs/architecture.md` 的「N2 单元规格」节（一个单元一节） |
 | 核心分析（可选） | `docs/core-analysis.md`（若有） |
 | 术语 | `docs/glossary.md` |
-| 方法论 / 铁律 / 加载表 | 方法论直引规则（`docs-templates/methodology.md` 或 `docs/templates/methodology.md`） |
+| 写 / 改文档的规则（铁律 / 加载表） | `docs-templates/methodology.md`（按需,不自动加载） |
 
 ## 开放问题
 

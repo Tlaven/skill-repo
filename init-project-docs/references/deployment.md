@@ -15,7 +15,7 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| `SKILL.md` | M0 入口：契约、引用/索引、主线、路由 |
+| `SKILL.md` | M0 入口：理念、契约、引用/索引、主线、路由 |
 | `references/modules.md` | 模块边界与状态表 |
 | `references/setup.md` | M1 建立 |
 | `references/authoring.md` | M2 写入 |
